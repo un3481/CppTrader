@@ -29,9 +29,9 @@ using namespace CppTrader::Matching;
 #define MAX_CLIENTS 64 // Max number of simultaneous clients connected to socket
 #define CSV_SEP "," // CSV separator
 #define CSV_EOL "\n" // CSV end of line
-#define STATUS_RUN "RUNNING\n" // Status of daemon (RUN)
-#define STATUS_ABEND "ABEND\n" // Status of daemon (ABEND)
-#define STATUS_GSTOP "GRACEFULLY_STOPPED\n" // Status of daemon (GSTOP)
+#define STATUS_RUN "RUNNING" // Status of daemon (RUN)
+#define STATUS_ABEND "ABEND" // Status of daemon (ABEND)
+#define STATUS_GSTOP "GRACEFULLY_STOPPED" // Status of daemon (GSTOP)
 
 static const std::string _str = "";
 
@@ -962,8 +962,6 @@ void DeleteOrder(MarketManager& market, const std::string& command)
     error("Invalid 'delete order' command: " + command);
 }
 
-/* ############################################################################################################################################# */
-
 // Get OrderBook in CSV format
 void GetOrderBook(MarketManager& market, const std::string& command, int sockfd)
 {
@@ -1064,17 +1062,17 @@ int main(int argc, char** argv)
 
     // Setup status file
     const std::string status_text = File::ReadAllText(status_path);
-    bool status = socket_path.IsExists() || (status_text != "GRACEFULLY_STOPPED\n");
+    bool status = socket_path.IsExists() || (status_text != "GRACEFULLY_STOPPED");
     
     bool socket_in_use = true;    
     int rdy = ConnectUnixSocket(socket_path.string().c_str());
     if (rdy < 0) socket_in_use = false;
     else close(rdy);
         
-    if (socket_in_use && (status_text == "RUNNING\n")) CliError("SOCKET_IN_USE");
+    if (socket_in_use && (status_text == "RUNNING")) CliError("SOCKET_IN_USE");
     if (!socket_in_use && status)
     {
-        File::WriteAllText(status_path, "ABEND\n");
+        File::WriteAllText(status_path, "ABEND");
         Path::Remove(socket_path);
     }
 
@@ -1103,7 +1101,7 @@ int main(int argc, char** argv)
     log("switched to daemon");
 
     // Update status file
-    File::WriteAllText(status_path, "RUNNING\n");
+    File::WriteAllText(status_path, "RUNNING");
 
     /* ############################################################################################################################################# */
 
@@ -1162,7 +1160,7 @@ int main(int argc, char** argv)
     market.DisableMatching();
 
     // Update status file
-    File::WriteAllText(status_path, "GRACEFULLY_STOPPED\n");
+    File::WriteAllText(status_path, "GRACEFULLY_STOPPED");
 
     log("graceful shutdown");
 
