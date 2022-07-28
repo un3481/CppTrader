@@ -144,7 +144,7 @@ int ConnectUnixSocket(const char* path)
 {
     // Set Variables
     struct sockaddr_un sock_addr;
-    int sockfd, addrlen, code;
+    int sockfd, addrlen;
 
     // Set Address
     bzero((char *) &sock_addr, sizeof(sock_addr));
@@ -1108,7 +1108,7 @@ int main(int argc, char** argv)
 
     std::vector<int> connections = {sockfd}; // Connection vector
     auto it = connections.begin(); // Connection iterator
-    int newfd, connfd, rdy;
+    int newfd, connfd;
     bool enable = true; // Run condition
     std::string message;
 
