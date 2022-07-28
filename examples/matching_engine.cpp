@@ -1027,7 +1027,7 @@ int main(int argc, char** argv)
     /* CLI */
 
     // Parse input args 
-    auto parser = optparse::OptionParser().version("1.0.0.0");
+    auto parser = optparse::OptionParser().version("1.0.0.1");
     parser.add_option("-n", "--name").dest("name").help("Daemon name");
     parser.add_option("-p", "--path").dest("path").help("Daemon root folder");
     auto options = parser.parse_args(argc, argv);
