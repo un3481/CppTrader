@@ -214,19 +214,19 @@ $(function() {
 <div class="line">{</div>
 <div class="line">    <span class="comment">// Set Variables</span></div>
 <div class="line">    <span class="keyword">struct </span>sockaddr_un sock_addr;</div>
-<div class="line">    <span class="keywordtype">int</span> sockfd, addrlen, code;</div>
+<div class="line">    <span class="keywordtype">int</span> sockfd, addr_len;</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Set Address</span></div>
 <div class="line">    bzero((<span class="keywordtype">char</span> *) &amp;sock_addr, <span class="keyword">sizeof</span>(sock_addr));</div>
 <div class="line">    sock_addr.sun_family = AF_UNIX;</div>
 <div class="line">    strcpy(sock_addr.sun_path, path);</div>
-<div class="line">    addrlen = strlen(sock_addr.sun_path) + <span class="keyword">sizeof</span>(sock_addr.sun_family);</div>
+<div class="line">    addr_len = strlen(sock_addr.sun_path) + <span class="keyword">sizeof</span>(sock_addr.sun_family);</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Create socket</span></div>
 <div class="line">    <span class="keywordflow">if</span> ((sockfd = socket(AF_UNIX, SOCK_STREAM, 0)) &lt; 0) <span class="keywordflow">return</span> -1;</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Connect socket</span></div>
-<div class="line">    <span class="keywordflow">if</span> (connect(sockfd, (<span class="keyword">struct</span> sockaddr *) &amp;sock_addr, addrlen) &lt; 0) <span class="keywordflow">return</span> -2;</div>
+<div class="line">    <span class="keywordflow">if</span> (connect(sockfd, (<span class="keyword">struct</span> sockaddr *) &amp;sock_addr, addr_len) &lt; 0) <span class="keywordflow">return</span> -2;</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordflow">return</span> sockfd;</div>
 <div class="line">}</div>
@@ -1178,7 +1178,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line">    std::vector&lt;int&gt; connections = {sockfd}; <span class="comment">// Connection vector</span></div>
 <div class="line">    <span class="keyword">auto</span> it = connections.begin(); <span class="comment">// Connection iterator</span></div>
-<div class="line">    <span class="keywordtype">int</span> newfd, connfd, rdy;</div>
+<div class="line">    <span class="keywordtype">int</span> newfd, connfd;</div>
 <div class="line">    <span class="keywordtype">bool</span> enable = <span class="keyword">true</span>; <span class="comment">// Run condition</span></div>
 <div class="line">    std::string message;</div>
 <div class="line"> </div>
