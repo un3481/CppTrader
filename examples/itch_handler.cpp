@@ -10,10 +10,39 @@
 #include <sys/un.h>
 #include <stdio.h>
 
+#define MSG_SIZE_LARGE 8192 // Buffer size for large messages on socket stream (bytes)
+
 void error(const char *msg)
 {
     perror(msg);
     exit(0);
+}
+
+// Check if descriptor is ready for read (non-blocking)
+inline int SelectReadBlocking(int fd)
+{
+    fd_set fdset; // Single descriptor set
+    FD_ZERO(&fdset); FD_SET(fd, &fdset);
+    struct timeval tv = {1, 0}; // Timeout zero (to prevent blocking)
+    return select(fd + 1, &fdset, NULL, NULL, &tv);
+}
+
+// Read stream on Unix socket (non-blocking)
+int ReadSocketStream(int sockfd, std::string* dest)
+{
+    // Always clear string
+    (*dest).clear();
+
+    // Check if data is available
+    int rdy = SelectReadBlocking(sockfd);
+    if (rdy <= 0) return rdy;
+
+    // Read stream to string
+    char buffer[MSG_SIZE_LARGE]; // Read MSG_SIZE bytes
+    if (read(sockfd, buffer, sizeof(buffer)) <= 0) return -1;
+    (*dest).append(buffer, strcspn(buffer, "\0")); // buffer is copied to string until the first \0 char is found
+
+    return 1;
 }
 
 int main(int argc, char *argv[])
@@ -61,6 +90,16 @@ int main(int argc, char *argv[])
         input = fgets(buffer, sizeof(buffer), stdin);
         buffer[strcspn(buffer, "\r\n")] = 0;
         size = write(sockfd, buffer, sizeof(buffer));
+
+        std::string instr = buffer;
+        if (instr.find("get book"))
+        {
+            std::string result;
+            int rdy = ReadSocketStream(sockfd, &result);
+            if (rdy < 0) {};
+            std::cout << result << std::endl;
+        }
+
         if ((input + size) < 0) {}
     }
 

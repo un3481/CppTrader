@@ -29,9 +29,6 @@ using namespace CppTrader::Matching;
 #define MAX_CLIENTS 64 // Max number of simultaneous clients connected to socket
 #define CSV_SEP "," // CSV separator
 #define CSV_EOL "\n" // CSV end of line
-#define STATUS_RUN "RUNNING" // Status of daemon (RUN)
-#define STATUS_ABEND "ABEND" // Status of daemon (ABEND)
-#define STATUS_GSTOP "GRACEFULLY_STOPPED" // Status of daemon (GSTOP)
 
 static const std::string _str = "";
 
@@ -979,6 +976,8 @@ void GetOrderBook(MarketManager& market, const std::string& command, int sockfd)
 
         // Get CSV
         std::string csv = ParseOrderBook(market, order_book_ptr);
+
+        std::cout << now() << '\t' << "Get book: " << csv << std::endl;
 
         // Send data back to client
         int rdy = WriteSocketStream(sockfd, &csv);
