@@ -973,17 +973,19 @@ void GetOrderBook(MarketManager& market, const std::string& command, int sockfd)
 
         if (order_book_ptr == NULL)
             std::cerr << now() << '\t' << "Failed 'get book' command" << std::endl;
+        else
+        {
+            // Get CSV
+            std::string csv = ParseOrderBook(market, order_book_ptr);
 
-        // Get CSV
-        std::string csv = ParseOrderBook(market, order_book_ptr);
+            std::cout << now() << '\t' << "Get book: " << csv << std::endl;
 
-        std::cout << now() << '\t' << "Get book: " << csv << std::endl;
-
-        // Send data back to client
-        int rdy = WriteSocketStream(sockfd, &csv);
-        if (rdy < 0)
-            std::cerr << now() << '\t' <<
-            "failed sending response of 'get book' command" << std::endl;
+            // Send data back to client
+            int rdy = WriteSocketStream(sockfd, &csv);
+            if (rdy < 0)
+                std::cerr << now() << '\t' <<
+                "failed sending response of 'get book' command" << std::endl;
+        }
         
         return;
     }
