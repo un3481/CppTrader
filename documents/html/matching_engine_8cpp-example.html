@@ -1043,17 +1043,19 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">if</span> (order_book_ptr == NULL)</div>
 <div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;get book&#39; command&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line">        <span class="keywordflow">else</span></div>
+<div class="line">        {</div>
+<div class="line">            <span class="comment">// Get CSV</span></div>
+<div class="line">            std::string csv = ParseOrderBook(market, order_book_ptr);</div>
 <div class="line"> </div>
-<div class="line">        <span class="comment">// Get CSV</span></div>
-<div class="line">        std::string csv = ParseOrderBook(market, order_book_ptr);</div>
+<div class="line">            std::cout &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Get book: &quot;</span> &lt;&lt; csv &lt;&lt; std::endl;</div>
 <div class="line"> </div>
-<div class="line">        std::cout &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Get book: &quot;</span> &lt;&lt; csv &lt;&lt; std::endl;</div>
-<div class="line"> </div>
-<div class="line">        <span class="comment">// Send data back to client</span></div>
-<div class="line">        <span class="keywordtype">int</span> rdy = WriteSocketStream(sockfd, &amp;csv);</div>
-<div class="line">        <span class="keywordflow">if</span> (rdy &lt; 0)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt;</div>
-<div class="line">            <span class="stringliteral">&quot;failed sending response of &#39;get book&#39; command&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line">            <span class="comment">// Send data back to client</span></div>
+<div class="line">            <span class="keywordtype">int</span> rdy = WriteSocketStream(sockfd, &amp;csv);</div>
+<div class="line">            <span class="keywordflow">if</span> (rdy &lt; 0)</div>
+<div class="line">                std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt;</div>
+<div class="line">                <span class="stringliteral">&quot;failed sending response of &#39;get book&#39; command&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line">        }</div>
 <div class="line">        </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
