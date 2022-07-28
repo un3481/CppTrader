@@ -118,27 +118,46 @@ int UnixSocket(const char* path, int clients)
 {
     // Set Variables
     struct sockaddr_un sock_addr;
-    int sockfd, servlen;
+    int sockfd, addr_len;
 
     // Set Address
     bzero((char *) &sock_addr, sizeof(sock_addr));
     sock_addr.sun_family = AF_UNIX;
     strcpy(sock_addr.sun_path, path);
-    servlen = strlen(sock_addr.sun_path) + sizeof(sock_addr.sun_family);
+    addr_len = strlen(sock_addr.sun_path) + sizeof(sock_addr.sun_family);
 
     // Create socket
-    if ((sockfd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
-        { error("error creating socket"); exit(1); };
+    if ((sockfd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) return -1;
 
     // Bind socket
-    if (bind(sockfd, (struct sockaddr *)&sock_addr, servlen) < 0)
-        { error("error binding socket"); exit(1); };
+    if (bind(sockfd, (struct sockaddr *)&sock_addr, addr_len) < 0) return -2;
 
     // Listen for connection
-    if (listen(sockfd, clients) < 0)
-        { error("error listening on socket"); exit(1); };
+    if (listen(sockfd, clients) < 0) return -3;
 
     // Return file descriptor
+    return sockfd;
+}
+
+// Connect to Unix socket
+int ConnectUnixSocket(const char* path)
+{
+    // Set Variables
+    struct sockaddr_un sock_addr;
+    int sockfd, addrlen, code;
+
+    // Set Address
+    bzero((char *) &sock_addr, sizeof(sock_addr));
+    sock_addr.sun_family = AF_UNIX;
+    strcpy(sock_addr.sun_path, path);
+    addrlen = strlen(sock_addr.sun_path) + sizeof(sock_addr.sun_family);
+
+    // Create socket
+    if ((sockfd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) return -1;
+
+    // Connect socket
+    if (connect(sockfd, (struct sockaddr *) &sock_addr, addrlen) < 0) return -2;
+
     return sockfd;
 }
 
@@ -1041,16 +1060,32 @@ int main(int argc, char** argv)
     /* SETUP */
 
     // Setup status file
-    File::WriteAllText(status_path, "STOPPED");
+    const std::string status_text = File::ReadAllText(status_path);
+    bool status = socket_path.IsExists() || (status_text != "GRACEFULLY_STOPPED");
+    
+    bool socket_in_use = true;    
+    int rdy = ConnectUnixSocket(socket_path.string().c_str());
+    if (rdy < 0) socket_in_use = false;
+    else close(rdy);
+        
+    if (socket_in_use && (status_text == "RUNNING")) CliError("SOCKET_IN_USE");
+    if (!socket_in_use && status)
+    {
+        File::WriteAllText(status_path, "ABEND");
+        Path::Remove(socket_path);
+    }
 
     // Set Stdout and Stderr to log and err files
     if (freopen(log_path.string().c_str(), "a+", stdout) == NULL) CliError("error opening log file");
     if (freopen(err_path.string().c_str(), "a+", stderr) == NULL) CliError("error opening err file");
 
-    log("starting");
+    log("starting new daemon");
 
     // Create socket
     int sockfd = UnixSocket(socket_path.string().c_str(), MAX_CLIENTS);
+    if (sockfd == -1) { error("error creating socket"); exit(1); };
+    if (sockfd == -2) { error("error binding socket"); exit(1); };
+    if (sockfd == -3) { error("error listening on socket"); exit(1); };
 
     log("listening...");
 
@@ -1080,33 +1115,38 @@ int main(int argc, char** argv)
     // Handle connections
     while (enable)
     {
-        // Wait for new connection or message
-        rdy = SelectVector(&connections);
-        if (rdy < 0) error("error waiting for connections");
-
-        // Accept new connection (if available)
-        newfd = AcceptConnection(sockfd);
-        if (newfd < 0) error("error accepting connetion");
-        if (newfd > 0) connections.push_back(newfd); // Add connection to vector
-           
-        // Read messages from all clients (if available)
-        it = ++connections.begin();
-        while ((it < connections.end()) && enable)
+        try
         {
-            connfd = *it;
-            rdy = ReadSocketStream(connfd, &message); // Read message
-            if (rdy < 0) // Connection closed
+            // Wait for new connection or message
+            rdy = SelectVector(&connections);
+            if (rdy < 0) error("error waiting for connections");
+
+            // Accept new connection (if available)
+            newfd = AcceptConnection(sockfd);
+            if (newfd < 0) error("error accepting connetion");
+            if (newfd > 0) connections.push_back(newfd); // Add connection to vector
+
+            // Read messages from all clients (if available)
+            it = ++connections.begin();
+            while ((it < connections.end()) && enable)
             {
-                close(connfd);
-                it = connections.erase(it); // Remove connection from vector
+                connfd = *it;
+                rdy = ReadSocketStream(connfd, &message); // Read message
+                if (rdy < 0) // Connection closed
+                {
+                    close(connfd);
+                    it = connections.erase(it); // Remove connection from vector
+                }
+                if (rdy > 0) // Message recieved
+                {
+                    if (message == "exit") enable = false;
+                    else Match(market, message, connfd); // Call matching engine
+                }
+                ++it; // Update iterator
             }
-            if (rdy > 0) // Message recieved
-            {
-                if (message == "exit") enable = false;
-                else Match(market, message, connfd); // Call matching engine
-            }
-            ++it; // Update iterator
         }
+        // Catch any error
+        catch (...) { enable = false; }
     }
 
     /* ############################################################################################################################################# */
