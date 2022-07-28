@@ -144,19 +144,19 @@ int ConnectUnixSocket(const char* path)
 {
     // Set Variables
     struct sockaddr_un sock_addr;
-    int sockfd, addrlen;
+    int sockfd, addr_len;
 
     // Set Address
     bzero((char *) &sock_addr, sizeof(sock_addr));
     sock_addr.sun_family = AF_UNIX;
     strcpy(sock_addr.sun_path, path);
-    addrlen = strlen(sock_addr.sun_path) + sizeof(sock_addr.sun_family);
+    addr_len = strlen(sock_addr.sun_path) + sizeof(sock_addr.sun_family);
 
     // Create socket
     if ((sockfd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) return -1;
 
     // Connect socket
-    if (connect(sockfd, (struct sockaddr *) &sock_addr, addrlen) < 0) return -2;
+    if (connect(sockfd, (struct sockaddr *) &sock_addr, addr_len) < 0) return -2;
 
     return sockfd;
 }
