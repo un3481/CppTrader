@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
         size = write(sockfd, buffer, sizeof(buffer));
 
         std::string instr = buffer;
-        if (instr.find("get book"))
+        if (instr.find("get book") != std::string::npos)
         {
             std::string result;
             int rdy = ReadSocketStream(sockfd, &result);

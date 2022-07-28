@@ -373,6 +373,7 @@ std::string ParseOrderBook(MarketManager& market, const OrderBook* order_book_pt
 
 /* ############################################################################################################################################# */
 
+/*
 class MyMarketHandler : public MarketHandler
 {
 protected:
@@ -403,10 +404,57 @@ protected:
     { std::cout << now() << '\t' << "Delete order: " << order << std::endl; }
 
     void onExecuteOrder(const Order& order, uint64_t price, uint64_t quantity) override
-    {
-        std::cout << now() << '\t' << "Execute order: " << order << " with price " << price << " and quantity " << quantity << std::endl;
+    { std::cout << now() << '\t' << "Execute order: " << order << " with price " << price << " and quantity " << quantity << std::endl; }
+};
+*/
 
-        // Get CSV
+class MyMarketHandler : public MarketHandler
+{
+public:
+    MyMarketHandler()
+        : _updates(0),
+          _symbols(0),
+          _max_symbols(0),
+          _order_books(0),
+          _max_order_books(0),
+          _max_order_book_levels(0),
+          _max_order_book_orders(0),
+          _orders(0),
+          _max_orders(0),
+          _add_orders(0),
+          _update_orders(0),
+          _delete_orders(0),
+          _execute_orders(0)
+    {}
+
+    size_t updates() const { return _updates; }
+    size_t max_symbols() const { return _max_symbols; }
+    size_t max_order_books() const { return _max_order_books; }
+    size_t max_order_book_levels() const { return _max_order_book_levels; }
+    size_t max_order_book_orders() const { return _max_order_book_orders; }
+    size_t max_orders() const { return _max_orders; }
+    size_t add_orders() const { return _add_orders; }
+    size_t update_orders() const { return _update_orders; }
+    size_t delete_orders() const { return _delete_orders; }
+    size_t execute_orders() const { return _execute_orders; }
+
+protected:
+    void onAddSymbol(const Symbol& symbol) override { ++_updates; ++_symbols; _max_symbols = std::max(_symbols, _max_symbols); }
+    void onDeleteSymbol(const Symbol& symbol) override { ++_updates; --_symbols; }
+    void onAddOrderBook(const OrderBook& order_book) override { ++_updates; ++_order_books; _max_order_books = std::max(_order_books, _max_order_books); }
+    void onUpdateOrderBook(const OrderBook& order_book, bool top) override { _max_order_book_levels = std::max(std::max(order_book.bids().size(), order_book.asks().size()), _max_order_book_levels); }
+    void onDeleteOrderBook(const OrderBook& order_book) override { ++_updates; --_order_books; }
+    void onAddLevel(const OrderBook& order_book, const Level& level, bool top) override { ++_updates; }
+    void onUpdateLevel(const OrderBook& order_book, const Level& level, bool top) override { ++_updates; _max_order_book_orders = std::max(level.Orders, _max_order_book_orders); }
+    void onDeleteLevel(const OrderBook& order_book, const Level& level, bool top) override { ++_updates; }
+    void onAddOrder(const Order& order) override { ++_updates; ++_orders; _max_orders = std::max(_orders, _max_orders); ++_add_orders; }
+    void onUpdateOrder(const Order& order) override { ++_updates; ++_update_orders; }
+    void onDeleteOrder(const Order& order) override { ++_updates; --_orders; ++_delete_orders; }
+    void onExecuteOrder(const Order& order, uint64_t price, uint64_t quantity) override
+    {
+        ++_updates;
+        ++_execute_orders;
+
         std::string csv;
         csv.append(
             OrderCSVHeader + CSV_SEP + 
@@ -419,17 +467,28 @@ protected:
             std::to_string(quantity) + CSV_EOL
         );
 
+        /*
         // Call trigger script
-        // std::string cmd = "py /home/ubuntu/Documents/GitHub/dummy.py \"";
-        // cmd.append(csv + "\"");
-        // system(cmd.c_str());
-
-        // Send data back to client via socket stream
-        // int rdy = WriteSocketStream(sockfd, &csv);
-        // if (rdy < 0)
-        //     std::cerr << now() << '\t' <<
-        //     "failed sending response of 'execute order' command" << std::endl;
+        std::string cmd = "py /home/ubuntu/Documents/GitHub/dummy.py \"";
+        cmd.append(csv + "\"");
+        system(cmd.c_str());
+        */
     }
+
+private:
+    size_t _updates;
+    size_t _symbols;
+    size_t _max_symbols;
+    size_t _order_books;
+    size_t _max_order_books;
+    size_t _max_order_book_levels;
+    size_t _max_order_book_orders;
+    size_t _orders;
+    size_t _max_orders;
+    size_t _add_orders;
+    size_t _update_orders;
+    size_t _delete_orders;
+    size_t _execute_orders;
 };
 
 /* ############################################################################################################################################# */
@@ -977,8 +1036,6 @@ void GetOrderBook(MarketManager& market, const std::string& command, int sockfd)
         {
             // Get CSV
             std::string csv = ParseOrderBook(market, order_book_ptr);
-
-            std::cout << now() << '\t' << "Get book: " << csv << std::endl;
 
             // Send data back to client
             int rdy = WriteSocketStream(sockfd, &csv);
