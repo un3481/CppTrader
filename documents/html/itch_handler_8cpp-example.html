@@ -80,10 +80,39 @@ $(function() {
 <div class="line"><span class="preprocessor">#include &lt;sys/un.h&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;stdio.h&gt;</span></div>
 <div class="line"> </div>
+<div class="line"><span class="preprocessor">#define MSG_SIZE_LARGE 8192 // Buffer size for large messages on socket stream (bytes)</span></div>
+<div class="line"> </div>
 <div class="line"><span class="keywordtype">void</span> error(<span class="keyword">const</span> <span class="keywordtype">char</span> *msg)</div>
 <div class="line">{</div>
 <div class="line">    perror(msg);</div>
 <div class="line">    exit(0);</div>
+<div class="line">}</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Check if descriptor is ready for read (non-blocking)</span></div>
+<div class="line"><span class="keyword">inline</span> <span class="keywordtype">int</span> SelectReadBlocking(<span class="keywordtype">int</span> fd)</div>
+<div class="line">{</div>
+<div class="line">    fd_set fdset; <span class="comment">// Single descriptor set</span></div>
+<div class="line">    FD_ZERO(&amp;fdset); FD_SET(fd, &amp;fdset);</div>
+<div class="line">    <span class="keyword">struct </span>timeval tv = {1, 0}; <span class="comment">// Timeout zero (to prevent blocking)</span></div>
+<div class="line">    <span class="keywordflow">return</span> select(fd + 1, &amp;fdset, NULL, NULL, &amp;tv);</div>
+<div class="line">}</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Read stream on Unix socket (non-blocking)</span></div>
+<div class="line"><span class="keywordtype">int</span> ReadSocketStream(<span class="keywordtype">int</span> sockfd, std::string* dest)</div>
+<div class="line">{</div>
+<div class="line">    <span class="comment">// Always clear string</span></div>
+<div class="line">    (*dest).clear();</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Check if data is available</span></div>
+<div class="line">    <span class="keywordtype">int</span> rdy = SelectReadBlocking(sockfd);</div>
+<div class="line">    <span class="keywordflow">if</span> (rdy &lt;= 0) <span class="keywordflow">return</span> rdy;</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Read stream to string</span></div>
+<div class="line">    <span class="keywordtype">char</span> buffer[MSG_SIZE_LARGE]; <span class="comment">// Read MSG_SIZE bytes</span></div>
+<div class="line">    <span class="keywordflow">if</span> (read(sockfd, buffer, <span class="keyword">sizeof</span>(buffer)) &lt;= 0) <span class="keywordflow">return</span> -1;</div>
+<div class="line">    (*dest).append(buffer, strcspn(buffer, <span class="stringliteral">&quot;\0&quot;</span>)); <span class="comment">// buffer is copied to string until the first \0 char is found</span></div>
+<div class="line"> </div>
+<div class="line">    <span class="keywordflow">return</span> 1;</div>
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> main(<span class="keywordtype">int</span> argc, <span class="keywordtype">char</span> *argv[])</div>
@@ -131,6 +160,16 @@ $(function() {
 <div class="line">        input = fgets(buffer, <span class="keyword">sizeof</span>(buffer), stdin);</div>
 <div class="line">        buffer[strcspn(buffer, <span class="stringliteral">&quot;\r\n&quot;</span>)] = 0;</div>
 <div class="line">        size = write(sockfd, buffer, <span class="keyword">sizeof</span>(buffer));</div>
+<div class="line"> </div>
+<div class="line">        std::string instr = buffer;</div>
+<div class="line">        <span class="keywordflow">if</span> (instr.find(<span class="stringliteral">&quot;get book&quot;</span>))</div>
+<div class="line">        {</div>
+<div class="line">            std::string result;</div>
+<div class="line">            <span class="keywordtype">int</span> rdy = ReadSocketStream(sockfd, &amp;result);</div>
+<div class="line">            <span class="keywordflow">if</span> (rdy &lt; 0) {};</div>
+<div class="line">            std::cout &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">        }</div>
+<div class="line"> </div>
 <div class="line">        <span class="keywordflow">if</span> ((input + size) &lt; 0) {}</div>
 <div class="line">    }</div>
 <div class="line"> </div>

@@ -99,9 +99,6 @@ $(function() {
 <div class="line"><span class="preprocessor">#define MAX_CLIENTS 64 // Max number of simultaneous clients connected to socket</span></div>
 <div class="line"><span class="preprocessor">#define CSV_SEP &quot;,&quot; // CSV separator</span></div>
 <div class="line"><span class="preprocessor">#define CSV_EOL &quot;\n&quot; // CSV end of line</span></div>
-<div class="line"><span class="preprocessor">#define STATUS_RUN &quot;RUNNING\n&quot; // Status of daemon (RUN)</span></div>
-<div class="line"><span class="preprocessor">#define STATUS_ABEND &quot;ABEND\n&quot; // Status of daemon (ABEND)</span></div>
-<div class="line"><span class="preprocessor">#define STATUS_GSTOP &quot;GRACEFULLY_STOPPED\n&quot; // Status of daemon (GSTOP)</span></div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">static</span> <span class="keyword">const</span> std::string _str = <span class="stringliteral">&quot;&quot;</span>;</div>
 <div class="line"> </div>
@@ -1032,8 +1029,6 @@ $(function() {
 <div class="line">    error(<span class="stringliteral">&quot;Invalid &#39;delete order&#39; command: &quot;</span> + command);</div>
 <div class="line">}</div>
 <div class="line"> </div>
-<div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
-<div class="line"> </div>
 <div class="line"><span class="comment">// Get OrderBook in CSV format</span></div>
 <div class="line"><span class="keywordtype">void</span> GetOrderBook(<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a>&amp; market, <span class="keyword">const</span> std::string&amp; command, <span class="keywordtype">int</span> sockfd)</div>
 <div class="line">{</div>
@@ -1051,6 +1046,8 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Get CSV</span></div>
 <div class="line">        std::string csv = ParseOrderBook(market, order_book_ptr);</div>
+<div class="line"> </div>
+<div class="line">        std::cout &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Get book: &quot;</span> &lt;&lt; csv &lt;&lt; std::endl;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Send data back to client</span></div>
 <div class="line">        <span class="keywordtype">int</span> rdy = WriteSocketStream(sockfd, &amp;csv);</div>
@@ -1134,17 +1131,17 @@ $(function() {
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Setup status file</span></div>
 <div class="line">    <span class="keyword">const</span> std::string status_text = File::ReadAllText(status_path);</div>
-<div class="line">    <span class="keywordtype">bool</span> status = socket_path.IsExists() || (status_text != STATUS_GSTOP);</div>
+<div class="line">    <span class="keywordtype">bool</span> status = socket_path.IsExists() || (status_text != <span class="stringliteral">&quot;GRACEFULLY_STOPPED&quot;</span>);</div>
 <div class="line">    </div>
 <div class="line">    <span class="keywordtype">bool</span> socket_in_use = <span class="keyword">true</span>;    </div>
 <div class="line">    <span class="keywordtype">int</span> rdy = ConnectUnixSocket(socket_path.string().c_str());</div>
 <div class="line">    <span class="keywordflow">if</span> (rdy &lt; 0) socket_in_use = <span class="keyword">false</span>;</div>
 <div class="line">    <span class="keywordflow">else</span> close(rdy);</div>
 <div class="line">        </div>
-<div class="line">    <span class="keywordflow">if</span> (socket_in_use &amp;&amp; (status_text == STATUS_RUN)) CliError(<span class="stringliteral">&quot;SOCKET_IN_USE&quot;</span>);</div>
+<div class="line">    <span class="keywordflow">if</span> (socket_in_use &amp;&amp; (status_text == <span class="stringliteral">&quot;RUNNING&quot;</span>)) CliError(<span class="stringliteral">&quot;SOCKET_IN_USE&quot;</span>);</div>
 <div class="line">    <span class="keywordflow">if</span> (!socket_in_use &amp;&amp; status)</div>
 <div class="line">    {</div>
-<div class="line">        File::WriteAllText(status_path, STATUS_ABEND);</div>
+<div class="line">        File::WriteAllText(status_path, <span class="stringliteral">&quot;ABEND&quot;</span>);</div>
 <div class="line">        Path::Remove(socket_path);</div>
 <div class="line">    }</div>
 <div class="line"> </div>
@@ -1173,7 +1170,7 @@ $(function() {
 <div class="line">    log(<span class="stringliteral">&quot;switched to daemon&quot;</span>);</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Update status file</span></div>
-<div class="line">    File::WriteAllText(status_path, STATUS_RUN);</div>
+<div class="line">    File::WriteAllText(status_path, <span class="stringliteral">&quot;RUNNING&quot;</span>);</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">/* ############################################################################################################################################# */</span></div>
 <div class="line"> </div>
@@ -1232,7 +1229,7 @@ $(function() {
 <div class="line">    market.<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a06930138a5a90d2f8f79ddeb3941d286">DisableMatching</a>();</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Update status file</span></div>
-<div class="line">    File::WriteAllText(status_path, STATUS_GSTOP);</div>
+<div class="line">    File::WriteAllText(status_path, <span class="stringliteral">&quot;GRACEFULLY_STOPPED&quot;</span>);</div>
 <div class="line"> </div>
 <div class="line">    log(<span class="stringliteral">&quot;graceful shutdown&quot;</span>);</div>
 <div class="line"> </div>
