@@ -188,27 +188,46 @@ $(function() {
 <div class="line">{</div>
 <div class="line">    <span class="comment">// Set Variables</span></div>
 <div class="line">    <span class="keyword">struct </span>sockaddr_un sock_addr;</div>
-<div class="line">    <span class="keywordtype">int</span> sockfd, servlen;</div>
+<div class="line">    <span class="keywordtype">int</span> sockfd, addr_len;</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Set Address</span></div>
 <div class="line">    bzero((<span class="keywordtype">char</span> *) &amp;sock_addr, <span class="keyword">sizeof</span>(sock_addr));</div>
 <div class="line">    sock_addr.sun_family = AF_UNIX;</div>
 <div class="line">    strcpy(sock_addr.sun_path, path);</div>
-<div class="line">    servlen = strlen(sock_addr.sun_path) + <span class="keyword">sizeof</span>(sock_addr.sun_family);</div>
+<div class="line">    addr_len = strlen(sock_addr.sun_path) + <span class="keyword">sizeof</span>(sock_addr.sun_family);</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Create socket</span></div>
-<div class="line">    <span class="keywordflow">if</span> ((sockfd = socket(AF_UNIX, SOCK_STREAM, 0)) &lt; 0)</div>
-<div class="line">        { error(<span class="stringliteral">&quot;error creating socket&quot;</span>); exit(1); };</div>
+<div class="line">    <span class="keywordflow">if</span> ((sockfd = socket(AF_UNIX, SOCK_STREAM, 0)) &lt; 0) <span class="keywordflow">return</span> -1;</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Bind socket</span></div>
-<div class="line">    <span class="keywordflow">if</span> (bind(sockfd, (<span class="keyword">struct</span> sockaddr *)&amp;sock_addr, servlen) &lt; 0)</div>
-<div class="line">        { error(<span class="stringliteral">&quot;error binding socket&quot;</span>); exit(1); };</div>
+<div class="line">    <span class="keywordflow">if</span> (bind(sockfd, (<span class="keyword">struct</span> sockaddr *)&amp;sock_addr, addr_len) &lt; 0) <span class="keywordflow">return</span> -2;</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Listen for connection</span></div>
-<div class="line">    <span class="keywordflow">if</span> (listen(sockfd, clients) &lt; 0)</div>
-<div class="line">        { error(<span class="stringliteral">&quot;error listening on socket&quot;</span>); exit(1); };</div>
+<div class="line">    <span class="keywordflow">if</span> (listen(sockfd, clients) &lt; 0) <span class="keywordflow">return</span> -3;</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Return file descriptor</span></div>
+<div class="line">    <span class="keywordflow">return</span> sockfd;</div>
+<div class="line">}</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Connect to Unix socket</span></div>
+<div class="line"><span class="keywordtype">int</span> ConnectUnixSocket(<span class="keyword">const</span> <span class="keywordtype">char</span>* path)</div>
+<div class="line">{</div>
+<div class="line">    <span class="comment">// Set Variables</span></div>
+<div class="line">    <span class="keyword">struct </span>sockaddr_un sock_addr;</div>
+<div class="line">    <span class="keywordtype">int</span> sockfd, addrlen, code;</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Set Address</span></div>
+<div class="line">    bzero((<span class="keywordtype">char</span> *) &amp;sock_addr, <span class="keyword">sizeof</span>(sock_addr));</div>
+<div class="line">    sock_addr.sun_family = AF_UNIX;</div>
+<div class="line">    strcpy(sock_addr.sun_path, path);</div>
+<div class="line">    addrlen = strlen(sock_addr.sun_path) + <span class="keyword">sizeof</span>(sock_addr.sun_family);</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Create socket</span></div>
+<div class="line">    <span class="keywordflow">if</span> ((sockfd = socket(AF_UNIX, SOCK_STREAM, 0)) &lt; 0) <span class="keywordflow">return</span> -1;</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Connect socket</span></div>
+<div class="line">    <span class="keywordflow">if</span> (connect(sockfd, (<span class="keyword">struct</span> sockaddr *) &amp;sock_addr, addrlen) &lt; 0) <span class="keywordflow">return</span> -2;</div>
+<div class="line"> </div>
 <div class="line">    <span class="keywordflow">return</span> sockfd;</div>
 <div class="line">}</div>
 <div class="line"> </div>
@@ -1111,16 +1130,32 @@ $(function() {
 <div class="line">    <span class="comment">/* SETUP */</span></div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Setup status file</span></div>
-<div class="line">    File::WriteAllText(status_path, <span class="stringliteral">&quot;STOPPED&quot;</span>);</div>
+<div class="line">    <span class="keyword">const</span> std::string status_text = File::ReadAllText(status_path);</div>
+<div class="line">    <span class="keywordtype">bool</span> status = socket_path.IsExists() || (status_text != <span class="stringliteral">&quot;GRACEFULLY_STOPPED&quot;</span>);</div>
+<div class="line">    </div>
+<div class="line">    <span class="keywordtype">bool</span> socket_in_use = <span class="keyword">true</span>;    </div>
+<div class="line">    <span class="keywordtype">int</span> rdy = ConnectUnixSocket(socket_path.string().c_str());</div>
+<div class="line">    <span class="keywordflow">if</span> (rdy &lt; 0) socket_in_use = <span class="keyword">false</span>;</div>
+<div class="line">    <span class="keywordflow">else</span> close(rdy);</div>
+<div class="line">        </div>
+<div class="line">    <span class="keywordflow">if</span> (socket_in_use &amp;&amp; (status_text == <span class="stringliteral">&quot;RUNNING&quot;</span>)) CliError(<span class="stringliteral">&quot;SOCKET_IN_USE&quot;</span>);</div>
+<div class="line">    <span class="keywordflow">if</span> (!socket_in_use &amp;&amp; status)</div>
+<div class="line">    {</div>
+<div class="line">        File::WriteAllText(status_path, <span class="stringliteral">&quot;ABEND&quot;</span>);</div>
+<div class="line">        Path::Remove(socket_path);</div>
+<div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Set Stdout and Stderr to log and err files</span></div>
 <div class="line">    <span class="keywordflow">if</span> (freopen(log_path.string().c_str(), <span class="stringliteral">&quot;a+&quot;</span>, stdout) == NULL) CliError(<span class="stringliteral">&quot;error opening log file&quot;</span>);</div>
 <div class="line">    <span class="keywordflow">if</span> (freopen(err_path.string().c_str(), <span class="stringliteral">&quot;a+&quot;</span>, stderr) == NULL) CliError(<span class="stringliteral">&quot;error opening err file&quot;</span>);</div>
 <div class="line"> </div>
-<div class="line">    log(<span class="stringliteral">&quot;starting&quot;</span>);</div>
+<div class="line">    log(<span class="stringliteral">&quot;starting new daemon&quot;</span>);</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Create socket</span></div>
 <div class="line">    <span class="keywordtype">int</span> sockfd = UnixSocket(socket_path.string().c_str(), MAX_CLIENTS);</div>
+<div class="line">    <span class="keywordflow">if</span> (sockfd == -1) { error(<span class="stringliteral">&quot;error creating socket&quot;</span>); exit(1); };</div>
+<div class="line">    <span class="keywordflow">if</span> (sockfd == -2) { error(<span class="stringliteral">&quot;error binding socket&quot;</span>); exit(1); };</div>
+<div class="line">    <span class="keywordflow">if</span> (sockfd == -3) { error(<span class="stringliteral">&quot;error listening on socket&quot;</span>); exit(1); };</div>
 <div class="line"> </div>
 <div class="line">    log(<span class="stringliteral">&quot;listening...&quot;</span>);</div>
 <div class="line"> </div>
@@ -1150,33 +1185,38 @@ $(function() {
 <div class="line">    <span class="comment">// Handle connections</span></div>
 <div class="line">    <span class="keywordflow">while</span> (enable)</div>
 <div class="line">    {</div>
-<div class="line">        <span class="comment">// Wait for new connection or message</span></div>
-<div class="line">        rdy = SelectVector(&amp;connections);</div>
-<div class="line">        <span class="keywordflow">if</span> (rdy &lt; 0) error(<span class="stringliteral">&quot;error waiting for connections&quot;</span>);</div>
-<div class="line"> </div>
-<div class="line">        <span class="comment">// Accept new connection (if available)</span></div>
-<div class="line">        newfd = AcceptConnection(sockfd);</div>
-<div class="line">        <span class="keywordflow">if</span> (newfd &lt; 0) error(<span class="stringliteral">&quot;error accepting connetion&quot;</span>);</div>
-<div class="line">        <span class="keywordflow">if</span> (newfd &gt; 0) connections.push_back(newfd); <span class="comment">// Add connection to vector</span></div>
-<div class="line">           </div>
-<div class="line">        <span class="comment">// Read messages from all clients (if available)</span></div>
-<div class="line">        it = ++connections.begin();</div>
-<div class="line">        <span class="keywordflow">while</span> ((it &lt; connections.end()) &amp;&amp; enable)</div>
+<div class="line">        <span class="keywordflow">try</span></div>
 <div class="line">        {</div>
-<div class="line">            connfd = *it;</div>
-<div class="line">            rdy = ReadSocketStream(connfd, &amp;message); <span class="comment">// Read message</span></div>
-<div class="line">            <span class="keywordflow">if</span> (rdy &lt; 0) <span class="comment">// Connection closed</span></div>
+<div class="line">            <span class="comment">// Wait for new connection or message</span></div>
+<div class="line">            rdy = SelectVector(&amp;connections);</div>
+<div class="line">            <span class="keywordflow">if</span> (rdy &lt; 0) error(<span class="stringliteral">&quot;error waiting for connections&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line">            <span class="comment">// Accept new connection (if available)</span></div>
+<div class="line">            newfd = AcceptConnection(sockfd);</div>
+<div class="line">            <span class="keywordflow">if</span> (newfd &lt; 0) error(<span class="stringliteral">&quot;error accepting connetion&quot;</span>);</div>
+<div class="line">            <span class="keywordflow">if</span> (newfd &gt; 0) connections.push_back(newfd); <span class="comment">// Add connection to vector</span></div>
+<div class="line"> </div>
+<div class="line">            <span class="comment">// Read messages from all clients (if available)</span></div>
+<div class="line">            it = ++connections.begin();</div>
+<div class="line">            <span class="keywordflow">while</span> ((it &lt; connections.end()) &amp;&amp; enable)</div>
 <div class="line">            {</div>
-<div class="line">                close(connfd);</div>
-<div class="line">                it = connections.erase(it); <span class="comment">// Remove connection from vector</span></div>
+<div class="line">                connfd = *it;</div>
+<div class="line">                rdy = ReadSocketStream(connfd, &amp;message); <span class="comment">// Read message</span></div>
+<div class="line">                <span class="keywordflow">if</span> (rdy &lt; 0) <span class="comment">// Connection closed</span></div>
+<div class="line">                {</div>
+<div class="line">                    close(connfd);</div>
+<div class="line">                    it = connections.erase(it); <span class="comment">// Remove connection from vector</span></div>
+<div class="line">                }</div>
+<div class="line">                <span class="keywordflow">if</span> (rdy &gt; 0) <span class="comment">// Message recieved</span></div>
+<div class="line">                {</div>
+<div class="line">                    <span class="keywordflow">if</span> (message == <span class="stringliteral">&quot;exit&quot;</span>) enable = <span class="keyword">false</span>;</div>
+<div class="line">                    <span class="keywordflow">else</span> Match(market, message, connfd); <span class="comment">// Call matching engine</span></div>
+<div class="line">                }</div>
+<div class="line">                ++it; <span class="comment">// Update iterator</span></div>
 <div class="line">            }</div>
-<div class="line">            <span class="keywordflow">if</span> (rdy &gt; 0) <span class="comment">// Message recieved</span></div>
-<div class="line">            {</div>
-<div class="line">                <span class="keywordflow">if</span> (message == <span class="stringliteral">&quot;exit&quot;</span>) enable = <span class="keyword">false</span>;</div>
-<div class="line">                <span class="keywordflow">else</span> Match(market, message, connfd); <span class="comment">// Call matching engine</span></div>
-<div class="line">            }</div>
-<div class="line">            ++it; <span class="comment">// Update iterator</span></div>
 <div class="line">        }</div>
+<div class="line">        <span class="comment">// Catch any error</span></div>
+<div class="line">        <span class="keywordflow">catch</span> (...) { enable = <span class="keyword">false</span>; }</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">/* ############################################################################################################################################# */</span></div>
