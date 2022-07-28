@@ -162,7 +162,7 @@ $(function() {
 <div class="line">        size = write(sockfd, buffer, <span class="keyword">sizeof</span>(buffer));</div>
 <div class="line"> </div>
 <div class="line">        std::string instr = buffer;</div>
-<div class="line">        <span class="keywordflow">if</span> (instr.find(<span class="stringliteral">&quot;get book&quot;</span>))</div>
+<div class="line">        <span class="keywordflow">if</span> (instr.find(<span class="stringliteral">&quot;get book&quot;</span>) != std::string::npos)</div>
 <div class="line">        {</div>
 <div class="line">            std::string result;</div>
 <div class="line">            <span class="keywordtype">int</span> rdy = ReadSocketStream(sockfd, &amp;result);</div>
