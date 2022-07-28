@@ -1064,17 +1064,17 @@ int main(int argc, char** argv)
 
     // Setup status file
     const std::string status_text = File::ReadAllText(status_path);
-    bool status = socket_path.IsExists() || (status_text != STATUS_GSTOP);
+    bool status = socket_path.IsExists() || (status_text != "GRACEFULLY_STOPPED\n");
     
     bool socket_in_use = true;    
     int rdy = ConnectUnixSocket(socket_path.string().c_str());
     if (rdy < 0) socket_in_use = false;
     else close(rdy);
         
-    if (socket_in_use && (status_text == STATUS_RUN)) CliError("SOCKET_IN_USE");
+    if (socket_in_use && (status_text == "RUNNING\n")) CliError("SOCKET_IN_USE");
     if (!socket_in_use && status)
     {
-        File::WriteAllText(status_path, STATUS_ABEND);
+        File::WriteAllText(status_path, "ABEND\n");
         Path::Remove(socket_path);
     }
 
@@ -1103,7 +1103,7 @@ int main(int argc, char** argv)
     log("switched to daemon");
 
     // Update status file
-    File::WriteAllText(status_path, STATUS_RUN);
+    File::WriteAllText(status_path, "RUNNING\n");
 
     /* ############################################################################################################################################# */
 
@@ -1162,7 +1162,7 @@ int main(int argc, char** argv)
     market.DisableMatching();
 
     // Update status file
-    File::WriteAllText(status_path, STATUS_GSTOP);
+    File::WriteAllText(status_path, "GRACEFULLY_STOPPED\n");
 
     log("graceful shutdown");
 
