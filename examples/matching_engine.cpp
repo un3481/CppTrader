@@ -104,11 +104,11 @@ static void Daemonize(const char* root)
     if (chdir(root) < 0) { error("error changing root directory"); exit(1); };
 
     /* Close all open file descriptors */
-    // int x;
-    // for (x = sysconf(_SC_OPEN_MAX); x>=0; x--)
-    // {
-    //     close (x);
-    // }
+    int x;
+    for (x = sysconf(_SC_OPEN_MAX); x>=0; x--)
+    {
+        close (x);
+    }
 }
 
 /* ############################################################################################################################################# */
@@ -1247,11 +1247,14 @@ int main(int argc, char** argv)
         Path::Remove(socket_path);
     }
 
-    // Set Stdout and Stderr to log and err files
-    if (freopen(log_path.string().c_str(), "a+", stdout) == NULL) CliError("error opening log file");
-    if (freopen(err_path.string().c_str(), "a+", stderr) == NULL) CliError("error opening err file");
+    // Change process to Daemon
+    Daemonize(root.string().c_str());
 
-    log("starting new daemon");
+    log("switched to daemon");
+
+    // Set Stdout and Stderr to log and err files
+    if (freopen(log_path.string().c_str(), "a+", stdout) == NULL) { error("error opening log file"); exit(1); };
+    if (freopen(err_path.string().c_str(), "a+", stderr) == NULL) { error("error opening err file"); exit(1); };
 
     // Create socket
     int sockfd = UnixSocket(socket_path.string().c_str(), MAX_CLIENTS);
@@ -1265,11 +1268,6 @@ int main(int argc, char** argv)
     MyMarketHandler market_handler;
     MarketManager market(market_handler);
     market.EnableMatching();
-
-    // Change process to Daemon
-    Daemonize(root.string().c_str());
-
-    log("switched to daemon");
 
     // Update status file
     File::WriteAllText(status_path, "RUNNING");
