@@ -373,41 +373,154 @@ std::string ParseOrderBook(MarketManager& market, const OrderBook* order_book_pt
 
 /* ############################################################################################################################################# */
 
-/*
 class MyMarketHandler : public MarketHandler
 {
 protected:
     void onAddSymbol(const Symbol& symbol) override
-    { std::cout << now() << '\t' << "Add symbol: " << symbol << std::endl; }
+    { 
+        // Log Add Symbol
+        std::cout << now() << '\t' << "Add symbol: " << symbol << std::endl; 
+
+        // Send to server
+        std::string cmd = "/home/sysop/books/scripts/server AddSymbol 123";
+        int iCallResult = system(cmd.c_str());
+        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+    }
+
     void onDeleteSymbol(const Symbol& symbol) override
-    { std::cout << now() << '\t' << "Delete symbol: " << symbol << std::endl; }
+    { 
+        // Log Delete Symbol
+        std::cout << now() << '\t' << "Delete symbol: " << symbol << std::endl; 
+
+        // Send to server
+        std::string cmd = "/home/sysop/books/scripts/server DeleteSymbol 123";
+        int iCallResult = system(cmd.c_str());
+        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+    }
 
     void onAddOrderBook(const OrderBook& order_book) override
-    { std::cout << now() << '\t' << "Add order book: " << order_book << std::endl; }
+    { 
+        // Log Add Order Book
+        std::cout << now() << '\t' << "Add order book: " << order_book << std::endl; 
+
+        // Send to server
+        std::string cmd = "/home/sysop/books/scripts/server AddOrderBook 123";
+        int iCallResult = system(cmd.c_str());
+        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+    }
+
     void onUpdateOrderBook(const OrderBook& order_book, bool top) override
-    { std::cout << now() << '\t' << "Update order book: " << order_book << (top ? " - Top of the book!" : "") << std::endl; }
+    {
+        // Log Update Order Book
+        std::cout << now() << '\t' << "Update order book: " << order_book << (top ? " - Top of the book!" : "") << std::endl; 
+
+        // Send to server
+        std::string cmd = "/home/sysop/books/scripts/server UpdateOrderBook 123";
+        int iCallResult = system(cmd.c_str());
+        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+    }
+
     void onDeleteOrderBook(const OrderBook& order_book) override
-    { std::cout << now() << '\t' << "Delete order book: " << order_book << std::endl; }
+    { 
+        // Log Delete Order Book
+        std::cout << now() << '\t' << "Delete order book: " << order_book << std::endl; 
+
+        // Send to server
+        std::string cmd = "/home/sysop/books/scripts/server DeleteOrderBook 123";
+        int iCallResult = system(cmd.c_str());
+        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+    }
 
     void onAddLevel(const OrderBook& order_book, const Level& level, bool top) override
-    { std::cout << now() << '\t' << "Add level: " << level << (top ? " - Top of the book!" : "") << std::endl; }
+    { 
+        // Log Add Level
+        std::cout << now() << '\t' << "Add level: " << level << (top ? " - Top of the book!" : "") << std::endl; 
+
+        // Send to server
+        std::string cmd = "/home/sysop/books/scripts/server AddLevel 123";
+        int iCallResult = system(cmd.c_str());
+        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+    }
+
     void onUpdateLevel(const OrderBook& order_book, const Level& level, bool top) override
-    { std::cout << now() << '\t' << "Update level: " << level << (top ? " - Top of the book!" : "") << std::endl; }
+    { 
+        // Log Update Level
+        std::cout << now() << '\t' << "Update level: " << level << (top ? " - Top of the book!" : "") << std::endl; 
+
+        // Send to server
+        std::string cmd = "/home/sysop/books/scripts/server UpdateLevel 123";
+        int iCallResult = system(cmd.c_str());
+        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+    }
+
     void onDeleteLevel(const OrderBook& order_book, const Level& level, bool top) override
-    { std::cout << now() << '\t' << "Delete level: " << level << (top ? " - Top of the book!" : "") << std::endl; }
+    { 
+        // Log Delete Leve
+        std::cout << now() << '\t' << "Delete level: " << level << (top ? " - Top of the book!" : "") << std::endl; 
+
+        // Send to server
+        std::string cmd = "/home/sysop/books/scripts/server DeleteLevel 123";
+        int iCallResult = system(cmd.c_str());
+        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+    }
 
     void onAddOrder(const Order& order) override
-    { std::cout << now() << '\t' << "Add order: " << order << std::endl; }
+    { 
+        // Log Add Order
+        std::cout << now() << '\t' << "Add order: " << order << std::endl; 
+
+        // Send to server
+        std::string cmd = "/home/sysop/books/scripts/server AddOrder 123";
+        int iCallResult = system(cmd.c_str());
+        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+    }
+
     void onUpdateOrder(const Order& order) override
-    { std::cout << now() << '\t' << "Update order: " << order << std::endl; }
+    { 
+        // Log Order Update
+        std::cout << now() << '\t' << "Update order: " << order << std::endl; 
+
+        // Send to server
+        std::string cmd = "/home/sysop/books/scripts/server UpdateOrder 123";
+        int iCallResult = system(cmd.c_str());
+        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+    }
+
     void onDeleteOrder(const Order& order) override
-    { std::cout << now() << '\t' << "Delete order: " << order << std::endl; }
+    { 
+        // Log Deleted Order
+        std::cout << now() << '\t' << "Delete order: " << order << std::endl;
+
+        // Send to server
+        std::string cmd = "/home/sysop/books/scripts/server DeleteOrder 123";
+        int iCallResult = system(cmd.c_str());
+        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+    }
 
     void onExecuteOrder(const Order& order, uint64_t price, uint64_t quantity) override
-    { std::cout << now() << '\t' << "Execute order: " << order << " with price " << price << " and quantity " << quantity << std::endl; }
-};
-*/
+    {
+        // Log Executed Order
+     	std::cout << now() << '\t' << "Execute order: " << order << " with price " << price << " and quantity " << quantity << std::endl;
+ 
+     	// std::string csv;
+        // csv.append(OrderCSVHeader + CSV_SEP + "Price" + CSV_SEP + "Quantity" + CSV_EOL);
+        // csv.append(ParseOrder(order) + CSV_SEP + std::to_string(price) + CSV_SEP + std::to_string(quantity) + CSV_EOL);
 
+        // Send to server
+        std::string cmd = "/home/sysop/books/scripts/server ExecuteOrder 123";
+        int iCallResult = system(cmd.c_str());
+        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+
+        // Call trigger script
+        // std::string cmd = "py /home/ubuntu/Documents/GitHub/dummy.py \"";
+        // cmd.append(csv + "\"");
+        // system(cmd.c_str());
+        // this should be your system call
+    }
+};
+
+/* 
+this class is the handler that does not log for "performance reasons" i believe
 class MyMarketHandler : public MarketHandler
 {
 public:
@@ -452,6 +565,7 @@ protected:
     void onDeleteOrder(const Order& order) override { ++_updates; --_orders; ++_delete_orders; }
     void onExecuteOrder(const Order& order, uint64_t price, uint64_t quantity) override
     {
+ // This part should be copy & pasted to the other 
         ++_updates;
         ++_execute_orders;
 
@@ -467,12 +581,10 @@ protected:
             std::to_string(quantity) + CSV_EOL
         );
 
-        /*
         // Call trigger script
         std::string cmd = "py /home/ubuntu/Documents/GitHub/dummy.py \"";
         cmd.append(csv + "\"");
         system(cmd.c_str());
-        */
     }
 
 private:
@@ -490,6 +602,7 @@ private:
     size_t _delete_orders;
     size_t _execute_orders;
 };
+*/
 
 /* ############################################################################################################################################# */
 
@@ -1086,7 +1199,7 @@ int main(int argc, char** argv)
     /* CLI */
 
     // Parse input args 
-    auto parser = optparse::OptionParser().version("1.0.0.1");
+    auto parser = optparse::OptionParser().version("1.0.0.5");
     parser.add_option("-n", "--name").dest("name").help("Daemon name");
     parser.add_option("-p", "--path").dest("path").help("Daemon root folder");
     auto options = parser.parse_args(argc, argv);
