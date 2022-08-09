@@ -658,15 +658,15 @@ $(function() {
 <div class="line">        <span class="comment">// Update Unique Id Record</span></div>
 <div class="line">        _lts_order_id = std::max((<span class="keywordtype">size_t</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>, _lts_order_id);</div>
 <div class="line"> </div>
-<div class="line">        <span class="comment">// Log Add Order</span></div>
-<div class="line">        std::cout &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Add order: &quot;</span> &lt;&lt; order &lt;&lt; std::endl;</div>
-<div class="line"> </div>
 <div class="line">        <span class="comment">// Update SQLite</span></div>
 <div class="line">        uint64_t ctx_id = CommandCtx::Get().OrderId;</div>
 <div class="line">        <span class="keywordflow">if</span> (ctx_id == order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>)</div>
 <div class="line">        {</div>
 <div class="line">            <span class="comment">// SQLite::AddOrder(order);</span></div>
 <div class="line">        }</div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Log Add Order</span></div>
+<div class="line">        std::cout &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Add order: &quot;</span> &lt;&lt; order &lt;&lt; std::endl;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server AddOrder 123&quot;</span>;</div>
