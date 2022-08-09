@@ -1190,8 +1190,7 @@ void GetOrderBook(MarketManager& market, const std::string& command)
             int connfd = CommandCtx::Get().Connection;
             int rdy = WriteSocketStream(connfd, &csv);
             if (rdy < 0)
-                std::cerr << now() << '\t' <<
-                "failed sending response of 'get book' command" << std::endl;
+                std::cerr << now() << '\t' << "failed sending response of 'get book' command" << std::endl;
         }
         
         return;
