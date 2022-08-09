@@ -588,15 +588,15 @@ protected:
         // Update Unique Id Record
         _lts_order_id = std::max((size_t)order.Id, _lts_order_id);
 
-        // Log Add Order
-        std::cout << now() << '\t' << "Add order: " << order << std::endl;
-
         // Update SQLite
         uint64_t ctx_id = CommandCtx::Get().OrderId;
         if (ctx_id == order.Id)
         {
             // SQLite::AddOrder(order);
         }
+
+        // Log Add Order
+        std::cout << now() << '\t' << "Add order: " << order << std::endl;
 
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server AddOrder 123";
