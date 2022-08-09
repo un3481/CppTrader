@@ -450,7 +450,8 @@ $(function() {
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
 <div class="line"> </div>
-<div class="line"><span class="comment">// Command Context</span></div>
+<div class="line"><span class="comment">/* Command Context */</span></div>
+<div class="line"> </div>
 <div class="line"><span class="keyword">namespace </span>CommandCtx {</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Context struct</span></div>
@@ -495,7 +496,8 @@ $(function() {
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
-<div class="line"><span class="comment">// Handler Callbacks</span></div>
+<div class="line"> </div>
+<div class="line"><span class="comment">/* Custom Market Handler */</span></div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">class </span>MyMarketHandler : <span class="keyword">public</span> <a name="_a23"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_handler.html">MarketHandler</a></div>
 <div class="line">{</div>
@@ -545,6 +547,10 @@ $(function() {
 <div class="line">    <span class="keywordtype">size_t</span> delete_orders()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _delete_orders; }</div>
 <div class="line">    <span class="keywordtype">size_t</span> execute_orders()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _execute_orders; }</div>
 <div class="line">    <span class="keywordtype">size_t</span> lts_order_id()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _lts_order_id; }</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
+<div class="line"> </div>
+<div class="line"><span class="comment">/* Handler Callbacks */</span></div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">protected</span>:</div>
 <div class="line">    <span class="keywordtype">void</span> onAddSymbol(<span class="keyword">const</span> <a name="_a24"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_symbol.html">Symbol</a>&amp; symbol)<span class="keyword"> override</span></div>
@@ -719,7 +725,8 @@ $(function() {
 <div class="line">};</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
-<div class="line"><span class="comment">// Symbols</span></div>
+<div class="line"> </div>
+<div class="line"><span class="comment">/* Symbols */</span></div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">void</span> AddSymbol(<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a>&amp; market, <span class="keyword">const</span> std::string&amp; command)</div>
 <div class="line">{</div>
@@ -766,7 +773,8 @@ $(function() {
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
-<div class="line"><span class="comment">// Books</span></div>
+<div class="line"> </div>
+<div class="line"><span class="comment">/* Books */</span></div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">void</span> AddOrderBook(<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a>&amp; market, <span class="keyword">const</span> std::string&amp; command)</div>
 <div class="line">{</div>
@@ -844,7 +852,8 @@ $(function() {
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
-<div class="line"><span class="comment">// Orders: Modify</span></div>
+<div class="line"> </div>
+<div class="line"><span class="comment">/* Orders: Modify */</span></div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">void</span> ReduceOrder(<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a>&amp; market, <span class="keyword">const</span> std::string&amp; command)</div>
 <div class="line">{</div>
@@ -950,7 +959,8 @@ $(function() {
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
-<div class="line"><span class="comment">// Orders: Add</span></div>
+<div class="line"> </div>
+<div class="line"><span class="comment">/* Orders: Add */</span></div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">void</span> AddMarketOrder(<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a>&amp; market, <span class="keyword">const</span> std::string&amp; command)</div>
 <div class="line">{</div>
@@ -1289,7 +1299,8 @@ $(function() {
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
 <div class="line"> </div>
-<div class="line"><span class="comment">// Match CppTrader command</span></div>
+<div class="line"><span class="comment">/* Execute Command */</span></div>
+<div class="line"> </div>
 <div class="line"><span class="keywordtype">void</span> Execute(<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a>&amp; market, <span class="keyword">const</span> std::string&amp; command)</div>
 <div class="line">{</div>
 <div class="line">    <span class="comment">// Matching</span></div>
