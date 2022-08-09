@@ -35,8 +35,9 @@ using namespace CppTrader::Matching;
 
 #define MAX_CLIENTS 64 // Max number of simultaneous clients connected to socket
 
-#define MSG_SIZE 1024 // Buffer size for messages on socket stream (bytes)
-#define MSG_SIZE_LARGE 8192 // Buffer size for large messages on socket stream (bytes)
+#define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)
+#define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)
+#define MSG_SIZE_LARGE 1024 // Buffer size for large messages on socket stream (bytes)
 
 #define SYMBOL_ID 1 // Symbol Id for the Order Book
 
