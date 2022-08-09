@@ -42,8 +42,6 @@ using namespace CppTrader::Matching;
 
 #define SYMBOL_ID 1 // Symbol Id for the Order Book
 
-static const std::string _str = "";
-
 /* ############################################################################################################################################# */
 
 // Get Timestamp for Logs
@@ -280,7 +278,7 @@ int AcceptConnection(int sockfd)
 /* ############################################################################################################################################# */
 
 // Order CSV Header
-static const std::string OrderCSVHeader = (_str +
+static const std::string OrderCSVHeader = (std::string("") +
     "Id" + CSV_SEP +
     "SymbolId" + CSV_SEP +
     "Type" + CSV_SEP +
@@ -334,7 +332,7 @@ inline std::string ParseOrder(const Order& order)
 /* ############################################################################################################################################# */
 
 // Order Book CSV Header
-static const std::string OrderBookCSVHeader = (_str +
+static const std::string OrderBookCSVHeader = (std::string("") +
     "Group" + CSV_SEP +
     "LevelType" + CSV_SEP +
     "LevelPrice"
