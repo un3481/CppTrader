@@ -583,7 +583,7 @@ $(function() {
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server DeleteSymbol 123&quot;</span>;</div>
 <div class="line">        <span class="keywordtype">int</span> iCallResult = system(cmd.c_str());</div>
-<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* std::cout &lt;&lt; &quot;Error doing system call &quot; &lt;&lt; strerror(errno) &lt;&lt; &#39;\n&#39;; */</span> }</div>
+<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* error(&quot;Error doing system call &quot; + strerror(errno)); */</span> }</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">void</span> onAddOrderBook(<span class="keyword">const</span> <a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html">OrderBook</a>&amp; order_book)<span class="keyword"> override</span></div>
@@ -596,7 +596,7 @@ $(function() {
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server AddOrderBook 123&quot;</span>;</div>
 <div class="line">        <span class="keywordtype">int</span> iCallResult = system(cmd.c_str());</div>
-<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* std::cout &lt;&lt; &quot;Error doing system call &quot; &lt;&lt; strerror(errno) &lt;&lt; &#39;\n&#39;; */</span> }</div>
+<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* error(&quot;Error doing system call &quot; + strerror(errno)); */</span> }</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">void</span> onUpdateOrderBook(<span class="keyword">const</span> <a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html">OrderBook</a>&amp; order_book, <span class="keywordtype">bool</span> top)<span class="keyword"> override</span></div>
@@ -609,7 +609,7 @@ $(function() {
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server UpdateOrderBook 123&quot;</span>;</div>
 <div class="line">        <span class="keywordtype">int</span> iCallResult = system(cmd.c_str());</div>
-<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* std::cout &lt;&lt; &quot;Error doing system call &quot; &lt;&lt; strerror(errno) &lt;&lt; &#39;\n&#39;; */</span> }</div>
+<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* error(&quot;Error doing system call &quot; + strerror(errno)); */</span> }</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">void</span> onDeleteOrderBook(<span class="keyword">const</span> <a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html">OrderBook</a>&amp; order_book)<span class="keyword"> override</span></div>
@@ -622,7 +622,7 @@ $(function() {
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server DeleteOrderBook 123&quot;</span>;</div>
 <div class="line">        <span class="keywordtype">int</span> iCallResult = system(cmd.c_str());</div>
-<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* std::cout &lt;&lt; &quot;Error doing system call &quot; &lt;&lt; strerror(errno) &lt;&lt; &#39;\n&#39;; */</span> }</div>
+<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* error(&quot;Error doing system call &quot; + strerror(errno)); */</span> }</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">void</span> onAddLevel(<span class="keyword">const</span> <a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html">OrderBook</a>&amp; order_book, <span class="keyword">const</span> <a name="_a27"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_level.html">Level</a>&amp; level, <span class="keywordtype">bool</span> top)<span class="keyword"> override</span></div>
@@ -635,7 +635,7 @@ $(function() {
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server AddLevel 123&quot;</span>;</div>
 <div class="line">        <span class="keywordtype">int</span> iCallResult = system(cmd.c_str());</div>
-<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* std::cout &lt;&lt; &quot;Error doing system call &quot; &lt;&lt; strerror(errno) &lt;&lt; &#39;\n&#39;; */</span> }</div>
+<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* error(&quot;Error doing system call &quot; + strerror(errno)); */</span> }</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">void</span> onUpdateLevel(<span class="keyword">const</span> <a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html">OrderBook</a>&amp; order_book, <span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_level.html">Level</a>&amp; level, <span class="keywordtype">bool</span> top)<span class="keyword"> override</span></div>
@@ -648,7 +648,7 @@ $(function() {
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server UpdateLevel 123&quot;</span>;</div>
 <div class="line">        <span class="keywordtype">int</span> iCallResult = system(cmd.c_str());</div>
-<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* std::cout &lt;&lt; &quot;Error doing system call &quot; &lt;&lt; strerror(errno) &lt;&lt; &#39;\n&#39;; */</span> }</div>
+<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* error(&quot;Error doing system call &quot; + strerror(errno)); */</span> }</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">void</span> onDeleteLevel(<span class="keyword">const</span> <a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html">OrderBook</a>&amp; order_book, <span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_level.html">Level</a>&amp; level, <span class="keywordtype">bool</span> top)<span class="keyword"> override</span></div>
@@ -661,7 +661,7 @@ $(function() {
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server DeleteLevel 123&quot;</span>;</div>
 <div class="line">        <span class="keywordtype">int</span> iCallResult = system(cmd.c_str());</div>
-<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* std::cout &lt;&lt; &quot;Error doing system call &quot; &lt;&lt; strerror(errno) &lt;&lt; &#39;\n&#39;; */</span> }</div>
+<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* error(&quot;Error doing system call &quot; + strerror(errno)); */</span> }</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">void</span> onAddOrder(<span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>&amp; order)<span class="keyword"> override</span></div>
@@ -685,7 +685,7 @@ $(function() {
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server AddOrder 123&quot;</span>;</div>
 <div class="line">        <span class="keywordtype">int</span> iCallResult = system(cmd.c_str());</div>
-<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* std::cout &lt;&lt; &quot;Error doing system call &quot; &lt;&lt; strerror(errno) &lt;&lt; &#39;\n&#39;; */</span> }</div>
+<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* error(&quot;Error doing system call &quot; + strerror(errno)); */</span> }</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">void</span> onUpdateOrder(<span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>&amp; order)<span class="keyword"> override</span></div>
@@ -698,7 +698,7 @@ $(function() {
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server UpdateOrder 123&quot;</span>;</div>
 <div class="line">        <span class="keywordtype">int</span> iCallResult = system(cmd.c_str());</div>
-<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* std::cout &lt;&lt; &quot;Error doing system call &quot; &lt;&lt; strerror(errno) &lt;&lt; &#39;\n&#39;; */</span> }</div>
+<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* error(&quot;Error doing system call &quot; + strerror(errno)); */</span> }</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">void</span> onDeleteOrder(<span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>&amp; order)<span class="keyword"> override</span></div>
@@ -711,7 +711,7 @@ $(function() {
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server DeleteOrder 123&quot;</span>;</div>
 <div class="line">        <span class="keywordtype">int</span> iCallResult = system(cmd.c_str());</div>
-<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* std::cout &lt;&lt; &quot;Error doing system call &quot; &lt;&lt; strerror(errno) &lt;&lt; &#39;\n&#39;; */</span> }</div>
+<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* error(&quot;Error doing system call &quot; + strerror(errno)); */</span> }</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">void</span> onExecuteOrder(<span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>&amp; order, uint64_t price, uint64_t quantity)<span class="keyword"> override</span></div>
@@ -721,14 +721,16 @@ $(function() {
 <div class="line">        <span class="comment">// Log Executed Order</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Execute order: &quot;</span> + sstos(&amp;order) + <span class="stringliteral">&quot; with price &quot;</span> + sstos(&amp;price) + <span class="stringliteral">&quot; and quantity &quot;</span> + sstos(&amp;quantity));</div>
 <div class="line"> </div>
-<div class="line">        <span class="comment">// std::string csv;</span></div>
-<div class="line">        <span class="comment">// csv.append(OrderCSVHeader + CSV_SEP + &quot;Price&quot; + CSV_SEP + &quot;Quantity&quot; + CSV_EOL);</span></div>
-<div class="line">        <span class="comment">// csv.append(ParseOrder(order) + CSV_SEP + std::to_string(price) + CSV_SEP + std::to_string(quantity) + CSV_EOL);</span></div>
+<div class="line">        <span class="comment">/*</span></div>
+<div class="line"><span class="comment">        std::string csv;</span></div>
+<div class="line"><span class="comment">        csv.append(OrderCSVHeader + CSV_SEP + &quot;Price&quot; + CSV_SEP + &quot;Quantity&quot; + CSV_EOL);</span></div>
+<div class="line"><span class="comment">        csv.append(ParseOrder(order) + CSV_SEP + std::to_string(price) + CSV_SEP + std::to_string(quantity) + CSV_EOL);</span></div>
+<div class="line"><span class="comment">        */</span></div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server ExecuteOrder 123&quot;</span>;</div>
 <div class="line">        <span class="keywordtype">int</span> iCallResult = system(cmd.c_str());</div>
-<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* std::cout &lt;&lt; &quot;Error doing system call &quot; &lt;&lt; strerror(errno) &lt;&lt; &#39;\n&#39;; */</span> }</div>
+<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* error(&quot;Error doing system call &quot; + strerror(errno)); */</span> }</div>
 <div class="line">    }</div>
 <div class="line">};</div>
 <div class="line"> </div>
