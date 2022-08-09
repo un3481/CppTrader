@@ -1187,8 +1187,8 @@ void GetOrderBook(MarketManager& market, const std::string& command)
             std::string csv = ParseOrderBook(market, order_book_ptr);
 
             // Send data back to client
-            auto sockfd = CommandCtx::Get().Connection;
-            int rdy = WriteSocketStream(sockfd, &csv);
+            int connfd = CommandCtx::Get().Connection;
+            int rdy = WriteSocketStream(connfd, &csv);
             if (rdy < 0)
                 std::cerr << now() << '\t' <<
                 "failed sending response of 'get book' command" << std::endl;
@@ -1341,6 +1341,7 @@ int main(int argc, char** argv)
             while ((it < connections.end()) && enable)
             {
                 connfd = *it;
+                CommandCtx::Clear(); // Clear Current Context
                 rdy = ReadSocketStream(connfd, &message); // Read message
                 if (rdy < 0) // Connection closed
                 {
