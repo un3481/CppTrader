@@ -1260,8 +1260,7 @@ $(function() {
 <div class="line">            <span class="keywordtype">int</span> connfd = CommandCtx::Get().Connection;</div>
 <div class="line">            <span class="keywordtype">int</span> rdy = WriteSocketStream(connfd, &amp;csv);</div>
 <div class="line">            <span class="keywordflow">if</span> (rdy &lt; 0)</div>
-<div class="line">                std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt;</div>
-<div class="line">                <span class="stringliteral">&quot;failed sending response of &#39;get book&#39; command&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line">                std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;failed sending response of &#39;get book&#39; command&quot;</span> &lt;&lt; std::endl;</div>
 <div class="line">        }</div>
 <div class="line">        </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
