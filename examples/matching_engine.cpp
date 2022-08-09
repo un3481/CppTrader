@@ -607,7 +607,7 @@ protected:
         {
             // SQLite::AddOrder(order);
         }
-        else error("sync error during onAddOrder callback: invalid order id");
+        else error("Error at 'onAddOrder' callback: id out of sync");
 
         // Log Add Order
         log("Add order: " + sstos(&order));
