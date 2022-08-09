@@ -92,11 +92,19 @@ $(function() {
 <div class="line"><span class="keyword">using namespace </span><a class="code" href="namespace_cpp_trader_1_1_matching.html">CppTrader::Matching</a>;</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
-<div class="line"> </div>
 <div class="line"><span class="comment">// Constants</span></div>
+<div class="line"> </div>
+<div class="line"><span class="preprocessor">#define VERSION &quot;2.0.0.0&quot; // Program version</span></div>
+<div class="line"> </div>
 <div class="line"><span class="preprocessor">#define MSG_SIZE 1024 // Buffer size for messages on socket stream (bytes)</span></div>
 <div class="line"><span class="preprocessor">#define MSG_SIZE_LARGE 8192 // Buffer size for large messages on socket stream (bytes)</span></div>
+<div class="line"> </div>
 <div class="line"><span class="preprocessor">#define MAX_CLIENTS 64 // Max number of simultaneous clients connected to socket</span></div>
+<div class="line"> </div>
+<div class="line"><span class="preprocessor">#define STATUS_RUN &quot;RUNNING&quot; // Daemon status (RUN)</span></div>
+<div class="line"><span class="preprocessor">#define STATUS_GSTOP &quot;GRACEFULLY_STOPPED&quot; // Daemon status (GSTOP)</span></div>
+<div class="line"><span class="preprocessor">#define STATUS_ABEND &quot;ABEND&quot; // Daemon status (ABEND)</span></div>
+<div class="line"> </div>
 <div class="line"><span class="preprocessor">#define CSV_SEP &quot;,&quot; // CSV separator</span></div>
 <div class="line"><span class="preprocessor">#define CSV_EOL &quot;\n&quot; // CSV end of line</span></div>
 <div class="line"> </div>
@@ -174,10 +182,9 @@ $(function() {
 <div class="line">    <span class="keywordflow">if</span> (chdir(root) &lt; 0) { error(<span class="stringliteral">&quot;error changing root directory&quot;</span>); exit(1); };</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">/* Close all open file descriptors */</span></div>
-<div class="line">    <span class="keywordtype">int</span> x;</div>
-<div class="line">    <span class="keywordflow">for</span> (x = sysconf(_SC_OPEN_MAX); x&gt;=0; x--)</div>
+<div class="line">    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> fd = sysconf(_SC_OPEN_MAX); fd &gt;= 0; fd--)</div>
 <div class="line">    {</div>
-<div class="line">        close (x);</div>
+<div class="line">        close(fd);</div>
 <div class="line">    }</div>
 <div class="line">}</div>
 <div class="line"> </div>
@@ -1269,7 +1276,7 @@ $(function() {
 <div class="line">    <span class="comment">/* CLI */</span></div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Parse input args </span></div>
-<div class="line">    <span class="keyword">auto</span> parser = optparse::OptionParser().version(<span class="stringliteral">&quot;1.0.0.5&quot;</span>);</div>
+<div class="line">    <span class="keyword">auto</span> parser = optparse::OptionParser().version(VERSION);</div>
 <div class="line">    parser.add_option(<span class="stringliteral">&quot;-n&quot;</span>, <span class="stringliteral">&quot;--name&quot;</span>).dest(<span class="stringliteral">&quot;name&quot;</span>).help(<span class="stringliteral">&quot;Daemon name&quot;</span>);</div>
 <div class="line">    parser.add_option(<span class="stringliteral">&quot;-p&quot;</span>, <span class="stringliteral">&quot;--path&quot;</span>).dest(<span class="stringliteral">&quot;path&quot;</span>).help(<span class="stringliteral">&quot;Daemon root folder&quot;</span>);</div>
 <div class="line">    <span class="keyword">auto</span> options = parser.parse_args(argc, argv);</div>
@@ -1303,17 +1310,17 @@ $(function() {
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Setup status file</span></div>
 <div class="line">    <span class="keyword">const</span> std::string status_text = File::ReadAllText(status_path);</div>
-<div class="line">    <span class="keywordtype">bool</span> status = socket_path.IsExists() || (status_text != <span class="stringliteral">&quot;GRACEFULLY_STOPPED&quot;</span>);</div>
+<div class="line">    <span class="keywordtype">bool</span> status = socket_path.IsExists() || (status_text != STATUS_GSTOP);</div>
 <div class="line">    </div>
 <div class="line">    <span class="keywordtype">bool</span> socket_in_use = <span class="keyword">true</span>;    </div>
 <div class="line">    <span class="keywordtype">int</span> rdy = ConnectUnixSocket(socket_path.string().c_str());</div>
 <div class="line">    <span class="keywordflow">if</span> (rdy &lt; 0) socket_in_use = <span class="keyword">false</span>;</div>
 <div class="line">    <span class="keywordflow">else</span> close(rdy);</div>
 <div class="line">        </div>
-<div class="line">    <span class="keywordflow">if</span> (socket_in_use &amp;&amp; (status_text == <span class="stringliteral">&quot;RUNNING&quot;</span>)) CliError(<span class="stringliteral">&quot;SOCKET_IN_USE&quot;</span>);</div>
+<div class="line">    <span class="keywordflow">if</span> (socket_in_use &amp;&amp; (status_text == STATUS_RUN)) CliError(<span class="stringliteral">&quot;SOCKET_IN_USE&quot;</span>);</div>
 <div class="line">    <span class="keywordflow">if</span> (!socket_in_use &amp;&amp; status)</div>
 <div class="line">    {</div>
-<div class="line">        File::WriteAllText(status_path, <span class="stringliteral">&quot;ABEND&quot;</span>);</div>
+<div class="line">        File::WriteAllText(status_path, STATUS_ABEND);</div>
 <div class="line">        Path::Remove(socket_path);</div>
 <div class="line">    }</div>
 <div class="line"> </div>
@@ -1323,8 +1330,11 @@ $(function() {
 <div class="line">    log(<span class="stringliteral">&quot;switched to daemon&quot;</span>);</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Set Stdout and Stderr to log and err files</span></div>
-<div class="line">    <span class="keywordflow">if</span> (freopen(log_path.string().c_str(), <span class="stringliteral">&quot;a+&quot;</span>, stdout) == NULL) { error(<span class="stringliteral">&quot;error opening log file&quot;</span>); exit(1); };</div>
-<div class="line">    <span class="keywordflow">if</span> (freopen(err_path.string().c_str(), <span class="stringliteral">&quot;a+&quot;</span>, stderr) == NULL) { error(<span class="stringliteral">&quot;error opening err file&quot;</span>); exit(1); };</div>
+<div class="line">    <span class="keywordflow">if</span> (freopen(log_path.string().c_str(), <span class="stringliteral">&quot;a+&quot;</span>, stdout) == NULL)</div>
+<div class="line">        { error(<span class="stringliteral">&quot;error opening log file&quot;</span>); exit(1); };</div>
+<div class="line">    </div>
+<div class="line">    <span class="keywordflow">if</span> (freopen(err_path.string().c_str(), <span class="stringliteral">&quot;a+&quot;</span>, stderr) == NULL)</div>
+<div class="line">        { error(<span class="stringliteral">&quot;error opening err file&quot;</span>); exit(1); };</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Create socket</span></div>
 <div class="line">    <span class="keywordtype">int</span> sockfd = UnixSocket(socket_path.string().c_str(), MAX_CLIENTS);</div>
@@ -1340,7 +1350,7 @@ $(function() {
 <div class="line">    market.<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a4bd7f531ee55fdd76974d75115e18687">EnableMatching</a>();</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Update status file</span></div>
-<div class="line">    File::WriteAllText(status_path, <span class="stringliteral">&quot;RUNNING&quot;</span>);</div>
+<div class="line">    File::WriteAllText(status_path, STATUS_RUN);</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">/* ############################################################################################################################################# */</span></div>
 <div class="line"> </div>
@@ -1399,7 +1409,7 @@ $(function() {
 <div class="line">    market.<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a06930138a5a90d2f8f79ddeb3941d286">DisableMatching</a>();</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Update status file</span></div>
-<div class="line">    File::WriteAllText(status_path, <span class="stringliteral">&quot;GRACEFULLY_STOPPED&quot;</span>);</div>
+<div class="line">    File::WriteAllText(status_path, STATUS_GSTOP);</div>
 <div class="line"> </div>
 <div class="line">    log(<span class="stringliteral">&quot;graceful shutdown&quot;</span>);</div>
 <div class="line"> </div>
