@@ -1326,7 +1326,16 @@ int main(int argc, char** argv)
             }
         }
         // Catch any error
-        catch (...) { enable = false; }
+        catch (std::exception const& e)
+        {
+            error(e.what());
+            enable = false;
+        }
+        catch (...)
+        {
+            error("unknown error occurred");
+            enable = false;
+        }
     }
 
     /* ############################################################################################################################################# */
