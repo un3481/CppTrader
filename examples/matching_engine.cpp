@@ -513,7 +513,7 @@ protected:
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server DeleteSymbol 123";
         int iCallResult = system(cmd.c_str());
-        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+        if (iCallResult < 0) { /* error("Error doing system call " + strerror(errno)); */ }
     }
 
     void onAddOrderBook(const OrderBook& order_book) override
@@ -526,7 +526,7 @@ protected:
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server AddOrderBook 123";
         int iCallResult = system(cmd.c_str());
-        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+        if (iCallResult < 0) { /* error("Error doing system call " + strerror(errno)); */ }
     }
 
     void onUpdateOrderBook(const OrderBook& order_book, bool top) override
@@ -539,7 +539,7 @@ protected:
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server UpdateOrderBook 123";
         int iCallResult = system(cmd.c_str());
-        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+        if (iCallResult < 0) { /* error("Error doing system call " + strerror(errno)); */ }
     }
 
     void onDeleteOrderBook(const OrderBook& order_book) override
@@ -552,7 +552,7 @@ protected:
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server DeleteOrderBook 123";
         int iCallResult = system(cmd.c_str());
-        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+        if (iCallResult < 0) { /* error("Error doing system call " + strerror(errno)); */ }
     }
 
     void onAddLevel(const OrderBook& order_book, const Level& level, bool top) override
@@ -565,7 +565,7 @@ protected:
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server AddLevel 123";
         int iCallResult = system(cmd.c_str());
-        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+        if (iCallResult < 0) { /* error("Error doing system call " + strerror(errno)); */ }
     }
 
     void onUpdateLevel(const OrderBook& order_book, const Level& level, bool top) override
@@ -578,7 +578,7 @@ protected:
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server UpdateLevel 123";
         int iCallResult = system(cmd.c_str());
-        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+        if (iCallResult < 0) { /* error("Error doing system call " + strerror(errno)); */ }
     }
 
     void onDeleteLevel(const OrderBook& order_book, const Level& level, bool top) override
@@ -591,7 +591,7 @@ protected:
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server DeleteLevel 123";
         int iCallResult = system(cmd.c_str());
-        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+        if (iCallResult < 0) { /* error("Error doing system call " + strerror(errno)); */ }
     }
 
     void onAddOrder(const Order& order) override
@@ -615,7 +615,7 @@ protected:
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server AddOrder 123";
         int iCallResult = system(cmd.c_str());
-        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+        if (iCallResult < 0) { /* error("Error doing system call " + strerror(errno)); */ }
     }
 
     void onUpdateOrder(const Order& order) override
@@ -628,7 +628,7 @@ protected:
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server UpdateOrder 123";
         int iCallResult = system(cmd.c_str());
-        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+        if (iCallResult < 0) { /* error("Error doing system call " + strerror(errno)); */ }
     }
 
     void onDeleteOrder(const Order& order) override
@@ -641,7 +641,7 @@ protected:
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server DeleteOrder 123";
         int iCallResult = system(cmd.c_str());
-        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+        if (iCallResult < 0) { /* error("Error doing system call " + strerror(errno)); */ }
     }
 
     void onExecuteOrder(const Order& order, uint64_t price, uint64_t quantity) override
@@ -650,15 +650,17 @@ protected:
 
         // Log Executed Order
      	log("Execute order: " + sstos(&order) + " with price " + sstos(&price) + " and quantity " + sstos(&quantity));
- 
-     	// std::string csv;
-        // csv.append(OrderCSVHeader + CSV_SEP + "Price" + CSV_SEP + "Quantity" + CSV_EOL);
-        // csv.append(ParseOrder(order) + CSV_SEP + std::to_string(price) + CSV_SEP + std::to_string(quantity) + CSV_EOL);
+
+        /*
+     	std::string csv;
+        csv.append(OrderCSVHeader + CSV_SEP + "Price" + CSV_SEP + "Quantity" + CSV_EOL);
+        csv.append(ParseOrder(order) + CSV_SEP + std::to_string(price) + CSV_SEP + std::to_string(quantity) + CSV_EOL);
+        */
 
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server ExecuteOrder 123";
         int iCallResult = system(cmd.c_str());
-        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+        if (iCallResult < 0) { /* error("Error doing system call " + strerror(errno)); */ }
     }
 };
 
