@@ -113,9 +113,7 @@ static void Daemonize(const char* root)
 
     /* Close all open file descriptors */
     for (int fd = sysconf(_SC_OPEN_MAX); fd >= 0; fd--)
-    {
-        close(fd);
-    }
+    { close(fd); }
 }
 
 /* ############################################################################################################################################# */
