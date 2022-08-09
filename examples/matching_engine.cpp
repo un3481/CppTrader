@@ -22,11 +22,19 @@ using namespace CppCommon;
 using namespace CppTrader::Matching;
 
 /* ############################################################################################################################################# */
-
 // Constants
+
+#define VERSION "2.0.0.0" // Program version
+
 #define MSG_SIZE 1024 // Buffer size for messages on socket stream (bytes)
 #define MSG_SIZE_LARGE 8192 // Buffer size for large messages on socket stream (bytes)
+
 #define MAX_CLIENTS 64 // Max number of simultaneous clients connected to socket
+
+#define STATUS_RUN "RUNNING" // Daemon status (RUN)
+#define STATUS_GSTOP "GRACEFULLY_STOPPED" // Daemon status (GSTOP)
+#define STATUS_ABEND "ABEND" // Daemon status (ABEND)
+
 #define CSV_SEP "," // CSV separator
 #define CSV_EOL "\n" // CSV end of line
 
@@ -104,10 +112,9 @@ static void Daemonize(const char* root)
     if (chdir(root) < 0) { error("error changing root directory"); exit(1); };
 
     /* Close all open file descriptors */
-    int x;
-    for (x = sysconf(_SC_OPEN_MAX); x>=0; x--)
+    for (int fd = sysconf(_SC_OPEN_MAX); fd >= 0; fd--)
     {
-        close (x);
+        close(fd);
     }
 }
 
@@ -1199,7 +1206,7 @@ int main(int argc, char** argv)
     /* CLI */
 
     // Parse input args 
-    auto parser = optparse::OptionParser().version("1.0.0.5");
+    auto parser = optparse::OptionParser().version(VERSION);
     parser.add_option("-n", "--name").dest("name").help("Daemon name");
     parser.add_option("-p", "--path").dest("path").help("Daemon root folder");
     auto options = parser.parse_args(argc, argv);
@@ -1233,17 +1240,17 @@ int main(int argc, char** argv)
 
     // Setup status file
     const std::string status_text = File::ReadAllText(status_path);
-    bool status = socket_path.IsExists() || (status_text != "GRACEFULLY_STOPPED");
+    bool status = socket_path.IsExists() || (status_text != STATUS_GSTOP);
     
     bool socket_in_use = true;    
     int rdy = ConnectUnixSocket(socket_path.string().c_str());
     if (rdy < 0) socket_in_use = false;
     else close(rdy);
         
-    if (socket_in_use && (status_text == "RUNNING")) CliError("SOCKET_IN_USE");
+    if (socket_in_use && (status_text == STATUS_RUN)) CliError("SOCKET_IN_USE");
     if (!socket_in_use && status)
     {
-        File::WriteAllText(status_path, "ABEND");
+        File::WriteAllText(status_path, STATUS_ABEND);
         Path::Remove(socket_path);
     }
 
@@ -1253,8 +1260,11 @@ int main(int argc, char** argv)
     log("switched to daemon");
 
     // Set Stdout and Stderr to log and err files
-    if (freopen(log_path.string().c_str(), "a+", stdout) == NULL) { error("error opening log file"); exit(1); };
-    if (freopen(err_path.string().c_str(), "a+", stderr) == NULL) { error("error opening err file"); exit(1); };
+    if (freopen(log_path.string().c_str(), "a+", stdout) == NULL)
+        { error("error opening log file"); exit(1); };
+    
+    if (freopen(err_path.string().c_str(), "a+", stderr) == NULL)
+        { error("error opening err file"); exit(1); };
 
     // Create socket
     int sockfd = UnixSocket(socket_path.string().c_str(), MAX_CLIENTS);
@@ -1270,7 +1280,7 @@ int main(int argc, char** argv)
     market.EnableMatching();
 
     // Update status file
-    File::WriteAllText(status_path, "RUNNING");
+    File::WriteAllText(status_path, STATUS_RUN);
 
     /* ############################################################################################################################################# */
 
@@ -1329,7 +1339,7 @@ int main(int argc, char** argv)
     market.DisableMatching();
 
     // Update status file
-    File::WriteAllText(status_path, "GRACEFULLY_STOPPED");
+    File::WriteAllText(status_path, STATUS_GSTOP);
 
     log("graceful shutdown");
 
