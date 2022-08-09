@@ -24,7 +24,7 @@ using namespace CppTrader::Matching;
 /* ############################################################################################################################################# */
 // Constants
 
-#define VERSION "2.0.2.0" // Program version
+#define VERSION "2.0.5.0" // Program version
 
 #define CSV_SEP "," // CSV separator
 #define CSV_EOL "\n" // CSV end of line
