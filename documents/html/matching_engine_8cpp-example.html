@@ -457,7 +457,9 @@ $(function() {
 <div class="line">    <span class="keyword">struct </span>Context</div>
 <div class="line">    {</div>
 <div class="line">        <span class="keywordtype">int</span> Connection; <span class="comment">// File Descriptor for current Connection</span></div>
-<div class="line">        std::string Hash; <span class="comment">// Identifying string</span></div>
+<div class="line">        std::string Command; <span class="comment">// Command text </span></div>
+<div class="line">        uint64_t OrderId; <span class="comment">// Order Id</span></div>
+<div class="line">        std::string TextId; <span class="comment">// Order TextId</span></div>
 <div class="line">    };</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Static context</span></div>
@@ -470,16 +472,23 @@ $(function() {
 <div class="line">    <span class="comment">// Get Context</span></div>
 <div class="line">    Context Get()</div>
 <div class="line">    {</div>
-<div class="line">        <span class="keyword">auto</span> ctx = CommandCtx::_ctx();</div>
+<div class="line">        <span class="keyword">auto</span> ctx = _ctx();</div>
 <div class="line">        <span class="keywordflow">return</span> Context(ctx);</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Set Context</span></div>
 <div class="line">    <span class="keywordtype">void</span> Set(Context&amp; value)</div>
 <div class="line">    {</div>
-<div class="line">        <span class="keyword">auto</span> ctx = CommandCtx::_ctx();</div>
+<div class="line">        <span class="keyword">auto</span> ctx = _ctx();</div>
 <div class="line">        <span class="keyword">auto</span> new_ctx = Context(value);</div>
 <div class="line">        ctx = new_ctx;</div>
+<div class="line">    }</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Clear Context</span></div>
+<div class="line">    <span class="keywordtype">void</span> Clear()</div>
+<div class="line">    {</div>
+<div class="line">        Context ctx;</div>
+<div class="line">        Set(ctx);</div>
 <div class="line">    }</div>
 <div class="line">}</div>
 <div class="line"> </div>
@@ -645,7 +654,11 @@ $(function() {
 <div class="line">        std::cout &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Add order: &quot;</span> &lt;&lt; order &lt;&lt; std::endl;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Update SQLite</span></div>
-<div class="line">        <span class="keyword">auto</span> ctx = CommandCtx::Get();</div>
+<div class="line">        <span class="keywordtype">int</span> ctx_id = CommandCtx::Get().OrderId;</div>
+<div class="line">        <span class="keywordflow">if</span> (ctx_id == order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>)</div>
+<div class="line">        {</div>
+<div class="line">            <span class="comment">// SQLite::AddOrder(order);</span></div>
+<div class="line">        }</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server AddOrder 123&quot;</span>;</div>
@@ -1225,7 +1238,7 @@ $(function() {
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Get OrderBook in CSV format</span></div>
-<div class="line"><span class="keywordtype">void</span> GetOrderBook(<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a>&amp; market, <span class="keyword">const</span> std::string&amp; command, <span class="keywordtype">int</span> sockfd)</div>
+<div class="line"><span class="keywordtype">void</span> GetOrderBook(<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a>&amp; market, <span class="keyword">const</span> std::string&amp; command)</div>
 <div class="line">{</div>
 <div class="line">    <span class="keyword">static</span> std::regex pattern(<span class="stringliteral">&quot;^get book (\\d+)$&quot;</span>);</div>
 <div class="line">    std::smatch match;</div>
@@ -1244,6 +1257,7 @@ $(function() {
 <div class="line">            std::string csv = ParseOrderBook(market, order_book_ptr);</div>
 <div class="line"> </div>
 <div class="line">            <span class="comment">// Send data back to client</span></div>
+<div class="line">            <span class="keyword">auto</span> sockfd = CommandCtx::Get().Connection;</div>
 <div class="line">            <span class="keywordtype">int</span> rdy = WriteSocketStream(sockfd, &amp;csv);</div>
 <div class="line">            <span class="keywordflow">if</span> (rdy &lt; 0)</div>
 <div class="line">                std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt;</div>
@@ -1259,7 +1273,7 @@ $(function() {
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Match CppTrader command</span></div>
-<div class="line"><span class="keywordtype">void</span> Match(<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a>&amp; market, <span class="keyword">const</span> std::string&amp; command, <span class="keywordtype">int</span> sockfd)</div>
+<div class="line"><span class="keywordtype">void</span> Execute(<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a>&amp; market, <span class="keyword">const</span> std::string&amp; command)</div>
 <div class="line">{</div>
 <div class="line">    <span class="keywordflow">if</span> (command == <span class="stringliteral">&quot;enable matching&quot;</span>) market.<a name="a40"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a4bd7f531ee55fdd76974d75115e18687">EnableMatching</a>();</div>
 <div class="line">    <span class="keywordflow">if</span> (command == <span class="stringliteral">&quot;disable matching&quot;</span>) market.<a name="a41"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a06930138a5a90d2f8f79ddeb3941d286">DisableMatching</a>();</div>
@@ -1267,7 +1281,7 @@ $(function() {
 <div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;delete symbol&quot;</span>) != std::string::npos) DeleteSymbol(market, command);</div>
 <div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;add book&quot;</span>) != std::string::npos) AddOrderBook(market, command);</div>
 <div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;delete book&quot;</span>) != std::string::npos) DeleteOrderBook(market, command);</div>
-<div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;get book&quot;</span>) != std::string::npos) GetOrderBook(market, command, sockfd);</div>
+<div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;get book&quot;</span>) != std::string::npos) GetOrderBook(market, command);</div>
 <div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;add market&quot;</span>) != std::string::npos) AddMarketOrder(market, command);</div>
 <div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;add slippage market&quot;</span>) != std::string::npos) AddSlippageMarketOrder(market, command);</div>
 <div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;add limit&quot;</span>) != std::string::npos) AddLimitOrder(market, command);</div>
@@ -1406,7 +1420,11 @@ $(function() {
 <div class="line">                <span class="keywordflow">if</span> (rdy &gt; 0) <span class="comment">// Message recieved</span></div>
 <div class="line">                {</div>
 <div class="line">                    <span class="keywordflow">if</span> (message == <span class="stringliteral">&quot;exit&quot;</span>) enable = <span class="keyword">false</span>;</div>
-<div class="line">                    <span class="keywordflow">else</span> Match(market, message, connfd); <span class="comment">// Call matching engine</span></div>
+<div class="line"> </div>
+<div class="line">                    CommandCtx::Context ctx = {Connection: connfd, Command: message};</div>
+<div class="line">                    CommandCtx::Set(ctx);</div>
+<div class="line"> </div>
+<div class="line">                    Execute(market, message); <span class="comment">// Call matching engine</span></div>
 <div class="line">                }</div>
 <div class="line">                ++it; <span class="comment">// Update iterator</span></div>
 <div class="line">            }</div>
