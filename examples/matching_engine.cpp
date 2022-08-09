@@ -17,6 +17,7 @@
 #include <regex>
 #include <iostream>
 #include <OptionParser.h>
+#include <sqlite3.h>
 
 using namespace CppCommon;
 using namespace CppTrader::Matching;
@@ -340,7 +341,7 @@ static const std::string OrderBookCSVHeader = (_str +
 );
 
 // Parse OrderBook::Levels to CSV
-std::string ParseOrderBookLevels(MarketManager& market, OrderBook::Levels levels, const char* group)
+std::string ParseOrderBookLevels(MarketManager* market, OrderBook::Levels levels, const char* group)
 {
     static const char* LevelTypes[] = {"BID","ASK"};
     static const std::string empty = "";
@@ -355,7 +356,7 @@ std::string ParseOrderBookLevels(MarketManager& market, OrderBook::Levels levels
             std::to_string(level.Price) + CSV_SEP
         );
         for (auto node : level.OrderList) {
-            auto order = market.GetOrder(node.Id);
+            auto order = (*market).GetOrder(node.Id);
             csv.append(level_props); // Insert level properties
             csv.append(ParseOrder(*order)); // Insert Order properties
             csv.append(CSV_EOL);
@@ -368,7 +369,7 @@ std::string ParseOrderBookLevels(MarketManager& market, OrderBook::Levels levels
 /* ############################################################################################################################################# */
 
 // Parse OrderBook to CSV
-std::string ParseOrderBook(MarketManager& market, const OrderBook* order_book_ptr)
+std::string ParseOrderBook(MarketManager* market, const OrderBook* order_book_ptr)
 {
     // Insert header
     std::string csv;
@@ -390,6 +391,12 @@ std::string ParseOrderBook(MarketManager& market, const OrderBook* order_book_pt
 
 /* ############################################################################################################################################# */
 
+void PopulateBook(MarketManager* market, sqlite3* db)
+{
+}
+
+/* ############################################################################################################################################# */
+
 /* Command Context */
 
 namespace CommandCtx {
@@ -399,7 +406,7 @@ namespace CommandCtx {
     {
         bool enable; // Enable operation with context
         int connection; // File Descriptor for current Connection
-        sqlite3 sqlite; // Connection to SQLite Database
+        sqlite3* sqlite_ptr; // Connection to SQLite Database
         std::string command; // Command text
         MarketManager* market_ptr; // Pointer to Market Manager
         MyMarketHandler* market_handler_ptr; // Pointer to Market Handler
@@ -461,18 +468,16 @@ private:
     size_t _lts_order_id;
 
     // Get Latest Id from Database
-    size_t get_lts_order_id(const char* db_path) {
-        /*
-        auto db = sqlite3_open(db_path);
-        std::string query = "";
-        int lts = sqlite3_execute(db, query);
+    size_t get_lts_order_id(sqlite3* db) {
+        char* query = "SELECT * FROM lts_id";
+        char* err; int lts;
+        int rdy = sqlite3_exec(db, query, NULL, 0, &err);
+        if (rdy != 0) { error("sqlite error: " + sstos(&err)); exit(1); };
         return lts;
-        */
-        return 0;
     }
 
 public:
-    MyMarketHandler(const char* db_path)
+    MyMarketHandler(sqlite3* db)
         : _updates(0),
           _symbols(0),
           _max_symbols(0),
@@ -487,7 +492,7 @@ public:
           _delete_orders(0),
           _execute_orders(0),
           _lts_order_id(
-            get_lts_order_id(db_path)
+            get_lts_order_id(db)
           )
     {}
 
@@ -686,7 +691,7 @@ protected:
 
 /* Symbols */
 
-void AddSymbol(MarketManager& market, const std::string& command)
+void AddSymbol(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^add symbol (\\d+) (.+)$");
     std::smatch match;
@@ -701,7 +706,7 @@ void AddSymbol(MarketManager& market, const std::string& command)
 
         Symbol symbol(id, name);
 
-        ErrorCode result = market.AddSymbol(symbol);
+        ErrorCode result = (*market).AddSymbol(symbol);
         if (result != ErrorCode::OK)
             error("Failed 'add symbol' command: " + sstos(&result));
 
@@ -711,7 +716,7 @@ void AddSymbol(MarketManager& market, const std::string& command)
     error("Invalid 'add symbol' command: " + command);
 }
 
-void DeleteSymbol(MarketManager& market, const std::string& command)
+void DeleteSymbol(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^delete symbol (\\d+)$");
     std::smatch match;
@@ -720,7 +725,7 @@ void DeleteSymbol(MarketManager& market, const std::string& command)
     {
         uint32_t id = std::stoi(match[1]);
 
-        ErrorCode result = market.DeleteSymbol(id);
+        ErrorCode result = (*market).DeleteSymbol(id);
         if (result != ErrorCode::OK)
             error("Failed 'delete symbol' command: " + sstos(&result));
 
@@ -734,7 +739,7 @@ void DeleteSymbol(MarketManager& market, const std::string& command)
 
 /* Books */
 
-void AddOrderBook(MarketManager& market, const std::string& command)
+void AddOrderBook(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^add book (\\d+)$");
     std::smatch match;
@@ -748,7 +753,7 @@ void AddOrderBook(MarketManager& market, const std::string& command)
 
         Symbol symbol(id, name);
 
-        ErrorCode result = market.AddOrderBook(symbol);
+        ErrorCode result = (*market).AddOrderBook(symbol);
         if (result != ErrorCode::OK)
             error("Failed 'add book' command: " + sstos(&result));
 
@@ -758,7 +763,7 @@ void AddOrderBook(MarketManager& market, const std::string& command)
     error("Invalid 'add book' command: " + command);
 }
 
-void DeleteOrderBook(MarketManager& market, const std::string& command)
+void DeleteOrderBook(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^delete book (\\d+)$");
     std::smatch match;
@@ -767,7 +772,7 @@ void DeleteOrderBook(MarketManager& market, const std::string& command)
     {
         uint32_t id = std::stoi(match[1]);
 
-        ErrorCode result = market.DeleteOrderBook(id);
+        ErrorCode result = (*market).DeleteOrderBook(id);
         if (result != ErrorCode::OK)
             error("Failed 'delete book' command: " + sstos(&result));
 
@@ -778,7 +783,7 @@ void DeleteOrderBook(MarketManager& market, const std::string& command)
 }
 
 // Get OrderBook in CSV format
-void GetOrderBook(MarketManager& market, const std::string& command)
+void GetOrderBook(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^get book (\\d+)$");
     std::smatch match;
@@ -787,7 +792,7 @@ void GetOrderBook(MarketManager& market, const std::string& command)
     {
         uint64_t id = std::stoi(match[1]);
 
-        const OrderBook* order_book_ptr = market.GetOrderBook(id);
+        const OrderBook* order_book_ptr = (*market).GetOrderBook(id);
 
         if (order_book_ptr == NULL)
             error("Failed 'get book' command");
@@ -813,7 +818,7 @@ void GetOrderBook(MarketManager& market, const std::string& command)
 
 /* Orders: Modify */
 
-void ReduceOrder(MarketManager& market, const std::string& command)
+void ReduceOrder(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^reduce order (\\d+) (\\d+)$");
     std::smatch match;
@@ -823,7 +828,7 @@ void ReduceOrder(MarketManager& market, const std::string& command)
         uint64_t id = std::stoi(match[1]);
         uint64_t quantity = std::stoi(match[2]);
 
-        ErrorCode result = market.ReduceOrder(id, quantity);
+        ErrorCode result = (*market).ReduceOrder(id, quantity);
         if (result != ErrorCode::OK)
             error("Failed 'reduce order' command: " + sstos(&result));
 
@@ -833,7 +838,7 @@ void ReduceOrder(MarketManager& market, const std::string& command)
     error("Invalid 'reduce order' command: " + command);
 }
 
-void ModifyOrder(MarketManager& market, const std::string& command)
+void ModifyOrder(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^modify order (\\d+) (\\d+) (\\d+)$");
     std::smatch match;
@@ -844,7 +849,7 @@ void ModifyOrder(MarketManager& market, const std::string& command)
         uint64_t new_price = std::stoi(match[2]);
         uint64_t new_quantity = std::stoi(match[3]);
 
-        ErrorCode result = market.ModifyOrder(id, new_price, new_quantity);
+        ErrorCode result = (*market).ModifyOrder(id, new_price, new_quantity);
         if (result != ErrorCode::OK)
             error("Failed 'modify order' command: " + sstos(&result));
 
@@ -854,7 +859,7 @@ void ModifyOrder(MarketManager& market, const std::string& command)
     error("Invalid 'modify order' command: " + command);
 }
 
-void MitigateOrder(MarketManager& market, const std::string& command)
+void MitigateOrder(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^mitigate order (\\d+) (\\d+) (\\d+)$");
     std::smatch match;
@@ -865,7 +870,7 @@ void MitigateOrder(MarketManager& market, const std::string& command)
         uint64_t new_price = std::stoi(match[2]);
         uint64_t new_quantity = std::stoi(match[3]);
 
-        ErrorCode result = market.MitigateOrder(id, new_price, new_quantity);
+        ErrorCode result = (*market).MitigateOrder(id, new_price, new_quantity);
         if (result != ErrorCode::OK)
             error("Failed 'mitigate order' command: " + sstos(&result));
 
@@ -875,7 +880,7 @@ void MitigateOrder(MarketManager& market, const std::string& command)
     error("Invalid 'mitigate order' command: " + command);
 }
 
-void ReplaceOrder(MarketManager& market, const std::string& command)
+void ReplaceOrder(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^replace order (\\d+) (\\d+) (\\d+) (\\d+)$");
     std::smatch match;
@@ -887,7 +892,7 @@ void ReplaceOrder(MarketManager& market, const std::string& command)
         uint64_t new_price = std::stoi(match[3]);
         uint64_t new_quantity = std::stoi(match[4]);
 
-        ErrorCode result = market.ReplaceOrder(id, new_id, new_price, new_quantity);
+        ErrorCode result = (*market).ReplaceOrder(id, new_id, new_price, new_quantity);
         if (result != ErrorCode::OK)
             error("Failed 'replace order' command: " + sstos(&result));
 
@@ -897,7 +902,7 @@ void ReplaceOrder(MarketManager& market, const std::string& command)
     error("Invalid 'replace order' command: " + command);
 }
 
-void DeleteOrder(MarketManager& market, const std::string& command)
+void DeleteOrder(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^delete order (\\d+)$");
     std::smatch match;
@@ -906,7 +911,7 @@ void DeleteOrder(MarketManager& market, const std::string& command)
     {
         uint64_t id = std::stoi(match[1]);
 
-        ErrorCode result = market.DeleteOrder(id);
+        ErrorCode result = (*market).DeleteOrder(id);
         if (result != ErrorCode::OK)
             error("Failed 'delete order' command: " + sstos(&result));
 
@@ -920,7 +925,7 @@ void DeleteOrder(MarketManager& market, const std::string& command)
 
 /* Orders: Add */
 
-void AddMarketOrder(MarketManager& market, const std::string& command)
+void AddMarketOrder(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^add market (buy|sell) (\\d+)$");
     std::smatch match;
@@ -941,7 +946,7 @@ void AddMarketOrder(MarketManager& market, const std::string& command)
             return;
         }
 
-        ErrorCode result = market.AddOrder(order);
+        ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
             error("Failed 'add market' command: " + sstos(&result));
 
@@ -951,7 +956,7 @@ void AddMarketOrder(MarketManager& market, const std::string& command)
     error("Invalid 'add market' command: " + command);
 }
 
-void AddSlippageMarketOrder(MarketManager& market, const std::string& command)
+void AddSlippageMarketOrder(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^add slippage market (buy|sell) (\\d+) (\\d+)$");
     std::smatch match;
@@ -973,7 +978,7 @@ void AddSlippageMarketOrder(MarketManager& market, const std::string& command)
             return;
         }
 
-        ErrorCode result = market.AddOrder(order);
+        ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
             error("Failed 'add slippage market' command: " + sstos(&result));
 
@@ -983,7 +988,7 @@ void AddSlippageMarketOrder(MarketManager& market, const std::string& command)
     error("Invalid 'add slippage market' command: " + command);
 }
 
-void AddLimitOrder(MarketManager& market, const std::string& command)
+void AddLimitOrder(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^add limit (buy|sell) (\\d+) (\\d+)$");
     std::smatch match;
@@ -1005,7 +1010,7 @@ void AddLimitOrder(MarketManager& market, const std::string& command)
             return;
         }
 
-        ErrorCode result = market.AddOrder(order);
+        ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
             error("Failed 'add limit' command: " + sstos(&result));
 
@@ -1015,7 +1020,7 @@ void AddLimitOrder(MarketManager& market, const std::string& command)
     error("Invalid 'add limit' command: " + command);
 }
 
-void AddIOCLimitOrder(MarketManager& market, const std::string& command)
+void AddIOCLimitOrder(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^add ioc limit (buy|sell) (\\d+) (\\d+)$");
     std::smatch match;
@@ -1037,7 +1042,7 @@ void AddIOCLimitOrder(MarketManager& market, const std::string& command)
             return;
         }
 
-        ErrorCode result = market.AddOrder(order);
+        ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
             error("Failed 'add ioc limit' command: " + sstos(&result));
 
@@ -1047,7 +1052,7 @@ void AddIOCLimitOrder(MarketManager& market, const std::string& command)
     error("Invalid 'add ioc limit' command: " + command);
 }
 
-void AddFOKLimitOrder(MarketManager& market, const std::string& command)
+void AddFOKLimitOrder(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^add fok limit (buy|sell) (\\d+) (\\d+)$");
     std::smatch match;
@@ -1069,7 +1074,7 @@ void AddFOKLimitOrder(MarketManager& market, const std::string& command)
             return;
         }
 
-        ErrorCode result = market.AddOrder(order);
+        ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
             error("Failed 'add fok limit' command: " + sstos(&result));
 
@@ -1079,7 +1084,7 @@ void AddFOKLimitOrder(MarketManager& market, const std::string& command)
     error("Invalid 'add fok limit' command: " + command);
 }
 
-void AddAONLimitOrder(MarketManager& market, const std::string& command)
+void AddAONLimitOrder(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^add aon limit (buy|sell) (\\d+) (\\d+)$");
     std::smatch match;
@@ -1101,7 +1106,7 @@ void AddAONLimitOrder(MarketManager& market, const std::string& command)
             return;
         }
 
-        ErrorCode result = market.AddOrder(order);
+        ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
             error("Failed 'add aon limit' command: " + sstos(&result));
 
@@ -1111,7 +1116,7 @@ void AddAONLimitOrder(MarketManager& market, const std::string& command)
     error("Invalid 'add aon limit' command: " + command);
 }
 
-void AddStopOrder(MarketManager& market, const std::string& command)
+void AddStopOrder(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^add stop (buy|sell) (\\d+) (\\d+)$");
     std::smatch match;
@@ -1133,7 +1138,7 @@ void AddStopOrder(MarketManager& market, const std::string& command)
             return;
         }
 
-        ErrorCode result = market.AddOrder(order);
+        ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
             error("Failed 'add stop' command: " + sstos(&result));
 
@@ -1143,7 +1148,7 @@ void AddStopOrder(MarketManager& market, const std::string& command)
     error("Invalid 'add stop' command: " + command);
 }
 
-void AddStopLimitOrder(MarketManager& market, const std::string& command)
+void AddStopLimitOrder(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^add stop-limit (buy|sell) (\\d+) (\\d+) (\\d+)$");
     std::smatch match;
@@ -1166,7 +1171,7 @@ void AddStopLimitOrder(MarketManager& market, const std::string& command)
             return;
         }
 
-        ErrorCode result = market.AddOrder(order);
+        ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
             error("Failed 'add stop-limit' command: " + sstos(&result));
 
@@ -1176,7 +1181,7 @@ void AddStopLimitOrder(MarketManager& market, const std::string& command)
     error("Invalid 'add stop-limit' command: " + command);
 }
 
-void AddTrailingStopOrder(MarketManager& market, const std::string& command)
+void AddTrailingStopOrder(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^add trailing stop (buy|sell) (\\d+) (\\d+) (\\d+) (\\d+)$");
     std::smatch match;
@@ -1200,7 +1205,7 @@ void AddTrailingStopOrder(MarketManager& market, const std::string& command)
             return;
         }
 
-        ErrorCode result = market.AddOrder(order);
+        ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
             error("Failed 'add trailing stop' command: " + sstos(&result));
 
@@ -1210,7 +1215,7 @@ void AddTrailingStopOrder(MarketManager& market, const std::string& command)
     error("Invalid 'add trailing stop' command: " + command);
 }
 
-void AddTrailingStopLimitOrder(MarketManager& market, const std::string& command)
+void AddTrailingStopLimitOrder(MarketManager* market, const std::string& command)
 {
     static std::regex pattern("^add trailing stop-limit (buy|sell) (\\d+) (\\d+) (\\d+) (\\d+) (\\d+)$");
     std::smatch match;
@@ -1235,7 +1240,7 @@ void AddTrailingStopLimitOrder(MarketManager& market, const std::string& command
             return;
         }
 
-        ErrorCode result = market.AddOrder(order);
+        ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
             error("Failed 'add trailing stop-limit' command: " + sstos(&result));
 
@@ -1249,11 +1254,11 @@ void AddTrailingStopLimitOrder(MarketManager& market, const std::string& command
 
 /* Execute Command */
 
-void Execute(MarketManager& market, const std::string& command)
+void Execute(MarketManager* market, const std::string& command)
 {
     // Matching
-    if (command == "enable matching") market.EnableMatching();
-    else if (command == "disable matching") market.DisableMatching();
+    if (command == "enable matching") (*market).EnableMatching();
+    else if (command == "disable matching") (*market).DisableMatching();
     // Symbols
     else if (command.find("add symbol") != std::string::npos) AddSymbol(market, command);
     else if (command.find("delete symbol") != std::string::npos) DeleteSymbol(market, command);
@@ -1267,15 +1272,16 @@ void Execute(MarketManager& market, const std::string& command)
     else if (command.find("mitigate order") != std::string::npos) MitigateOrder(market, command);
     else if (command.find("replace order") != std::string::npos) ReplaceOrder(market, command);
     else if (command.find("delete order") != std::string::npos) DeleteOrder(market, command);
-    // Orders: Add
+    // Prepare to Add
     else if (command.find("add ") != std::string::npos)
     {
-        // Get Latest Order Id Registered
+        // Set new Order Id
         auto ctx = CommandCtx::Get();
         auto handler_ptr = ctx.market_handler_ptr;
         ctx.order_id = (*handler_ptr).lts_order_id() + 1; // Generate Order Id
         CommandCtx::Set(ctx); // Set new context
 
+        // Orders: Add
         if (command.find("add market") != std::string::npos) AddMarketOrder(market, command);
         else if (command.find("add slippage market") != std::string::npos) AddSlippageMarketOrder(market, command);
         else if (command.find("add limit") != std::string::npos) AddLimitOrder(market, command);
@@ -1323,7 +1329,7 @@ int main(int argc, char** argv)
     Path err_path = root / Path(name + ".err");
     Path status_path = root / Path(name + ".status");
     Path socket_path = root / Path(name + ".sock");
-    Path db_path = root / Path(name + ".db");
+    Path sqlite_path = root / Path(name + ".db");
 
     /* ############################################################################################################################################# */
 
@@ -1357,21 +1363,31 @@ int main(int argc, char** argv)
     if (freopen(err_path.string().c_str(), "a+", stderr) == NULL)
         { error("error opening err file"); exit(1); };
 
+    // Connect to SQLite
+    sqlite3* db;
+    int rdy = sqlite3_open(sqlite_path.string().c_str(), &db);
+    if (rdy != SQLITE_OK) { error("error connecting to sqlite"); exit(1); };
+
+    log("connected to sqlite");
+
+    // Initiate MarketManager
+    MyMarketHandler market_handler(db);
+    MarketManager market(market_handler);
+    PopulateBook(&market, db); // Fill order book with data from SQLite
+    
     // Create socket
     int sockfd = UnixSocket(socket_path.string().c_str(), MAX_CLIENTS);
     if (sockfd == -1) { error("error creating socket"); exit(1); };
     if (sockfd == -2) { error("error binding socket"); exit(1); };
     if (sockfd == -3) { error("error listening on socket"); exit(1); };
 
-    log("listening...");
-
-    // Initiate MarketManager
-    MyMarketHandler market_handler(db_path.string().c_str());
-    MarketManager market(market_handler);
-    market.EnableMatching();
+    log("listening on socket...");
 
     // Update status file
     File::WriteAllText(status_path, STATUS_RUN);
+
+    // Enable matching
+    market.EnableMatching(); 
 
     /* ############################################################################################################################################# */
 
@@ -1401,8 +1417,9 @@ int main(int argc, char** argv)
             it = ++connections.begin();
             while ((it < connections.end()) && enable)
             {
-                connfd = *it;
                 CommandCtx::Clear(); // Clear Current Context
+                
+                connfd = *it;
                 rdy = ReadSocketStream(connfd, &message); // Read message
                 if (rdy < 0) // Connection closed
                 {
@@ -1412,19 +1429,22 @@ int main(int argc, char** argv)
                 if (rdy > 0) // Message recieved
                 {
                     if (message == "exit") enable = false;
+                    else
+                    {
+                        // Set New Context
+                        CommandCtx::Context ctx = {
+                            enable: true,
+                            connection: connfd,
+                            sqlite_ptr: db,
+                            command: message,
+                            market_ptr: &market,
+                            market_handler_ptr: &market_handler
+                        };
+                        CommandCtx::Set(ctx);
 
-                    // Set Context
-                    CommandCtx::Context ctx = {
-                        enable: true,
-                        connection: connfd,
-                        command: message,
-                        market_ptr: &market,
-                        market_handler_ptr: &market_handler
-                    };
-                    CommandCtx::Set(ctx);
-
-                    // Call Matching engine
-                    Execute(market, message);
+                        // Execute command
+                        Execute(&market, message);
+                    }
                 }
                 ++it; // Update iterator
             }
