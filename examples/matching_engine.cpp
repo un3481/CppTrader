@@ -387,7 +387,9 @@ namespace CommandCtx {
     struct Context
     {
         int Connection; // File Descriptor for current Connection
-        std::string Hash; // Identifying string
+        std::string Command; // Command text 
+        uint64_t OrderId; // Order Id
+        std::string TextId; // Order TextId
     };
 
     // Static context
@@ -400,16 +402,23 @@ namespace CommandCtx {
     // Get Context
     Context Get()
     {
-        auto ctx = CommandCtx::_ctx();
+        auto ctx = _ctx();
         return Context(ctx);
     }
 
     // Set Context
     void Set(Context& value)
     {
-        auto ctx = CommandCtx::_ctx();
+        auto ctx = _ctx();
         auto new_ctx = Context(value);
         ctx = new_ctx;
+    }
+
+    // Clear Context
+    void Clear()
+    {
+        Context ctx;
+        Set(ctx);
     }
 }
 
@@ -575,7 +584,11 @@ protected:
         std::cout << now() << '\t' << "Add order: " << order << std::endl;
 
         // Update SQLite
-        auto ctx = CommandCtx::Get();
+        int ctx_id = CommandCtx::Get().OrderId;
+        if (ctx_id == order.Id)
+        {
+            // SQLite::AddOrder(order);
+        }
 
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server AddOrder 123";
@@ -1155,7 +1168,7 @@ void DeleteOrder(MarketManager& market, const std::string& command)
 }
 
 // Get OrderBook in CSV format
-void GetOrderBook(MarketManager& market, const std::string& command, int sockfd)
+void GetOrderBook(MarketManager& market, const std::string& command)
 {
     static std::regex pattern("^get book (\\d+)$");
     std::smatch match;
@@ -1174,6 +1187,7 @@ void GetOrderBook(MarketManager& market, const std::string& command, int sockfd)
             std::string csv = ParseOrderBook(market, order_book_ptr);
 
             // Send data back to client
+            auto sockfd = CommandCtx::Get().Connection;
             int rdy = WriteSocketStream(sockfd, &csv);
             if (rdy < 0)
                 std::cerr << now() << '\t' <<
@@ -1189,7 +1203,7 @@ void GetOrderBook(MarketManager& market, const std::string& command, int sockfd)
 /* ############################################################################################################################################# */
 
 // Match CppTrader command
-void Match(MarketManager& market, const std::string& command, int sockfd)
+void Execute(MarketManager& market, const std::string& command)
 {
     if (command == "enable matching") market.EnableMatching();
     if (command == "disable matching") market.DisableMatching();
@@ -1197,7 +1211,7 @@ void Match(MarketManager& market, const std::string& command, int sockfd)
     else if (command.find("delete symbol") != std::string::npos) DeleteSymbol(market, command);
     else if (command.find("add book") != std::string::npos) AddOrderBook(market, command);
     else if (command.find("delete book") != std::string::npos) DeleteOrderBook(market, command);
-    else if (command.find("get book") != std::string::npos) GetOrderBook(market, command, sockfd);
+    else if (command.find("get book") != std::string::npos) GetOrderBook(market, command);
     else if (command.find("add market") != std::string::npos) AddMarketOrder(market, command);
     else if (command.find("add slippage market") != std::string::npos) AddSlippageMarketOrder(market, command);
     else if (command.find("add limit") != std::string::npos) AddLimitOrder(market, command);
@@ -1336,7 +1350,11 @@ int main(int argc, char** argv)
                 if (rdy > 0) // Message recieved
                 {
                     if (message == "exit") enable = false;
-                    else Match(market, message, connfd); // Call matching engine
+
+                    CommandCtx::Context ctx = {Connection: connfd, Command: message};
+                    CommandCtx::Set(ctx);
+
+                    Execute(market, message); // Call matching engine
                 }
                 ++it; // Update iterator
             }
