@@ -135,6 +135,15 @@ $(function() {
 <div class="line"><span class="keyword">inline</span> <span class="keywordtype">void</span> CliError(<span class="keyword">const</span> <span class="keywordtype">char</span> *msg)</div>
 <div class="line">    { perror(msg); exit(1); }</div>
 <div class="line"> </div>
+<div class="line"><span class="comment">// Convert Objects to string via operator&lt;&lt;</span></div>
+<div class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><span class="keyword">inline</span> std::string sstos(<span class="keyword">const</span> T* input)</div>
+<div class="line">{</div>
+<div class="line">    std::stringstream ss;</div>
+<div class="line">    std::string str;</div>
+<div class="line">    ss &lt;&lt; (*input); ss &gt;&gt; str;</div>
+<div class="line">    <span class="keywordflow">return</span> str;</div>
+<div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
 <div class="line"> </div>
@@ -556,12 +565,12 @@ $(function() {
 <div class="line">        ++_updates; ++_symbols; _max_symbols = std::max(_symbols, _max_symbols);</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Add Symbol</span></div>
-<div class="line">        std::cout &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Add symbol: &quot;</span> &lt;&lt; symbol &lt;&lt; std::endl; </div>
+<div class="line">        log(<span class="stringliteral">&quot;Add symbol: &quot;</span> + sstos(&amp;symbol));</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server AddSymbol 123&quot;</span>;</div>
 <div class="line">        <span class="keywordtype">int</span> iCallResult = system(cmd.c_str());</div>
-<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* std::cout &lt;&lt; &quot;Error doing system call &quot; &lt;&lt; strerror(errno) &lt;&lt; &#39;\n&#39;; */</span> }</div>
+<div class="line">        <span class="keywordflow">if</span> (iCallResult &lt; 0) { <span class="comment">/* error(&quot;Error doing system call &quot; + strerror(errno)); */</span> }</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">void</span> onDeleteSymbol(<span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_symbol.html">Symbol</a>&amp; symbol)<span class="keyword"> override</span></div>
@@ -569,7 +578,7 @@ $(function() {
 <div class="line">        ++_updates; --_symbols;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Delete Symbol</span></div>
-<div class="line">        std::cout &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Delete symbol: &quot;</span> &lt;&lt; symbol &lt;&lt; std::endl; </div>
+<div class="line">        log(<span class="stringliteral">&quot;Delete symbol: &quot;</span> + sstos(&amp;symbol)); </div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server DeleteSymbol 123&quot;</span>;</div>
@@ -582,7 +591,7 @@ $(function() {
 <div class="line">        ++_updates; ++_order_books; _max_order_books = std::max(_order_books, _max_order_books);</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Add Order Book</span></div>
-<div class="line">        std::cout &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Add order book: &quot;</span> &lt;&lt; order_book &lt;&lt; std::endl; </div>
+<div class="line">        log(<span class="stringliteral">&quot;Add order book: &quot;</span> + sstos(&amp;order_book)); </div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server AddOrderBook 123&quot;</span>;</div>
@@ -595,7 +604,7 @@ $(function() {
 <div class="line">        _max_order_book_levels = std::max(std::max(order_book.<a name="a25"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html#a613c21ef0c5097641a559032b0d1df3d">bids</a>().size(), order_book.<a name="a26"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html#a5dc10173d986f48d519c5da0e4d8d29b">asks</a>().size()), _max_order_book_levels);</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Update Order Book</span></div>
-<div class="line">        std::cout &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Update order book: &quot;</span> &lt;&lt; order_book &lt;&lt; (top ? <span class="stringliteral">&quot; - Top of the book!&quot;</span> : <span class="stringliteral">&quot;&quot;</span>) &lt;&lt; std::endl; </div>
+<div class="line">        log(<span class="stringliteral">&quot;Update order book: &quot;</span> + sstos(&amp;order_book) + (top ? <span class="stringliteral">&quot; - Top of the book!&quot;</span> : <span class="stringliteral">&quot;&quot;</span>)); </div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server UpdateOrderBook 123&quot;</span>;</div>
@@ -608,7 +617,7 @@ $(function() {
 <div class="line">        ++_updates; --_order_books;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Delete Order Book</span></div>
-<div class="line">        std::cout &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Delete order book: &quot;</span> &lt;&lt; order_book &lt;&lt; std::endl; </div>
+<div class="line">        log(<span class="stringliteral">&quot;Delete order book: &quot;</span> + sstos(&amp;order_book)); </div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server DeleteOrderBook 123&quot;</span>;</div>
@@ -621,7 +630,7 @@ $(function() {
 <div class="line">        ++_updates;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Add Level</span></div>
-<div class="line">        std::cout &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Add level: &quot;</span> &lt;&lt; level &lt;&lt; (top ? <span class="stringliteral">&quot; - Top of the book!&quot;</span> : <span class="stringliteral">&quot;&quot;</span>) &lt;&lt; std::endl; </div>
+<div class="line">        log(<span class="stringliteral">&quot;Add level: &quot;</span> + sstos(&amp;level) + (top ? <span class="stringliteral">&quot; - Top of the book!&quot;</span> : <span class="stringliteral">&quot;&quot;</span>)); </div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server AddLevel 123&quot;</span>;</div>
@@ -634,7 +643,7 @@ $(function() {
 <div class="line">        ++_updates; _max_order_book_orders = std::max(level.<a name="a28"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_level.html#a164155ae2b8f0c691be8292c5e39084b">Orders</a>, _max_order_book_orders);</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Update Level</span></div>
-<div class="line">        std::cout &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Update level: &quot;</span> &lt;&lt; level &lt;&lt; (top ? <span class="stringliteral">&quot; - Top of the book!&quot;</span> : <span class="stringliteral">&quot;&quot;</span>) &lt;&lt; std::endl; </div>
+<div class="line">        log(<span class="stringliteral">&quot;Update level: &quot;</span> + sstos(&amp;level) + (top ? <span class="stringliteral">&quot; - Top of the book!&quot;</span> : <span class="stringliteral">&quot;&quot;</span>)); </div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server UpdateLevel 123&quot;</span>;</div>
@@ -647,7 +656,7 @@ $(function() {
 <div class="line">        ++_updates;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Delete Leve</span></div>
-<div class="line">        std::cout &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Delete level: &quot;</span> &lt;&lt; level &lt;&lt; (top ? <span class="stringliteral">&quot; - Top of the book!&quot;</span> : <span class="stringliteral">&quot;&quot;</span>) &lt;&lt; std::endl; </div>
+<div class="line">        log(<span class="stringliteral">&quot;Delete level: &quot;</span> + sstos(&amp;level) + (top ? <span class="stringliteral">&quot; - Top of the book!&quot;</span> : <span class="stringliteral">&quot;&quot;</span>)); </div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server DeleteLevel 123&quot;</span>;</div>
@@ -668,9 +677,10 @@ $(function() {
 <div class="line">        {</div>
 <div class="line">            <span class="comment">// SQLite::AddOrder(order);</span></div>
 <div class="line">        }</div>
+<div class="line">        <span class="keywordflow">else</span> error(<span class="stringliteral">&quot;sync error during onAddOrder callback: invalid order id&quot;</span>);</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Add Order</span></div>
-<div class="line">        std::cout &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Add order: &quot;</span> &lt;&lt; order &lt;&lt; std::endl;</div>
+<div class="line">        log(<span class="stringliteral">&quot;Add order: &quot;</span> + sstos(&amp;order));</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server AddOrder 123&quot;</span>;</div>
@@ -683,7 +693,7 @@ $(function() {
 <div class="line">        ++_updates; ++_update_orders;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Order Update</span></div>
-<div class="line">        std::cout &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Update order: &quot;</span> &lt;&lt; order &lt;&lt; std::endl; </div>
+<div class="line">        log(<span class="stringliteral">&quot;Update order: &quot;</span> + sstos(&amp;order)); </div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server UpdateOrder 123&quot;</span>;</div>
@@ -696,7 +706,7 @@ $(function() {
 <div class="line">        ++_updates; --_orders; ++_delete_orders;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Deleted Order</span></div>
-<div class="line">        std::cout &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Delete order: &quot;</span> &lt;&lt; order &lt;&lt; std::endl;</div>
+<div class="line">        log(<span class="stringliteral">&quot;Delete order: &quot;</span> + sstos(&amp;order));</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Send to server</span></div>
 <div class="line">        std::string cmd = <span class="stringliteral">&quot;/home/sysop/books/scripts/server DeleteOrder 123&quot;</span>;</div>
@@ -709,7 +719,7 @@ $(function() {
 <div class="line">        ++_updates; ++_execute_orders;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Executed Order</span></div>
-<div class="line">        std::cout &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Execute order: &quot;</span> &lt;&lt; order &lt;&lt; <span class="stringliteral">&quot; with price &quot;</span> &lt;&lt; price &lt;&lt; <span class="stringliteral">&quot; and quantity &quot;</span> &lt;&lt; quantity &lt;&lt; std::endl;</div>
+<div class="line">        log(<span class="stringliteral">&quot;Execute order: &quot;</span> + sstos(&amp;order) + <span class="stringliteral">&quot; with price &quot;</span> + sstos(&amp;price) + <span class="stringliteral">&quot; and quantity &quot;</span> + sstos(&amp;quantity));</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// std::string csv;</span></div>
 <div class="line">        <span class="comment">// csv.append(OrderCSVHeader + CSV_SEP + &quot;Price&quot; + CSV_SEP + &quot;Quantity&quot; + CSV_EOL);</span></div>
@@ -743,7 +753,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a name="a29"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a69d21a5d2128335edd697fbf317d6190">AddSymbol</a>(symbol);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;add symbol&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;add symbol&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
@@ -762,7 +772,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a name="a30"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a952e0654d038647335b1b146bc56a5f7">DeleteSymbol</a>(<span class="keywordtype">id</span>);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;delete symbol&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;delete symbol&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
@@ -790,7 +800,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a name="a31"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a2b256b95613140f917fc9cab0a5edec4">AddOrderBook</a>(symbol);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;add book&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;add book&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
@@ -809,7 +819,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a name="a32"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#ac803b3540af4b7d6d5659b21fc5918e5">DeleteOrderBook</a>(<span class="keywordtype">id</span>);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;delete book&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;delete book&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
@@ -830,7 +840,7 @@ $(function() {
 <div class="line">        <span class="keyword">const</span> <a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html">OrderBook</a>* order_book_ptr = market.<a name="a33"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a2210ef75c65068fd248000143dfce4a9">GetOrderBook</a>(<span class="keywordtype">id</span>);</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">if</span> (order_book_ptr == NULL)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;get book&#39; command&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;get book&#39; command&quot;</span>);</div>
 <div class="line">        <span class="keywordflow">else</span></div>
 <div class="line">        {</div>
 <div class="line">            <span class="comment">// Get CSV</span></div>
@@ -840,7 +850,7 @@ $(function() {
 <div class="line">            <span class="keywordtype">int</span> connfd = CommandCtx::Get().Connection;</div>
 <div class="line">            <span class="keywordtype">int</span> rdy = WriteSocketStream(connfd, &amp;csv);</div>
 <div class="line">            <span class="keywordflow">if</span> (rdy &lt; 0)</div>
-<div class="line">                std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;failed sending response of &#39;get book&#39; command&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line">                error(<span class="stringliteral">&quot;failed sending response of &#39;get book&#39; command&quot;</span>);</div>
 <div class="line">        }</div>
 <div class="line">        </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
@@ -865,7 +875,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a name="a34"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a0de974448f76a5d97b033a969bc5b0b8">ReduceOrder</a>(<span class="keywordtype">id</span>, quantity);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;reduce order&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;reduce order&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
@@ -886,7 +896,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a name="a35"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a86f10e2b8f9d913e3a9c3b640cf169dd">ModifyOrder</a>(<span class="keywordtype">id</span>, new_price, new_quantity);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;modify order&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;modify order&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
@@ -907,7 +917,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a name="a36"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a24a4ae0561e03e2f82ef6ae217814678">MitigateOrder</a>(<span class="keywordtype">id</span>, new_price, new_quantity);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;mitigate order&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;mitigate order&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
@@ -929,7 +939,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a name="a37"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a937554e308537e4d05180ebf54b05966">ReplaceOrder</a>(<span class="keywordtype">id</span>, new_id, new_price, new_quantity);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;replace order&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;replace order&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
@@ -948,7 +958,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a name="a38"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a4bd22c0b638edcc5b543210b8d2dcb83">DeleteOrder</a>(<span class="keywordtype">id</span>);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;delete order&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;delete order&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
@@ -978,13 +988,13 @@ $(function() {
 <div class="line">            order = Order::SellMarket(<span class="keywordtype">id</span>, symbol_id, quantity);</div>
 <div class="line">        <span class="keywordflow">else</span></div>
 <div class="line">        {</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Invalid market order side: &quot;</span> &lt;&lt; match[1] &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Invalid market order side: &quot;</span> + sstos(&amp;match[1]));</div>
 <div class="line">            <span class="keywordflow">return</span>;</div>
 <div class="line">        }</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a name="a39"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a87bf495ca404eb9720499fe5a7dbc55b">AddOrder</a>(order);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;add market&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;add market&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
@@ -1011,13 +1021,13 @@ $(function() {
 <div class="line">            order = Order::SellMarket(<span class="keywordtype">id</span>, symbol_id, quantity, slippage);</div>
 <div class="line">        <span class="keywordflow">else</span></div>
 <div class="line">        {</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Invalid market order side: &quot;</span> &lt;&lt; match[1] &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Invalid market order side: &quot;</span> + sstos(&amp;match[1]));</div>
 <div class="line">            <span class="keywordflow">return</span>;</div>
 <div class="line">        }</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a87bf495ca404eb9720499fe5a7dbc55b">AddOrder</a>(order);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;add slippage market&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;add slippage market&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
@@ -1044,13 +1054,13 @@ $(function() {
 <div class="line">            order = Order::SellLimit(<span class="keywordtype">id</span>, symbol_id, price, quantity);</div>
 <div class="line">        <span class="keywordflow">else</span></div>
 <div class="line">        {</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Invalid limit order side: &quot;</span> &lt;&lt; match[1] &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Invalid limit order side: &quot;</span> + sstos(&amp;match[1]));</div>
 <div class="line">            <span class="keywordflow">return</span>;</div>
 <div class="line">        }</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a87bf495ca404eb9720499fe5a7dbc55b">AddOrder</a>(order);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;add limit&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;add limit&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
@@ -1077,13 +1087,13 @@ $(function() {
 <div class="line">            order = Order::SellLimit(<span class="keywordtype">id</span>, symbol_id, price, quantity, OrderTimeInForce::IOC);</div>
 <div class="line">        <span class="keywordflow">else</span></div>
 <div class="line">        {</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Invalid limit order side: &quot;</span> &lt;&lt; match[1] &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Invalid limit order side: &quot;</span> + sstos(&amp;match[1]));</div>
 <div class="line">            <span class="keywordflow">return</span>;</div>
 <div class="line">        }</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a87bf495ca404eb9720499fe5a7dbc55b">AddOrder</a>(order);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;add ioc limit&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;add ioc limit&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
@@ -1110,13 +1120,13 @@ $(function() {
 <div class="line">            order = Order::SellLimit(<span class="keywordtype">id</span>, symbol_id, price, quantity, OrderTimeInForce::FOK);</div>
 <div class="line">        <span class="keywordflow">else</span></div>
 <div class="line">        {</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Invalid limit order side: &quot;</span> &lt;&lt; match[1] &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Invalid limit order side: &quot;</span> + sstos(&amp;match[1]));</div>
 <div class="line">            <span class="keywordflow">return</span>;</div>
 <div class="line">        }</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a87bf495ca404eb9720499fe5a7dbc55b">AddOrder</a>(order);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;add fok limit&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;add fok limit&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
@@ -1143,13 +1153,13 @@ $(function() {
 <div class="line">            order = Order::SellLimit(<span class="keywordtype">id</span>, symbol_id, price, quantity, OrderTimeInForce::AON);</div>
 <div class="line">        <span class="keywordflow">else</span></div>
 <div class="line">        {</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Invalid limit order side: &quot;</span> &lt;&lt; match[1] &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Invalid limit order side: &quot;</span> + sstos(&amp;match[1]));</div>
 <div class="line">            <span class="keywordflow">return</span>;</div>
 <div class="line">        }</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a87bf495ca404eb9720499fe5a7dbc55b">AddOrder</a>(order);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;add aon limit&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;add aon limit&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
@@ -1176,13 +1186,13 @@ $(function() {
 <div class="line">            order = Order::SellStop(<span class="keywordtype">id</span>, symbol_id, stop_price, quantity);</div>
 <div class="line">        <span class="keywordflow">else</span></div>
 <div class="line">        {</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Invalid stop order side: &quot;</span> &lt;&lt; match[1] &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Invalid stop order side: &quot;</span> + sstos(&amp;match[1]));</div>
 <div class="line">            <span class="keywordflow">return</span>;</div>
 <div class="line">        }</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a87bf495ca404eb9720499fe5a7dbc55b">AddOrder</a>(order);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;add stop&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;add stop&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
@@ -1210,13 +1220,13 @@ $(function() {
 <div class="line">            order = Order::SellStopLimit(<span class="keywordtype">id</span>, symbol_id, stop_price, price, quantity);</div>
 <div class="line">        <span class="keywordflow">else</span></div>
 <div class="line">        {</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Invalid stop-limit order side: &quot;</span> &lt;&lt; match[1] &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Invalid stop-limit order side: &quot;</span> + sstos(&amp;match[1]));</div>
 <div class="line">            <span class="keywordflow">return</span>;</div>
 <div class="line">        }</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a87bf495ca404eb9720499fe5a7dbc55b">AddOrder</a>(order);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;add stop-limit&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;add stop-limit&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
@@ -1245,13 +1255,13 @@ $(function() {
 <div class="line">            order = Order::TrailingSellStop(<span class="keywordtype">id</span>, symbol_id, stop_price, quantity, trailing_distance, trailing_step);</div>
 <div class="line">        <span class="keywordflow">else</span></div>
 <div class="line">        {</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Invalid stop order side: &quot;</span> &lt;&lt; match[1] &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Invalid stop order side: &quot;</span> + sstos(&amp;match[1]));</div>
 <div class="line">            <span class="keywordflow">return</span>;</div>
 <div class="line">        }</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a87bf495ca404eb9720499fe5a7dbc55b">AddOrder</a>(order);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;add trailing stop&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;add trailing stop&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
@@ -1281,13 +1291,13 @@ $(function() {
 <div class="line">            order = Order::TrailingSellStopLimit(<span class="keywordtype">id</span>, symbol_id, stop_price, price, quantity, trailing_distance, trailing_step);</div>
 <div class="line">        <span class="keywordflow">else</span></div>
 <div class="line">        {</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Invalid stop-limit order side: &quot;</span> &lt;&lt; match[1] &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Invalid stop-limit order side: &quot;</span> + sstos(&amp;match[1]));</div>
 <div class="line">            <span class="keywordflow">return</span>;</div>
 <div class="line">        }</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = market.<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a87bf495ca404eb9720499fe5a7dbc55b">AddOrder</a>(order);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
-<div class="line">            std::cerr &lt;&lt; now() &lt;&lt; <span class="charliteral">&#39;\t&#39;</span> &lt;&lt; <span class="stringliteral">&quot;Failed &#39;add trailing stop-limit&#39; command: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;add trailing stop-limit&#39; command: &quot;</span> + sstos(&amp;result));</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
