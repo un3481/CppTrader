@@ -24,7 +24,7 @@ using namespace CppTrader::Matching;
 /* ############################################################################################################################################# */
 // Constants
 
-#define VERSION "2.0.0.0" // Program version
+#define VERSION "2.0.0.1" // Program version
 
 #define MSG_SIZE 1024 // Buffer size for messages on socket stream (bytes)
 #define MSG_SIZE_LARGE 8192 // Buffer size for large messages on socket stream (bytes)
