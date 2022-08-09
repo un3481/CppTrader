@@ -399,11 +399,12 @@ namespace CommandCtx {
     {
         bool enable; // Enable operation with context
         int connection; // File Descriptor for current Connection
+        sqlite3 sqlite; // Connection to SQLite Database
         std::string command; // Command text
         MarketManager* market_ptr; // Pointer to Market Manager
         MyMarketHandler* market_handler_ptr; // Pointer to Market Handler
         uint64_t order_id; // Order Id
-        std::string text_id; // Order TextId
+        std::string text_id; // Order text Id
     };
 
     // Static context
@@ -459,8 +460,19 @@ private:
     size_t _execute_orders;
     size_t _lts_order_id;
 
+    // Get Latest Id from Database
+    size_t get_lts_order_id(const char* db_path) {
+        /*
+        auto db = sqlite3_open(db_path);
+        std::string query = "";
+        int lts = sqlite3_execute(db, query);
+        return lts;
+        */
+        return 0;
+    }
+
 public:
-    MyMarketHandler()
+    MyMarketHandler(const char* db_path)
         : _updates(0),
           _symbols(0),
           _max_symbols(0),
@@ -474,7 +486,9 @@ public:
           _update_orders(0),
           _delete_orders(0),
           _execute_orders(0),
-          _lts_order_id(0)
+          _lts_order_id(
+            get_lts_order_id(db_path)
+          )
     {}
 
     size_t updates() const { return _updates; }
@@ -1309,6 +1323,7 @@ int main(int argc, char** argv)
     Path err_path = root / Path(name + ".err");
     Path status_path = root / Path(name + ".status");
     Path socket_path = root / Path(name + ".sock");
+    Path db_path = root / Path(name + ".db");
 
     /* ############################################################################################################################################# */
 
@@ -1351,7 +1366,7 @@ int main(int argc, char** argv)
     log("listening...");
 
     // Initiate MarketManager
-    MyMarketHandler market_handler;
+    MyMarketHandler market_handler(db_path.string().c_str());
     MarketManager market(market_handler);
     market.EnableMatching();
 
