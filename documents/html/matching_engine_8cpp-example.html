@@ -174,11 +174,11 @@ $(function() {
 <div class="line">    <span class="keywordflow">if</span> (chdir(root) &lt; 0) { error(<span class="stringliteral">&quot;error changing root directory&quot;</span>); exit(1); };</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">/* Close all open file descriptors */</span></div>
-<div class="line">    <span class="comment">// int x;</span></div>
-<div class="line">    <span class="comment">// for (x = sysconf(_SC_OPEN_MAX); x&gt;=0; x--)</span></div>
-<div class="line">    <span class="comment">// {</span></div>
-<div class="line">    <span class="comment">//     close (x);</span></div>
-<div class="line">    <span class="comment">// }</span></div>
+<div class="line">    <span class="keywordtype">int</span> x;</div>
+<div class="line">    <span class="keywordflow">for</span> (x = sysconf(_SC_OPEN_MAX); x&gt;=0; x--)</div>
+<div class="line">    {</div>
+<div class="line">        close (x);</div>
+<div class="line">    }</div>
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
@@ -1317,11 +1317,14 @@ $(function() {
 <div class="line">        Path::Remove(socket_path);</div>
 <div class="line">    }</div>
 <div class="line"> </div>
-<div class="line">    <span class="comment">// Set Stdout and Stderr to log and err files</span></div>
-<div class="line">    <span class="keywordflow">if</span> (freopen(log_path.string().c_str(), <span class="stringliteral">&quot;a+&quot;</span>, stdout) == NULL) CliError(<span class="stringliteral">&quot;error opening log file&quot;</span>);</div>
-<div class="line">    <span class="keywordflow">if</span> (freopen(err_path.string().c_str(), <span class="stringliteral">&quot;a+&quot;</span>, stderr) == NULL) CliError(<span class="stringliteral">&quot;error opening err file&quot;</span>);</div>
+<div class="line">    <span class="comment">// Change process to Daemon</span></div>
+<div class="line">    Daemonize(root.string().c_str());</div>
 <div class="line"> </div>
-<div class="line">    log(<span class="stringliteral">&quot;starting new daemon&quot;</span>);</div>
+<div class="line">    log(<span class="stringliteral">&quot;switched to daemon&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Set Stdout and Stderr to log and err files</span></div>
+<div class="line">    <span class="keywordflow">if</span> (freopen(log_path.string().c_str(), <span class="stringliteral">&quot;a+&quot;</span>, stdout) == NULL) { error(<span class="stringliteral">&quot;error opening log file&quot;</span>); exit(1); };</div>
+<div class="line">    <span class="keywordflow">if</span> (freopen(err_path.string().c_str(), <span class="stringliteral">&quot;a+&quot;</span>, stderr) == NULL) { error(<span class="stringliteral">&quot;error opening err file&quot;</span>); exit(1); };</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Create socket</span></div>
 <div class="line">    <span class="keywordtype">int</span> sockfd = UnixSocket(socket_path.string().c_str(), MAX_CLIENTS);</div>
@@ -1335,11 +1338,6 @@ $(function() {
 <div class="line">    MyMarketHandler market_handler;</div>
 <div class="line">    <a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a> market(market_handler);</div>
 <div class="line">    market.<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a4bd7f531ee55fdd76974d75115e18687">EnableMatching</a>();</div>
-<div class="line"> </div>
-<div class="line">    <span class="comment">// Change process to Daemon</span></div>
-<div class="line">    Daemonize(root.string().c_str());</div>
-<div class="line"> </div>
-<div class="line">    log(<span class="stringliteral">&quot;switched to daemon&quot;</span>);</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Update status file</span></div>
 <div class="line">    File::WriteAllText(status_path, <span class="stringliteral">&quot;RUNNING&quot;</span>);</div>
