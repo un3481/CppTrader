@@ -24,7 +24,7 @@ using namespace CppTrader::Matching;
 /* ############################################################################################################################################# */
 // Constants
 
-#define VERSION "2.0.1.0" // Program version
+#define VERSION "2.0.2.0" // Program version
 
 #define MSG_SIZE 1024 // Buffer size for messages on socket stream (bytes)
 #define MSG_SIZE_LARGE 8192 // Buffer size for large messages on socket stream (bytes)
@@ -884,14 +884,14 @@ void DeleteOrder(MarketManager& market, const std::string& command)
 
 void AddMarketOrder(MarketManager& market, const std::string& command)
 {
-    static std::regex pattern("^add market (buy|sell) (\\d+) (\\d+) (\\d+)$");
+    static std::regex pattern("^add market (buy|sell) (\\d+) (\\d+)$");
     std::smatch match;
 
     if (std::regex_search(command, match, pattern))
     {
-        uint64_t id = std::stoi(match[2]);
-        uint32_t symbol_id = std::stoi(match[3]);
-        uint64_t quantity = std::stoi(match[4]);
+        uint64_t id = CommandCtx::Get().OrderId;
+        uint32_t symbol_id = std::stoi(match[2]);
+        uint64_t quantity = std::stoi(match[3]);
 
         Order order;
         if (match[1] == "buy")
@@ -916,15 +916,15 @@ void AddMarketOrder(MarketManager& market, const std::string& command)
 
 void AddSlippageMarketOrder(MarketManager& market, const std::string& command)
 {
-    static std::regex pattern("^add slippage market (buy|sell) (\\d+) (\\d+) (\\d+) (\\d+)$");
+    static std::regex pattern("^add slippage market (buy|sell) (\\d+) (\\d+) (\\d+)$");
     std::smatch match;
 
     if (std::regex_search(command, match, pattern))
     {
-        uint64_t id = std::stoi(match[2]);
-        uint32_t symbol_id = std::stoi(match[3]);
-        uint64_t quantity = std::stoi(match[4]);
-        uint64_t slippage = std::stoi(match[5]);
+        uint64_t id = CommandCtx::Get().OrderId;
+        uint32_t symbol_id = std::stoi(match[2]);
+        uint64_t quantity = std::stoi(match[3]);
+        uint64_t slippage = std::stoi(match[4]);
 
         Order order;
         if (match[1] == "buy")
@@ -949,15 +949,15 @@ void AddSlippageMarketOrder(MarketManager& market, const std::string& command)
 
 void AddLimitOrder(MarketManager& market, const std::string& command)
 {
-    static std::regex pattern("^add limit (buy|sell) (\\d+) (\\d+) (\\d+) (\\d+)$");
+    static std::regex pattern("^add limit (buy|sell) (\\d+) (\\d+) (\\d+)$");
     std::smatch match;
 
     if (std::regex_search(command, match, pattern))
     {
-        uint64_t id = std::stoi(match[2]);
-        uint32_t symbol_id = std::stoi(match[3]);
-        uint64_t price = std::stoi(match[4]);
-        uint64_t quantity = std::stoi(match[5]);
+        uint64_t id = CommandCtx::Get().OrderId;
+        uint32_t symbol_id = std::stoi(match[2]);
+        uint64_t price = std::stoi(match[3]);
+        uint64_t quantity = std::stoi(match[4]);
 
         Order order;
         if (match[1] == "buy")
@@ -982,15 +982,15 @@ void AddLimitOrder(MarketManager& market, const std::string& command)
 
 void AddIOCLimitOrder(MarketManager& market, const std::string& command)
 {
-    static std::regex pattern("^add ioc limit (buy|sell) (\\d+) (\\d+) (\\d+) (\\d+)$");
+    static std::regex pattern("^add ioc limit (buy|sell) (\\d+) (\\d+) (\\d+)$");
     std::smatch match;
 
     if (std::regex_search(command, match, pattern))
     {
-        uint64_t id = std::stoi(match[2]);
-        uint32_t symbol_id = std::stoi(match[3]);
-        uint64_t price = std::stoi(match[4]);
-        uint64_t quantity = std::stoi(match[5]);
+        uint64_t id = CommandCtx::Get().OrderId;
+        uint32_t symbol_id = std::stoi(match[2]);
+        uint64_t price = std::stoi(match[3]);
+        uint64_t quantity = std::stoi(match[4]);
 
         Order order;
         if (match[1] == "buy")
@@ -1015,15 +1015,15 @@ void AddIOCLimitOrder(MarketManager& market, const std::string& command)
 
 void AddFOKLimitOrder(MarketManager& market, const std::string& command)
 {
-    static std::regex pattern("^add fok limit (buy|sell) (\\d+) (\\d+) (\\d+) (\\d+)$");
+    static std::regex pattern("^add fok limit (buy|sell) (\\d+) (\\d+) (\\d+)$");
     std::smatch match;
 
     if (std::regex_search(command, match, pattern))
     {
-        uint64_t id = std::stoi(match[2]);
-        uint32_t symbol_id = std::stoi(match[3]);
-        uint64_t price = std::stoi(match[4]);
-        uint64_t quantity = std::stoi(match[5]);
+        uint64_t id = CommandCtx::Get().OrderId;
+        uint32_t symbol_id = std::stoi(match[2]);
+        uint64_t price = std::stoi(match[3]);
+        uint64_t quantity = std::stoi(match[4]);
 
         Order order;
         if (match[1] == "buy")
@@ -1048,15 +1048,15 @@ void AddFOKLimitOrder(MarketManager& market, const std::string& command)
 
 void AddAONLimitOrder(MarketManager& market, const std::string& command)
 {
-    static std::regex pattern("^add aon limit (buy|sell) (\\d+) (\\d+) (\\d+) (\\d+)$");
+    static std::regex pattern("^add aon limit (buy|sell) (\\d+) (\\d+) (\\d+)$");
     std::smatch match;
 
     if (std::regex_search(command, match, pattern))
     {
-        uint64_t id = std::stoi(match[2]);
-        uint32_t symbol_id = std::stoi(match[3]);
-        uint64_t price = std::stoi(match[4]);
-        uint64_t quantity = std::stoi(match[5]);
+        uint64_t id = CommandCtx::Get().OrderId;
+        uint32_t symbol_id = std::stoi(match[2]);
+        uint64_t price = std::stoi(match[3]);
+        uint64_t quantity = std::stoi(match[4]);
 
         Order order;
         if (match[1] == "buy")
@@ -1081,15 +1081,15 @@ void AddAONLimitOrder(MarketManager& market, const std::string& command)
 
 void AddStopOrder(MarketManager& market, const std::string& command)
 {
-    static std::regex pattern("^add stop (buy|sell) (\\d+) (\\d+) (\\d+) (\\d+)$");
+    static std::regex pattern("^add stop (buy|sell) (\\d+) (\\d+) (\\d+)$");
     std::smatch match;
 
     if (std::regex_search(command, match, pattern))
     {
-        uint64_t id = std::stoi(match[2]);
-        uint32_t symbol_id = std::stoi(match[3]);
-        uint64_t stop_price = std::stoi(match[4]);
-        uint64_t quantity = std::stoi(match[5]);
+        uint64_t id = CommandCtx::Get().OrderId;
+        uint32_t symbol_id = std::stoi(match[2]);
+        uint64_t stop_price = std::stoi(match[3]);
+        uint64_t quantity = std::stoi(match[4]);
 
         Order order;
         if (match[1] == "buy")
@@ -1114,16 +1114,16 @@ void AddStopOrder(MarketManager& market, const std::string& command)
 
 void AddStopLimitOrder(MarketManager& market, const std::string& command)
 {
-    static std::regex pattern("^add stop-limit (buy|sell) (\\d+) (\\d+) (\\d+) (\\d+) (\\d+)$");
+    static std::regex pattern("^add stop-limit (buy|sell) (\\d+) (\\d+) (\\d+) (\\d+)$");
     std::smatch match;
 
     if (std::regex_search(command, match, pattern))
     {
-        uint64_t id = std::stoi(match[2]);
-        uint32_t symbol_id = std::stoi(match[3]);
-        uint64_t stop_price = std::stoi(match[4]);
-        uint64_t price = std::stoi(match[5]);
-        uint64_t quantity = std::stoi(match[6]);
+        uint64_t id = CommandCtx::Get().OrderId;
+        uint32_t symbol_id = std::stoi(match[2]);
+        uint64_t stop_price = std::stoi(match[3]);
+        uint64_t price = std::stoi(match[4]);
+        uint64_t quantity = std::stoi(match[5]);
 
         Order order;
         if (match[1] == "buy")
@@ -1148,17 +1148,17 @@ void AddStopLimitOrder(MarketManager& market, const std::string& command)
 
 void AddTrailingStopOrder(MarketManager& market, const std::string& command)
 {
-    static std::regex pattern("^add trailing stop (buy|sell) (\\d+) (\\d+) (\\d+) (\\d+) (\\d+) (\\d+)$");
+    static std::regex pattern("^add trailing stop (buy|sell) (\\d+) (\\d+) (\\d+) (\\d+) (\\d+)$");
     std::smatch match;
 
     if (std::regex_search(command, match, pattern))
     {
-        uint64_t id = std::stoi(match[2]);
-        uint32_t symbol_id = std::stoi(match[3]);
-        uint64_t stop_price = std::stoi(match[4]);
-        uint64_t quantity = std::stoi(match[5]);
-        int64_t trailing_distance = std::stoi(match[6]);
-        int64_t trailing_step = std::stoi(match[7]);
+        uint64_t id = CommandCtx::Get().OrderId;
+        uint32_t symbol_id = std::stoi(match[2]);
+        uint64_t stop_price = std::stoi(match[3]);
+        uint64_t quantity = std::stoi(match[4]);
+        int64_t trailing_distance = std::stoi(match[5]);
+        int64_t trailing_step = std::stoi(match[6]);
 
         Order order;
         if (match[1] == "buy")
@@ -1183,18 +1183,18 @@ void AddTrailingStopOrder(MarketManager& market, const std::string& command)
 
 void AddTrailingStopLimitOrder(MarketManager& market, const std::string& command)
 {
-    static std::regex pattern("^add trailing stop-limit (buy|sell) (\\d+) (\\d+) (\\d+) (\\d+) (\\d+) (\\d+) (\\d+)$");
+    static std::regex pattern("^add trailing stop-limit (buy|sell) (\\d+) (\\d+) (\\d+) (\\d+) (\\d+) (\\d+)$");
     std::smatch match;
 
     if (std::regex_search(command, match, pattern))
     {
-        uint64_t id = std::stoi(match[2]);
-        uint32_t symbol_id = std::stoi(match[3]);
-        uint64_t stop_price = std::stoi(match[4]);
-        uint64_t price = std::stoi(match[5]);
-        uint64_t quantity = std::stoi(match[6]);
-        int64_t trailing_distance = std::stoi(match[7]);
-        int64_t trailing_step = std::stoi(match[8]);
+        uint64_t id = CommandCtx::Get().OrderId;
+        uint32_t symbol_id = std::stoi(match[2]);
+        uint64_t stop_price = std::stoi(match[3]);
+        uint64_t price = std::stoi(match[4]);
+        uint64_t quantity = std::stoi(match[5]);
+        int64_t trailing_distance = std::stoi(match[6]);
+        int64_t trailing_step = std::stoi(match[7]);
 
         Order order;
         if (match[1] == "buy")
