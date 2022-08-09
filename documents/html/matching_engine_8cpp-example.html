@@ -183,9 +183,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line">    <span class="comment">/* Close all open file descriptors */</span></div>
 <div class="line">    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> fd = sysconf(_SC_OPEN_MAX); fd &gt;= 0; fd--)</div>
-<div class="line">    {</div>
-<div class="line">        close(fd);</div>
-<div class="line">    }</div>
+<div class="line">    { close(fd); }</div>
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
