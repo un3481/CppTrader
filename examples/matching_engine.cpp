@@ -391,8 +391,51 @@ std::string ParseOrderBook(MarketManager* market, const OrderBook* order_book_pt
 
 /* ############################################################################################################################################# */
 
-void PopulateBook(MarketManager* market, sqlite3* db)
+void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
 {
+    // Add Symbol
+    Symbol symbol(SYMBOL_ID, name);
+    auto errc = (*market).AddSymbol(symbol);
+    if (errc != ErrorCode::OK)
+    { error("Failed AddSymbol: " + sstos(&errc)); exit(1); };
+
+    // Add Book
+    errc = (*market).AddOrderBook(symbol);
+    if (errc != ErrorCode::OK)
+    { error("Failed AddOrderBook: " + sstos(&errc)); exit(1); };
+
+    sqlite3_stmt* result;
+    char* query = "SELECT * FROM orders";
+
+    // Prepare query
+    auto rdy = sqlite3_prepare(db, query, -1, &result, NULL);
+    auto err = sqlite3_errmsg(db);
+    if (rdy != SQLITE_OK) { error("sqlite error: " + sstos(&err)); exit(1); };
+
+    // Get Orders
+    while (sqlite3_step(result) == SQLITE_ROW)
+    {
+        // Get Order from Row
+        auto order = Order(
+            sqlite3_column_int(result, 0), // Id
+            SYMBOL_ID, // Symbol
+            OrderType(sqlite3_column_int(result, 2)), // Type
+            OrderSide(sqlite3_column_int(result, 3)), // Side
+            sqlite3_column_int(result, 4), // Price
+            sqlite3_column_int(result, 5), // Stop Price
+            sqlite3_column_int(result, 6), // Quantity
+            OrderTimeInForce(sqlite3_column_int(result, 7)), // Time In Force
+            sqlite3_column_int(result, 8), // Max Visible Quantity
+            sqlite3_column_int(result, 9), // Slippage
+            sqlite3_column_int(result, 10), // Trailing Distance
+            sqlite3_column_int(result, 11) // Trailing Step
+        );
+
+        // Add Order
+        errc = (*market).AddOrder(order);
+        if (errc != ErrorCode::OK)
+        { error("Failed AddOrder: " + sstos(&errc)); exit(1); };
+    };
 }
 
 /* ############################################################################################################################################# */
@@ -469,10 +512,18 @@ private:
 
     // Get Latest Id from Database
     size_t get_lts_order_id(sqlite3* db) {
-        char* query = "SELECT * FROM lts_id";
-        char* err; int lts;
-        int rdy = sqlite3_exec(db, query, NULL, 0, &err);
-        if (rdy != 0) { error("sqlite error: " + sstos(&err)); exit(1); };
+        sqlite3_stmt* result;
+        char* query = "SELECT * FROM latest";
+
+        // Prepare query
+        auto rdy = sqlite3_prepare(db, query, -1, &result, NULL);
+        auto err = sqlite3_errmsg(db);
+        if (rdy != SQLITE_OK) { error("sqlite error: " + sstos(&err)); exit(1); };
+
+        // Get Latest value
+        int lts = 1;
+        while (sqlite3_step(result) == SQLITE_ROW)
+        { lts = sqlite3_column_int(result, 0); };
         return lts;
     }
 
@@ -624,13 +675,26 @@ protected:
         // Update Unique Id Record
         _lts_order_id = std::max((size_t)order.Id, _lts_order_id);
 
-        // Update SQLite
-        uint64_t ctx_id = CommandCtx::Get().order_id;
-        if (ctx_id == order.Id)
+        // Check if operation is enabled
+        if (CommandCtx::Get().enable)
         {
-            // SQLite::AddOrder(order);
-        }
-        else error("Error at 'onAddOrder' callback: id out of sync");
+            // Check Id Sync
+            uint64_t ctx_id = CommandCtx::Get().order_id;
+            if (ctx_id != order.Id) error("Error at 'onAddOrder' callback: id out of sync");
+            else
+            {
+                // Add order to SQLite
+                char* err;
+                auto db = CommandCtx::Get().sqlite_ptr;
+                auto query = (std::string("") +
+                    "INSERT () INTO orders " +
+                    "VALUES (" +
+                    ")"
+                );
+                int rdy = sqlite3_exec(db, query.c_str(), NULL, 0, &err);
+                if (rdy != 0) { error("sqlite error: " + sstos(&err)); };
+            };
+        };
 
         // Log Add Order
         log("Add order: " + sstos(&order));
@@ -657,6 +721,20 @@ protected:
     void onDeleteOrder(const Order& order) override
     {
         ++_updates; --_orders; ++_delete_orders;
+
+        // Check if operation is enabled
+        if (CommandCtx::Get().enable)
+        {
+            // Delete order from SQLite
+            char* err;
+            auto db = CommandCtx::Get().sqlite_ptr;
+            auto query = (std::string("") +
+                "DELETE * FROM orders " +
+                "WHERE id = " + sstos(&order.Id)
+            );
+            int rdy = sqlite3_exec(db, query.c_str(), NULL, 0, &err);
+            if (rdy != 0) { error("sqlite error: " + sstos(&err)); };
+        };
 
         // Log Deleted Order
         log("Delete order: " + sstos(&order));
@@ -785,27 +863,24 @@ void DeleteOrderBook(MarketManager* market, const std::string& command)
 // Get OrderBook in CSV format
 void GetOrderBook(MarketManager* market, const std::string& command)
 {
-    static std::regex pattern("^get book (\\d+)$");
+    static std::regex pattern("^get book$");
     std::smatch match;
 
     if (std::regex_search(command, match, pattern))
     {
-        uint64_t id = std::stoi(match[1]);
-
-        const OrderBook* order_book_ptr = (*market).GetOrderBook(id);
-
+        const OrderBook* order_book_ptr = (*market).GetOrderBook(SYMBOL_ID);
         if (order_book_ptr == NULL)
-            error("Failed 'get book' command");
+            error("Failed 'get book' command: Book not found");
         else
         {
             // Get CSV
             std::string csv = ParseOrderBook(market, order_book_ptr);
 
             // Send data back to client
-            int connfd = CommandCtx::Get().connection;
-            int rdy = WriteSocketStream(connfd, &csv);
+            auto connfd = CommandCtx::Get().connection;
+            auto rdy = WriteSocketStream(connfd, &csv);
             if (rdy < 0)
-                error("failed sending response of 'get book' command");
+                error("Failed sending response of 'get book' command");
         }
         
         return;
@@ -1336,11 +1411,11 @@ int main(int argc, char** argv)
     /* SETUP */
 
     // Setup status file
-    const std::string status_text = File::ReadAllText(status_path);
+    const auto status_text = File::ReadAllText(status_path);
     bool status = socket_path.IsExists() || (status_text != STATUS_GSTOP);
     
     bool socket_in_use = true;    
-    int rdy = ConnectUnixSocket(socket_path.string().c_str());
+    auto rdy = ConnectUnixSocket(socket_path.string().c_str());
     if (rdy < 0) socket_in_use = false;
     else close(rdy);
         
@@ -1365,7 +1440,7 @@ int main(int argc, char** argv)
 
     // Connect to SQLite
     sqlite3* db;
-    int rdy = sqlite3_open(sqlite_path.string().c_str(), &db);
+    auto rdy = sqlite3_open(sqlite_path.string().c_str(), &db);
     if (rdy != SQLITE_OK) { error("error connecting to sqlite"); exit(1); };
 
     log("connected to sqlite");
@@ -1373,10 +1448,10 @@ int main(int argc, char** argv)
     // Initiate MarketManager
     MyMarketHandler market_handler(db);
     MarketManager market(market_handler);
-    PopulateBook(&market, db); // Fill order book with data from SQLite
+    PopulateBook(&market, db, name.c_str()); // Fill order book with data from SQLite
     
     // Create socket
-    int sockfd = UnixSocket(socket_path.string().c_str(), MAX_CLIENTS);
+    auto sockfd = UnixSocket(socket_path.string().c_str(), MAX_CLIENTS);
     if (sockfd == -1) { error("error creating socket"); exit(1); };
     if (sockfd == -2) { error("error binding socket"); exit(1); };
     if (sockfd == -3) { error("error listening on socket"); exit(1); };
