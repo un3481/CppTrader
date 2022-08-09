@@ -380,7 +380,8 @@ std::string ParseOrderBook(MarketManager& market, const OrderBook* order_book_pt
 
 /* ############################################################################################################################################# */
 
-// Command Context
+/* Command Context */
+
 namespace CommandCtx {
 
     // Context struct
@@ -425,7 +426,8 @@ namespace CommandCtx {
 }
 
 /* ############################################################################################################################################# */
-// Handler Callbacks
+
+/* Custom Market Handler */
 
 class MyMarketHandler : public MarketHandler
 {
@@ -475,6 +477,10 @@ public:
     size_t delete_orders() const { return _delete_orders; }
     size_t execute_orders() const { return _execute_orders; }
     size_t lts_order_id() const { return _lts_order_id; }
+
+/* ############################################################################################################################################# */
+
+/* Handler Callbacks */
 
 protected:
     void onAddSymbol(const Symbol& symbol) override
@@ -649,7 +655,8 @@ protected:
 };
 
 /* ############################################################################################################################################# */
-// Symbols
+
+/* Symbols */
 
 void AddSymbol(MarketManager& market, const std::string& command)
 {
@@ -696,7 +703,8 @@ void DeleteSymbol(MarketManager& market, const std::string& command)
 }
 
 /* ############################################################################################################################################# */
-// Books
+
+/* Books */
 
 void AddOrderBook(MarketManager& market, const std::string& command)
 {
@@ -774,7 +782,8 @@ void GetOrderBook(MarketManager& market, const std::string& command)
 }
 
 /* ############################################################################################################################################# */
-// Orders: Modify
+
+/* Orders: Modify */
 
 void ReduceOrder(MarketManager& market, const std::string& command)
 {
@@ -880,7 +889,8 @@ void DeleteOrder(MarketManager& market, const std::string& command)
 }
 
 /* ############################################################################################################################################# */
-// Orders: Add
+
+/* Orders: Add */
 
 void AddMarketOrder(MarketManager& market, const std::string& command)
 {
@@ -1219,7 +1229,8 @@ void AddTrailingStopLimitOrder(MarketManager& market, const std::string& command
 
 /* ############################################################################################################################################# */
 
-// Match CppTrader command
+/* Execute Command */
+
 void Execute(MarketManager& market, const std::string& command)
 {
     // Matching
