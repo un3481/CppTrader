@@ -65,6 +65,15 @@ inline void error(const std::string& msg)
 inline void CliError(const char *msg)
     { perror(msg); exit(1); }
 
+// Convert Objects to string via operator<<
+template <typename T>
+inline std::string sstos(const T* input)
+{
+    std::stringstream ss;
+    std::string str;
+    ss << (*input); ss >> str;
+    return str;
+}
 
 /* ############################################################################################################################################# */
 
@@ -486,12 +495,12 @@ protected:
         ++_updates; ++_symbols; _max_symbols = std::max(_symbols, _max_symbols);
 
         // Log Add Symbol
-        std::cout << now() << '\t' << "Add symbol: " << symbol << std::endl; 
+        log("Add symbol: " + sstos(&symbol));
 
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server AddSymbol 123";
         int iCallResult = system(cmd.c_str());
-        if (iCallResult < 0) { /* std::cout << "Error doing system call " << strerror(errno) << '\n'; */ }
+        if (iCallResult < 0) { /* error("Error doing system call " + strerror(errno)); */ }
     }
 
     void onDeleteSymbol(const Symbol& symbol) override
@@ -499,7 +508,7 @@ protected:
         ++_updates; --_symbols;
 
         // Log Delete Symbol
-        std::cout << now() << '\t' << "Delete symbol: " << symbol << std::endl; 
+        log("Delete symbol: " + sstos(&symbol)); 
 
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server DeleteSymbol 123";
@@ -512,7 +521,7 @@ protected:
         ++_updates; ++_order_books; _max_order_books = std::max(_order_books, _max_order_books);
 
         // Log Add Order Book
-        std::cout << now() << '\t' << "Add order book: " << order_book << std::endl; 
+        log("Add order book: " + sstos(&order_book)); 
 
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server AddOrderBook 123";
@@ -525,7 +534,7 @@ protected:
         _max_order_book_levels = std::max(std::max(order_book.bids().size(), order_book.asks().size()), _max_order_book_levels);
 
         // Log Update Order Book
-        std::cout << now() << '\t' << "Update order book: " << order_book << (top ? " - Top of the book!" : "") << std::endl; 
+        log("Update order book: " + sstos(&order_book) + (top ? " - Top of the book!" : "")); 
 
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server UpdateOrderBook 123";
@@ -538,7 +547,7 @@ protected:
         ++_updates; --_order_books;
 
         // Log Delete Order Book
-        std::cout << now() << '\t' << "Delete order book: " << order_book << std::endl; 
+        log("Delete order book: " + sstos(&order_book)); 
 
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server DeleteOrderBook 123";
@@ -551,7 +560,7 @@ protected:
         ++_updates;
 
         // Log Add Level
-        std::cout << now() << '\t' << "Add level: " << level << (top ? " - Top of the book!" : "") << std::endl; 
+        log("Add level: " + sstos(&level) + (top ? " - Top of the book!" : "")); 
 
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server AddLevel 123";
@@ -564,7 +573,7 @@ protected:
         ++_updates; _max_order_book_orders = std::max(level.Orders, _max_order_book_orders);
 
         // Log Update Level
-        std::cout << now() << '\t' << "Update level: " << level << (top ? " - Top of the book!" : "") << std::endl; 
+        log("Update level: " + sstos(&level) + (top ? " - Top of the book!" : "")); 
 
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server UpdateLevel 123";
@@ -577,7 +586,7 @@ protected:
         ++_updates;
 
         // Log Delete Leve
-        std::cout << now() << '\t' << "Delete level: " << level << (top ? " - Top of the book!" : "") << std::endl; 
+        log("Delete level: " + sstos(&level) + (top ? " - Top of the book!" : "")); 
 
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server DeleteLevel 123";
@@ -598,9 +607,10 @@ protected:
         {
             // SQLite::AddOrder(order);
         }
+        else error("sync error during onAddOrder callback: invalid order id");
 
         // Log Add Order
-        std::cout << now() << '\t' << "Add order: " << order << std::endl;
+        log("Add order: " + sstos(&order));
 
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server AddOrder 123";
@@ -613,7 +623,7 @@ protected:
         ++_updates; ++_update_orders;
 
         // Log Order Update
-        std::cout << now() << '\t' << "Update order: " << order << std::endl; 
+        log("Update order: " + sstos(&order)); 
 
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server UpdateOrder 123";
@@ -626,7 +636,7 @@ protected:
         ++_updates; --_orders; ++_delete_orders;
 
         // Log Deleted Order
-        std::cout << now() << '\t' << "Delete order: " << order << std::endl;
+        log("Delete order: " + sstos(&order));
 
         // Send to server
         std::string cmd = "/home/sysop/books/scripts/server DeleteOrder 123";
@@ -639,7 +649,7 @@ protected:
         ++_updates; ++_execute_orders;
 
         // Log Executed Order
-     	std::cout << now() << '\t' << "Execute order: " << order << " with price " << price << " and quantity " << quantity << std::endl;
+     	log("Execute order: " + sstos(&order) + " with price " + sstos(&price) + " and quantity " + sstos(&quantity));
  
      	// std::string csv;
         // csv.append(OrderCSVHeader + CSV_SEP + "Price" + CSV_SEP + "Quantity" + CSV_EOL);
@@ -673,7 +683,7 @@ void AddSymbol(MarketManager& market, const std::string& command)
 
         ErrorCode result = market.AddSymbol(symbol);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'add symbol' command: " << result << std::endl;
+            error("Failed 'add symbol' command: " + sstos(&result));
 
         return;
     }
@@ -692,7 +702,7 @@ void DeleteSymbol(MarketManager& market, const std::string& command)
 
         ErrorCode result = market.DeleteSymbol(id);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'delete symbol' command: " << result << std::endl;
+            error("Failed 'delete symbol' command: " + sstos(&result));
 
         return;
     }
@@ -720,7 +730,7 @@ void AddOrderBook(MarketManager& market, const std::string& command)
 
         ErrorCode result = market.AddOrderBook(symbol);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'add book' command: " << result << std::endl;
+            error("Failed 'add book' command: " + sstos(&result));
 
         return;
     }
@@ -739,7 +749,7 @@ void DeleteOrderBook(MarketManager& market, const std::string& command)
 
         ErrorCode result = market.DeleteOrderBook(id);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'delete book' command: " << result << std::endl;
+            error("Failed 'delete book' command: " + sstos(&result));
 
         return;
     }
@@ -760,7 +770,7 @@ void GetOrderBook(MarketManager& market, const std::string& command)
         const OrderBook* order_book_ptr = market.GetOrderBook(id);
 
         if (order_book_ptr == NULL)
-            std::cerr << now() << '\t' << "Failed 'get book' command" << std::endl;
+            error("Failed 'get book' command");
         else
         {
             // Get CSV
@@ -770,7 +780,7 @@ void GetOrderBook(MarketManager& market, const std::string& command)
             int connfd = CommandCtx::Get().Connection;
             int rdy = WriteSocketStream(connfd, &csv);
             if (rdy < 0)
-                std::cerr << now() << '\t' << "failed sending response of 'get book' command" << std::endl;
+                error("failed sending response of 'get book' command");
         }
         
         return;
@@ -795,7 +805,7 @@ void ReduceOrder(MarketManager& market, const std::string& command)
 
         ErrorCode result = market.ReduceOrder(id, quantity);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'reduce order' command: " << result << std::endl;
+            error("Failed 'reduce order' command: " + sstos(&result));
 
         return;
     }
@@ -816,7 +826,7 @@ void ModifyOrder(MarketManager& market, const std::string& command)
 
         ErrorCode result = market.ModifyOrder(id, new_price, new_quantity);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'modify order' command: " << result << std::endl;
+            error("Failed 'modify order' command: " + sstos(&result));
 
         return;
     }
@@ -837,7 +847,7 @@ void MitigateOrder(MarketManager& market, const std::string& command)
 
         ErrorCode result = market.MitigateOrder(id, new_price, new_quantity);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'mitigate order' command: " << result << std::endl;
+            error("Failed 'mitigate order' command: " + sstos(&result));
 
         return;
     }
@@ -859,7 +869,7 @@ void ReplaceOrder(MarketManager& market, const std::string& command)
 
         ErrorCode result = market.ReplaceOrder(id, new_id, new_price, new_quantity);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'replace order' command: " << result << std::endl;
+            error("Failed 'replace order' command: " + sstos(&result));
 
         return;
     }
@@ -878,7 +888,7 @@ void DeleteOrder(MarketManager& market, const std::string& command)
 
         ErrorCode result = market.DeleteOrder(id);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'delete order' command: " << result << std::endl;
+            error("Failed 'delete order' command: " + sstos(&result));
 
         return;
     }
@@ -908,13 +918,13 @@ void AddMarketOrder(MarketManager& market, const std::string& command)
             order = Order::SellMarket(id, symbol_id, quantity);
         else
         {
-            std::cerr << now() << '\t' << "Invalid market order side: " << match[1] << std::endl;
+            error("Invalid market order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = market.AddOrder(order);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'add market' command: " << result << std::endl;
+            error("Failed 'add market' command: " + sstos(&result));
 
         return;
     }
@@ -941,13 +951,13 @@ void AddSlippageMarketOrder(MarketManager& market, const std::string& command)
             order = Order::SellMarket(id, symbol_id, quantity, slippage);
         else
         {
-            std::cerr << now() << '\t' << "Invalid market order side: " << match[1] << std::endl;
+            error("Invalid market order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = market.AddOrder(order);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'add slippage market' command: " << result << std::endl;
+            error("Failed 'add slippage market' command: " + sstos(&result));
 
         return;
     }
@@ -974,13 +984,13 @@ void AddLimitOrder(MarketManager& market, const std::string& command)
             order = Order::SellLimit(id, symbol_id, price, quantity);
         else
         {
-            std::cerr << now() << '\t' << "Invalid limit order side: " << match[1] << std::endl;
+            error("Invalid limit order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = market.AddOrder(order);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'add limit' command: " << result << std::endl;
+            error("Failed 'add limit' command: " + sstos(&result));
 
         return;
     }
@@ -1007,13 +1017,13 @@ void AddIOCLimitOrder(MarketManager& market, const std::string& command)
             order = Order::SellLimit(id, symbol_id, price, quantity, OrderTimeInForce::IOC);
         else
         {
-            std::cerr << now() << '\t' << "Invalid limit order side: " << match[1] << std::endl;
+            error("Invalid limit order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = market.AddOrder(order);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'add ioc limit' command: " << result << std::endl;
+            error("Failed 'add ioc limit' command: " + sstos(&result));
 
         return;
     }
@@ -1040,13 +1050,13 @@ void AddFOKLimitOrder(MarketManager& market, const std::string& command)
             order = Order::SellLimit(id, symbol_id, price, quantity, OrderTimeInForce::FOK);
         else
         {
-            std::cerr << now() << '\t' << "Invalid limit order side: " << match[1] << std::endl;
+            error("Invalid limit order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = market.AddOrder(order);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'add fok limit' command: " << result << std::endl;
+            error("Failed 'add fok limit' command: " + sstos(&result));
 
         return;
     }
@@ -1073,13 +1083,13 @@ void AddAONLimitOrder(MarketManager& market, const std::string& command)
             order = Order::SellLimit(id, symbol_id, price, quantity, OrderTimeInForce::AON);
         else
         {
-            std::cerr << now() << '\t' << "Invalid limit order side: " << match[1] << std::endl;
+            error("Invalid limit order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = market.AddOrder(order);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'add aon limit' command: " << result << std::endl;
+            error("Failed 'add aon limit' command: " + sstos(&result));
 
         return;
     }
@@ -1106,13 +1116,13 @@ void AddStopOrder(MarketManager& market, const std::string& command)
             order = Order::SellStop(id, symbol_id, stop_price, quantity);
         else
         {
-            std::cerr << now() << '\t' << "Invalid stop order side: " << match[1] << std::endl;
+            error("Invalid stop order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = market.AddOrder(order);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'add stop' command: " << result << std::endl;
+            error("Failed 'add stop' command: " + sstos(&result));
 
         return;
     }
@@ -1140,13 +1150,13 @@ void AddStopLimitOrder(MarketManager& market, const std::string& command)
             order = Order::SellStopLimit(id, symbol_id, stop_price, price, quantity);
         else
         {
-            std::cerr << now() << '\t' << "Invalid stop-limit order side: " << match[1] << std::endl;
+            error("Invalid stop-limit order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = market.AddOrder(order);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'add stop-limit' command: " << result << std::endl;
+            error("Failed 'add stop-limit' command: " + sstos(&result));
 
         return;
     }
@@ -1175,13 +1185,13 @@ void AddTrailingStopOrder(MarketManager& market, const std::string& command)
             order = Order::TrailingSellStop(id, symbol_id, stop_price, quantity, trailing_distance, trailing_step);
         else
         {
-            std::cerr << now() << '\t' << "Invalid stop order side: " << match[1] << std::endl;
+            error("Invalid stop order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = market.AddOrder(order);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'add trailing stop' command: " << result << std::endl;
+            error("Failed 'add trailing stop' command: " + sstos(&result));
 
         return;
     }
@@ -1211,13 +1221,13 @@ void AddTrailingStopLimitOrder(MarketManager& market, const std::string& command
             order = Order::TrailingSellStopLimit(id, symbol_id, stop_price, price, quantity, trailing_distance, trailing_step);
         else
         {
-            std::cerr << now() << '\t' << "Invalid stop-limit order side: " << match[1] << std::endl;
+            error("Invalid stop-limit order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = market.AddOrder(order);
         if (result != ErrorCode::OK)
-            std::cerr << now() << '\t' << "Failed 'add trailing stop-limit' command: " << result << std::endl;
+            error("Failed 'add trailing stop-limit' command: " + sstos(&result));
 
         return;
     }
