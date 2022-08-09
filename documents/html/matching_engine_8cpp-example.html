@@ -94,7 +94,7 @@ $(function() {
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
 <div class="line"><span class="comment">// Constants</span></div>
 <div class="line"> </div>
-<div class="line"><span class="preprocessor">#define VERSION &quot;2.0.0.0&quot; // Program version</span></div>
+<div class="line"><span class="preprocessor">#define VERSION &quot;2.0.0.1&quot; // Program version</span></div>
 <div class="line"> </div>
 <div class="line"><span class="preprocessor">#define MSG_SIZE 1024 // Buffer size for messages on socket stream (bytes)</span></div>
 <div class="line"><span class="preprocessor">#define MSG_SIZE_LARGE 8192 // Buffer size for large messages on socket stream (bytes)</span></div>
@@ -1396,7 +1396,16 @@ $(function() {
 <div class="line">            }</div>
 <div class="line">        }</div>
 <div class="line">        <span class="comment">// Catch any error</span></div>
-<div class="line">        <span class="keywordflow">catch</span> (...) { enable = <span class="keyword">false</span>; }</div>
+<div class="line">        <span class="keywordflow">catch</span> (std::exception <span class="keyword">const</span>&amp; e)</div>
+<div class="line">        {</div>
+<div class="line">            error(e.what());</div>
+<div class="line">            enable = <span class="keyword">false</span>;</div>
+<div class="line">        }</div>
+<div class="line">        <span class="keywordflow">catch</span> (...)</div>
+<div class="line">        {</div>
+<div class="line">            error(<span class="stringliteral">&quot;unknown error occurred&quot;</span>);</div>
+<div class="line">            enable = <span class="keyword">false</span>;</div>
+<div class="line">        }</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">/* ############################################################################################################################################# */</span></div>
