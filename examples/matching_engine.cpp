@@ -17,7 +17,7 @@
 #include <regex>
 #include <iostream>
 #include <OptionParser.h>
-#include <SQLite/sqlite3.h>
+#include <sqlite/sqlite3.h>
 
 using namespace CppCommon;
 using namespace CppTrader::Matching;
@@ -76,55 +76,6 @@ inline void error(const std::string& msg)
 // Error during the CLI step
 inline void CliError(const char *msg)
 { perror(msg); exit(1); }
-
-/* ############################################################################################################################################# */
-
-/* Command Context */
-
-namespace CommandCtx {
-
-    // Context struct
-    struct Context
-    {
-        bool enable; // Enable operation with context
-        int connection; // File Descriptor for current Connection
-        sqlite3* sqlite_ptr; // Connection to SQLite Database
-        MarketManager* market_ptr; // Pointer to Market Manager
-        MyMarketHandler* handler_ptr; // Pointer to Market Handler
-        std::string command; // Command text
-        std::string order_info; // Order text Id
-        uint64_t order_id; // Order Id
-    };
-
-    // Static context
-    Context& _ctx()
-    {
-        static Context ctx;
-        return ctx;
-    }
-
-    // Get Context
-    Context Get()
-    {
-        auto ctx = _ctx();
-        return Context(ctx);
-    }
-
-    // Set Context
-    void Set(Context& value)
-    {
-        auto ctx = _ctx();
-        auto new_ctx = Context(value);
-        ctx = new_ctx;
-    }
-
-    // Clear Context
-    void Clear()
-    {
-        Context ctx;
-        Set(ctx);
-    }
-}
 
 /* ############################################################################################################################################# */
 
@@ -841,6 +792,55 @@ protected:
 
 /* ############################################################################################################################################# */
 
+/* Command Context */
+
+namespace CommandCtx {
+
+    // Context struct
+    struct Context
+    {
+        bool enable; // Enable operation with context
+        int connection; // File Descriptor for current Connection
+        sqlite3* sqlite_ptr; // Connection to SQLite Database
+        MarketManager* market_ptr; // Pointer to Market Manager
+        MyMarketHandler* handler_ptr; // Pointer to Market Handler
+        std::string command; // Command text
+        std::string order_info; // Order text Id
+        uint64_t order_id; // Order Id
+    };
+
+    // Static context
+    Context& _ctx()
+    {
+        static Context ctx;
+        return ctx;
+    }
+
+    // Get Context
+    Context Get()
+    {
+        auto ctx = _ctx();
+        return Context(ctx);
+    }
+
+    // Set Context
+    void Set(Context& value)
+    {
+        auto ctx = _ctx();
+        auto new_ctx = Context(value);
+        ctx = new_ctx;
+    }
+
+    // Clear Context
+    void Clear()
+    {
+        Context ctx;
+        Set(ctx);
+    }
+}
+
+/* ############################################################################################################################################# */
+
 /* Symbols */
 
 void AddSymbol(MarketManager* market, const std::string& command)
@@ -1488,8 +1488,8 @@ int main(int argc, char** argv)
     const auto status_text = File::ReadAllText(status_path);
     bool status = socket_path.IsExists() || (status_text != STATUS_GSTOP);
     
-    bool socket_in_use = true;    
-    auto rdy = ConnectUnixSocket(socket_path.string().c_str());
+    bool socket_in_use = true;
+    int rdy = ConnectUnixSocket(socket_path.string().c_str());
     if (rdy < 0) socket_in_use = false;
     else close(rdy);
         
@@ -1514,7 +1514,7 @@ int main(int argc, char** argv)
 
     // Connect to SQLite
     sqlite3* db;
-    auto rdy = sqlite3_open(sqlite_path.string().c_str(), &db);
+    rdy = sqlite3_open(sqlite_path.string().c_str(), &db);
     if (rdy != SQLITE_OK)
     { error("error connecting to sqlite"); exit(1); };
 
@@ -1584,14 +1584,13 @@ int main(int argc, char** argv)
                     else
                     {
                         // Set New Context
-                        CommandCtx::Context ctx = {
-                            enable: true,
-                            connection: connfd,
-                            sqlite_ptr: db,
-                            market_ptr: &market,
-                            handler_ptr: &market_handler,
-                            command: message
-                        };
+                        CommandCtx::Context ctx;
+                        ctx.enable = true;
+                        ctx.connection = connfd;
+                        ctx.sqlite_ptr = db;
+                        ctx.market_ptr = &market;
+                        ctx.handler_ptr = &market_handler;
+                        ctx.command = message;
                         CommandCtx::Set(ctx);
 
                         // Execute command
