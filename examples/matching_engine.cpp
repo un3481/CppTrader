@@ -532,11 +532,14 @@ static const std::string CreateTableLatestQuery = (std::string("") +
 void PopulateDatabase(sqlite3* db)
 {
     // Create Tables in SQLite
-    char* err;
     auto query = (CreateTableLatestQuery + CreateTableOrdersQuery).c_str();
+    char* err;
     auto rdy = sqlite3_exec(db, query, NULL, 0, &err);
     if (rdy != SQLITE_OK)
-    { error("sqlite error: " + sstos(&err)); exit(1); };
+    {
+        error("sqlite error(1): " + sstos(&err));
+        exit(1);
+    };
 }
 
 // Get Latest Id from Database
@@ -546,9 +549,12 @@ int GetLatestId(sqlite3* db) {
 
     // Prepare query
     auto rdy = sqlite3_prepare(db, query.c_str(), -1, &result, NULL);
-    auto err = sqlite3_errmsg(db);
     if (rdy != SQLITE_OK)
-    { error("sqlite error: " + sstos(&err)); exit(1); };
+    {
+        auto err = sqlite3_errmsg(db);
+        error("sqlite error(2): " + sstos(&err));
+        exit(1);
+    };
 
     // Get Latest value
     int lts = 0;
@@ -562,32 +568,35 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
 {
     // Add Symbol
     Symbol symbol(SYMBOL_ID, name);
-    auto errc = (*market).AddSymbol(symbol);
-    if (errc != ErrorCode::OK)
-    { error("Failed AddSymbol: " + sstos(&errc)); exit(1); };
+    auto err = (*market).AddSymbol(symbol);
+    if (err != ErrorCode::OK)
+    { error("Failed AddSymbol: " + sstos(&err)); exit(1); };
 
     // Add Book
-    errc = (*market).AddOrderBook(symbol);
-    if (errc != ErrorCode::OK)
-    { error("Failed AddOrderBook: " + sstos(&errc)); exit(1); };
+    err = (*market).AddOrderBook(symbol);
+    if (err != ErrorCode::OK)
+    { error("Failed AddOrderBook: " + sstos(&err)); exit(1); };
 
     sqlite3_stmt* result;
     const std::string query = "SELECT * FROM orders";
 
     // Prepare query
     auto rdy = sqlite3_prepare(db, query.c_str(), -1, &result, NULL);
-    auto errmsg = sqlite3_errmsg(db);
     if (rdy != SQLITE_OK)
-    { error("sqlite error: " + sstos(&errmsg)); exit(1); };
+    {
+        auto err = sqlite3_errmsg(db);
+        error("sqlite error(3): " + sstos(&err));
+        exit(1);
+    };
 
     // Get Orders
     while (sqlite3_step(result) == SQLITE_ROW)
     {
         // Add Order
         auto order = OrderFromQuery(result);
-        errc = (*market).AddOrder(order);
-        if (errc != ErrorCode::OK)
-        { error("Failed AddOrder: " + sstos(&errc)); exit(1); };
+        err = (*market).AddOrder(order);
+        if (err != ErrorCode::OK)
+        { error("Failed AddOrder: " + sstos(&err)); exit(1); };
     };
 }
 
@@ -769,12 +778,12 @@ protected:
             else
             {
                 // Add order to SQLite
-                char* err;
                 auto db = CommandCtx::Get().sqlite_ptr;
                 auto query = QueryFromOrder(order);
+                char* err;
                 auto rdy = sqlite3_exec(db, query.c_str(), NULL, 0, &err);
                 if (rdy != SQLITE_OK)
-                { error("sqlite error: " + sstos(&err)); };
+                { error("sqlite error(4): " + sstos(&err)); };
             };
         };
 
@@ -808,12 +817,12 @@ protected:
         if (CommandCtx::Get().enable)
         {
             // Delete order from SQLite
-            char* err;
             auto db = CommandCtx::Get().sqlite_ptr;
             auto query = "DELETE FROM orders WHERE (Id = " + sstos(&order.Id) + ")";
+            char* err;
             auto rdy = sqlite3_exec(db, query.c_str(), NULL, 0, &err);
             if (rdy != SQLITE_OK)
-            { error("sqlite error: " + sstos(&err)); };
+            { error("sqlite error(5): " + sstos(&err)); };
         };
 
         // Log Deleted Order
