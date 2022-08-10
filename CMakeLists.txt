@@ -31,6 +31,7 @@ add_subdirectory("modules")
 
 # Link libraries
 list(APPEND LINKLIBS cppcommon)
+list(APPEND LINKLIBS sqlite3)
 
 # System directories
 include_directories(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/modules")

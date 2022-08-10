@@ -14,7 +14,7 @@ tags.idx
 modules/*
 !modules/CMakeLists.txt
 !modules/*.cmake
-!modules/sqlite
+!modules/sqlite3
 
 # Temporary
 .idea
