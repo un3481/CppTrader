@@ -77,6 +77,58 @@ inline void error(const std::string& msg)
 inline void CliError(const char *msg)
 { perror(msg); exit(1); }
 
+
+/* ############################################################################################################################################# */
+
+/* Command Context */
+
+class MyMarketHandler;
+
+namespace CommandCtx {
+
+    // Context struct
+    struct Context
+    {
+        bool enable; // Enable operation with context
+        int connection; // File Descriptor for current Connection
+        sqlite3* sqlite_ptr; // Connection to SQLite Database
+        MarketManager* market_ptr; // Pointer to Market Manager
+        MyMarketHandler* handler_ptr; // Pointer to Market Handler
+        std::string command; // Command text
+        std::string order_info; // Order text Id
+        uint64_t order_id; // Order Id
+    };
+
+    // Static context
+    Context& _ctx()
+    {
+        static Context ctx;
+        return ctx;
+    }
+
+    // Get Context
+    Context Get()
+    {
+        auto ctx = _ctx();
+        return Context(ctx);
+    }
+
+    // Set Context
+    void Set(Context& value)
+    {
+        auto ctx = _ctx();
+        auto new_ctx = Context(value);
+        ctx = new_ctx;
+    }
+
+    // Clear Context
+    void Clear()
+    {
+        Context ctx;
+        Set(ctx);
+    }
+}
+
 /* ############################################################################################################################################# */
 
 // Change current process to Daemon
@@ -789,55 +841,6 @@ protected:
         if (iCallResult < 0) { /* error("Error doing system call " + strerror(errno)); */ }
     }
 };
-
-/* ############################################################################################################################################# */
-
-/* Command Context */
-
-namespace CommandCtx {
-
-    // Context struct
-    struct Context
-    {
-        bool enable; // Enable operation with context
-        int connection; // File Descriptor for current Connection
-        sqlite3* sqlite_ptr; // Connection to SQLite Database
-        MarketManager* market_ptr; // Pointer to Market Manager
-        MyMarketHandler* handler_ptr; // Pointer to Market Handler
-        std::string command; // Command text
-        std::string order_info; // Order text Id
-        uint64_t order_id; // Order Id
-    };
-
-    // Static context
-    Context& _ctx()
-    {
-        static Context ctx;
-        return ctx;
-    }
-
-    // Get Context
-    Context Get()
-    {
-        auto ctx = _ctx();
-        return Context(ctx);
-    }
-
-    // Set Context
-    void Set(Context& value)
-    {
-        auto ctx = _ctx();
-        auto new_ctx = Context(value);
-        ctx = new_ctx;
-    }
-
-    // Clear Context
-    void Clear()
-    {
-        Context ctx;
-        Set(ctx);
-    }
-}
 
 /* ############################################################################################################################################# */
 
