@@ -19,7 +19,7 @@
 #include <OptionParser.h>
 
 extern "C" {
-    #include <sqlite/sqlite3.h>
+    #include <sqlite3.h>
 }
 
 using namespace CppCommon;

@@ -31,7 +31,6 @@ add_subdirectory("modules")
 
 # Link libraries
 list(APPEND LINKLIBS cppcommon)
-list(APPEND LINKLIBS sqlite3)
 
 # System directories
 include_directories(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/modules")
@@ -46,6 +45,7 @@ target_include_directories(cpptrader PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include
 target_link_libraries(cpptrader ${LINKLIBS})
 list(APPEND INSTALL_TARGETS cpptrader)
 list(APPEND LINKLIBS cpptrader)
+list(APPEND LINKLIBS sqlite3)
 
 # Additional module components: benchmarks, examples, plugins, tests, tools and install
 if(NOT CPPTRADER_MODULE)
