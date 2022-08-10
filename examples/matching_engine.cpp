@@ -522,16 +522,38 @@ static const std::string CreateTableLatestQuery = (std::string("") +
 
 /* ############################################################################################################################################# */
 
+// Populate SQLite Database
+void PopulateDatabase(sqlite3* db)
+{
+    // Create Tables in SQLite
+    char* err;
+    auto query = (CreateTableLatestQuery + CreateTableOrdersQuery).c_str();
+    auto rdy = sqlite3_exec(db, query, NULL, 0, &err);
+    if (rdy != SQLITE_OK)
+    { error("sqlite error: " + sstos(&err)); exit(1); };
+}
+
+// Get Latest Id from Database
+int GetLatestId(sqlite3* db) {
+    sqlite3_stmt* result;
+    char* query = "SELECT * FROM latest";
+
+    // Prepare query
+    auto rdy = sqlite3_prepare(db, query, -1, &result, NULL);
+    auto err = sqlite3_errmsg(db);
+    if (rdy != SQLITE_OK)
+    { error("sqlite error: " + sstos(&err)); exit(1); };
+
+    // Get Latest value
+    int lts = 0;
+    while (sqlite3_step(result) == SQLITE_ROW)
+    { lts = sqlite3_column_int(result, 0); };
+    return lts;
+}
+
 // Populate Local Order Book from SQLite
 void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
 {
-    // Add order to SQLite
-    char* err;
-    auto query1 = (CreateTableLatestQuery + CreateTableOrdersQuery).c_str();
-    auto rdy = sqlite3_exec(db, query1, NULL, 0, &err);
-    if (rdy != SQLITE_OK)
-    { error("sqlite error: " + sstos(&err)); };
-
     // Add Symbol
     Symbol symbol(SYMBOL_ID, name);
     auto errc = (*market).AddSymbol(symbol);
@@ -544,10 +566,10 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
     { error("Failed AddOrderBook: " + sstos(&errc)); exit(1); };
 
     sqlite3_stmt* result;
-    char* query2 = "SELECT * FROM orders";
+    char* query = "SELECT * FROM orders";
 
     // Prepare query
-    rdy = sqlite3_prepare(db, query2, -1, &result, NULL);
+    auto rdy = sqlite3_prepare(db, query, -1, &result, NULL);
     auto errmsg = sqlite3_errmsg(db);
     if (rdy != SQLITE_OK)
     { error("sqlite error: " + sstos(&errmsg)); exit(1); };
@@ -586,26 +608,8 @@ private:
     size_t _execute_orders;
     size_t _lts_order_id;
 
-    // Get Latest Id from Database
-    size_t get_lts_order_id(sqlite3* db) {
-        sqlite3_stmt* result;
-        char* query = "SELECT * FROM latest";
-
-        // Prepare query
-        auto rdy = sqlite3_prepare(db, query, -1, &result, NULL);
-        auto err = sqlite3_errmsg(db);
-        if (rdy != SQLITE_OK)
-        { error("sqlite error: " + sstos(&err)); exit(1); };
-
-        // Get Latest value
-        int lts = 1;
-        while (sqlite3_step(result) == SQLITE_ROW)
-        { lts = sqlite3_column_int(result, 0); };
-        return lts;
-    }
-
 public:
-    MyMarketHandler(sqlite3* db)
+    MyMarketHandler(int lts)
         : _updates(0),
           _symbols(0),
           _max_symbols(0),
@@ -619,9 +623,7 @@ public:
           _update_orders(0),
           _delete_orders(0),
           _execute_orders(0),
-          _lts_order_id(
-            get_lts_order_id(db)
-          )
+          _lts_order_id(lts)
     {}
 
     size_t updates() const { return _updates; }
@@ -1516,12 +1518,17 @@ int main(int argc, char** argv)
     if (rdy != SQLITE_OK)
     { error("error connecting to sqlite"); exit(1); };
 
+    // Setup SQLite
+    PopulateDatabase(db); // Create DB Tables
+    auto lts = GetLatestId(db); // Get Latest Order Id
+
     log("connected to sqlite");
 
     // Initiate MarketManager
-    MyMarketHandler market_handler(db);
+    MyMarketHandler market_handler(lts);
     MarketManager market(market_handler);
-    PopulateBook(&market, db, name.c_str()); // Fill order book with data from SQLite
+    PopulateBook(&market, db, name.c_str()); // Fill order book from DB
+    market.EnableMatching(); // Enable matching
     
     // Create socket
     auto sockfd = UnixSocket(socket_path.string().c_str(), MAX_CLIENTS);
@@ -1533,9 +1540,6 @@ int main(int argc, char** argv)
 
     // Update status file
     File::WriteAllText(status_path, STATUS_RUN);
-
-    // Enable matching
-    market.EnableMatching(); 
 
     /* ############################################################################################################################################# */
 
