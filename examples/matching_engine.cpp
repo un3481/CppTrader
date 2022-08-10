@@ -304,6 +304,7 @@ inline std::string ParseOrder(const Order& order)
     static const std::string NullField = "NULL";
     std::string csv;
 
+    // Format CSV Values
     csv.append(
         std::to_string(order.Id) + CSV_SEP +
         std::to_string(order.SymbolId) + CSV_SEP +
@@ -393,6 +394,51 @@ std::string ParseOrderBook(MarketManager* market, const OrderBook* order_book_pt
 
 /* ############################################################################################################################################# */
 
+// Generate Query to insert Order into SQLite
+std::string QueryFromOrder(const Order& order)
+{
+    return (std::string("") +
+        "INSERT INTO orders (" + OrderCSVHeader + ") VALUES (" +
+            std::to_string((int)order.Id) + CSV_SEP +
+            std::to_string((int)SYMBOL_ID) + CSV_SEP +
+            std::to_string((int)order.Type) + CSV_SEP +
+            std::to_string((int)order.Side) + CSV_SEP +
+            std::to_string((int)order.Price) + CSV_SEP +
+            std::to_string((int)order.StopPrice) + CSV_SEP +
+            std::to_string((int)order.Quantity) + CSV_SEP +
+            std::to_string((int)order.TimeInForce) + CSV_SEP +
+            std::to_string((int)order.MaxVisibleQuantity) + CSV_SEP +
+            std::to_string((int)order.Slippage) + CSV_SEP +
+            std::to_string((int)order.TrailingDistance) + CSV_SEP +
+            std::to_string((int)order.TrailingStep) + CSV_SEP +
+            std::to_string((int)order.ExecutedQuantity) + CSV_SEP +
+            std::to_string((int)order.LeavesQuantity) +
+        ")"
+    );
+}
+
+// Generate new Order from result of Query
+Order OrderFromQuery(sqlite3_stmt* row)
+{
+    return Order(
+        sqlite3_column_int(row, 0), // Id
+        SYMBOL_ID, // Symbol
+        OrderType(sqlite3_column_int(row, 2)), // Type
+        OrderSide(sqlite3_column_int(row, 3)), // Side
+        sqlite3_column_int(row, 4), // Price
+        sqlite3_column_int(row, 5), // Stop Price
+        sqlite3_column_int(row, 6), // Quantity
+        OrderTimeInForce(sqlite3_column_int(row, 7)), // Time In Force
+        sqlite3_column_int(row, 8), // Max Visible Quantity
+        sqlite3_column_int(row, 9), // Slippage
+        sqlite3_column_int(row, 10), // Trailing Distance
+        sqlite3_column_int(row, 11) // Trailing Step
+    );
+}
+
+/* ############################################################################################################################################# */
+
+// Populate Local Order Book from SQLite
 void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
 {
     // Add Symbol
@@ -417,23 +463,8 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
     // Get Orders
     while (sqlite3_step(result) == SQLITE_ROW)
     {
-        // Get Order from Row
-        auto order = Order(
-            sqlite3_column_int(result, 0), // Id
-            SYMBOL_ID, // Symbol
-            OrderType(sqlite3_column_int(result, 2)), // Type
-            OrderSide(sqlite3_column_int(result, 3)), // Side
-            sqlite3_column_int(result, 4), // Price
-            sqlite3_column_int(result, 5), // Stop Price
-            sqlite3_column_int(result, 6), // Quantity
-            OrderTimeInForce(sqlite3_column_int(result, 7)), // Time In Force
-            sqlite3_column_int(result, 8), // Max Visible Quantity
-            sqlite3_column_int(result, 9), // Slippage
-            sqlite3_column_int(result, 10), // Trailing Distance
-            sqlite3_column_int(result, 11) // Trailing Step
-        );
-
         // Add Order
+        auto order = OrderFromQuery(result);
         errc = (*market).AddOrder(order);
         if (errc != ErrorCode::OK)
         { error("Failed AddOrder: " + sstos(&errc)); exit(1); };
@@ -689,26 +720,8 @@ protected:
                 // Add order to SQLite
                 char* err;
                 auto db = CommandCtx::Get().sqlite_ptr;
-                auto query = (std::string("") +
-                    "INSERT (" +
-                        "Id," +
-                        "SymbolId," +
-                        "Type," +
-                        "Side," +
-                        "Price," +
-                        "StopPrice," +
-                        "Quantity," +
-                        "ExecutedQuantity," +
-                        "LeavesQuantity," +
-                        "TimeInForce," +
-                        "TrailingDistance," +
-                        "TrailingStep," +
-                        "MaxVisibleQuantity," +
-                        "Slippage" +
-                    ") INTO orders VALUES (" +
-                    ")"
-                );
-                int rdy = sqlite3_exec(db, query.c_str(), NULL, 0, &err);
+                auto query = QueryFromOrder(order);
+                auto rdy = sqlite3_exec(db, query.c_str(), NULL, 0, &err);
                 if (rdy != 0) { error("sqlite error: " + sstos(&err)); };
             };
         };
@@ -745,11 +758,8 @@ protected:
             // Delete order from SQLite
             char* err;
             auto db = CommandCtx::Get().sqlite_ptr;
-            auto query = (std::string("") +
-                "DELETE * FROM orders " +
-                "WHERE id = " + sstos(&order.Id)
-            );
-            int rdy = sqlite3_exec(db, query.c_str(), NULL, 0, &err);
+            auto query = "DELETE * FROM orders WHERE Id = " + sstos(&order.Id);
+            auto rdy = sqlite3_exec(db, query.c_str(), NULL, 0, &err);
             if (rdy != 0) { error("sqlite error: " + sstos(&err)); };
         };
 
