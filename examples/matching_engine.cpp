@@ -539,10 +539,10 @@ void PopulateDatabase(sqlite3* db)
 // Get Latest Id from Database
 int GetLatestId(sqlite3* db) {
     sqlite3_stmt* result;
-    char* query = "SELECT * FROM latest";
+    const std::string query = "SELECT * FROM latest";
 
     // Prepare query
-    auto rdy = sqlite3_prepare(db, query, -1, &result, NULL);
+    auto rdy = sqlite3_prepare(db, query.c_str(), -1, &result, NULL);
     auto err = sqlite3_errmsg(db);
     if (rdy != SQLITE_OK)
     { error("sqlite error: " + sstos(&err)); exit(1); };
@@ -569,10 +569,10 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
     { error("Failed AddOrderBook: " + sstos(&errc)); exit(1); };
 
     sqlite3_stmt* result;
-    char* query = "SELECT * FROM orders";
+    const std::string query = "SELECT * FROM orders";
 
     // Prepare query
-    auto rdy = sqlite3_prepare(db, query, -1, &result, NULL);
+    auto rdy = sqlite3_prepare(db, query.c_str(), -1, &result, NULL);
     auto errmsg = sqlite3_errmsg(db);
     if (rdy != SQLITE_OK)
     { error("sqlite error: " + sstos(&errmsg)); exit(1); };
