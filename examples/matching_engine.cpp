@@ -551,10 +551,10 @@ void PopulateDatabase(sqlite3* db)
 // Get Latest Id from Database
 int GetLatestId(sqlite3* db) {
     sqlite3_stmt* result;
-    const std::string query = "SELECT * FROM latest";
+    const char* query = "SELECT * FROM latest";
 
     // Prepare query
-    auto rdy = sqlite3_prepare(db, query.c_str(), -1, &result, NULL);
+    auto rdy = sqlite3_prepare(db, query, -1, &result, NULL);
     if (rdy != SQLITE_OK)
     {
         const char* err = sqlite3_errmsg(db);
@@ -585,8 +585,8 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
 
     // Prepare query
     sqlite3_stmt* result;
-    const std::string query = "SELECT * FROM orders";
-    auto rdy = sqlite3_prepare(db, query.c_str(), -1, &result, NULL);
+    const char* query = "SELECT * FROM orders";
+    auto rdy = sqlite3_prepare(db, query, -1, &result, NULL);
     if (rdy != SQLITE_OK)
     {
         const char* _err = sqlite3_errmsg(db);
@@ -802,13 +802,13 @@ protected:
             char* err;
 
             // Add order to SQLite
-            auto query1 = QueryFromOrder(order);
+            const auto query1 = QueryFromOrder(order);
             auto rdy = sqlite3_exec(db, query1.c_str(), NULL, NULL, &err);
             if (rdy != SQLITE_OK)
             { error("sqlite error(6): " + sstos(&err)); };
 
             // Update Latest Id
-            auto query2 = (std::string("") +
+            const auto query2 = (std::string("") +
                 "UPDATE latest SET Id=" + sstos(&order.Id)
             );
             rdy = sqlite3_exec(db, query2.c_str(), NULL, NULL, &err);
@@ -856,10 +856,10 @@ protected:
         char* err;
 
         // Delete order from SQLite
-        auto query = (std::string("") +
+        const auto query = (std::string("") +
             "DELETE FROM orders WHERE Id=" + sstos(&order.Id)
-        ).c_str();
-        auto rdy = sqlite3_exec(db, query, NULL, NULL, &err);
+        );
+        auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
         { error("sqlite error(8): " + sstos(&err)); };
 
