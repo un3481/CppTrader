@@ -25,7 +25,7 @@ using namespace CppTrader::Matching;
 /* ############################################################################################################################################# */
 // Constants
 
-#define VERSION "2.0.9.0" // Program version
+#define VERSION "2.0.11.0" // Program version
 
 #define CSV_SEP "," // CSV separator
 #define CSV_EOL "\n" // CSV end of line
@@ -76,6 +76,55 @@ inline void error(const std::string& msg)
 // Error during the CLI step
 inline void CliError(const char *msg)
 { perror(msg); exit(1); }
+
+/* ############################################################################################################################################# */
+
+/* Command Context */
+
+namespace CommandCtx {
+
+    // Context struct
+    struct Context
+    {
+        bool enable; // Enable operation with context
+        int connection; // File Descriptor for current Connection
+        sqlite3* sqlite_ptr; // Connection to SQLite Database
+        MarketManager* market_ptr; // Pointer to Market Manager
+        MyMarketHandler* handler_ptr; // Pointer to Market Handler
+        std::string command; // Command text
+        std::string order_info; // Order text Id
+        uint64_t order_id; // Order Id
+    };
+
+    // Static context
+    Context& _ctx()
+    {
+        static Context ctx;
+        return ctx;
+    }
+
+    // Get Context
+    Context Get()
+    {
+        auto ctx = _ctx();
+        return Context(ctx);
+    }
+
+    // Set Context
+    void Set(Context& value)
+    {
+        auto ctx = _ctx();
+        auto new_ctx = Context(value);
+        ctx = new_ctx;
+    }
+
+    // Clear Context
+    void Clear()
+    {
+        Context ctx;
+        Set(ctx);
+    }
+}
 
 /* ############################################################################################################################################# */
 
@@ -295,6 +344,15 @@ static const std::string OrderCSVHeader = (std::string("") +
     "LeavesQuantity"
 );
 
+// Order Book CSV Header
+static const std::string OrderBookCSVHeader = (std::string("") +
+    "Group" + CSV_SEP +
+    "LevelType" + CSV_SEP +
+    "LevelPrice"
+);
+
+/* ############################################################################################################################################# */
+
 // Parse Order to CSV
 inline std::string ParseOrder(const Order& order)
 {
@@ -335,13 +393,6 @@ inline std::string ParseOrder(const Order& order)
 }
 
 /* ############################################################################################################################################# */
-
-// Order Book CSV Header
-static const std::string OrderBookCSVHeader = (std::string("") +
-    "Group" + CSV_SEP +
-    "LevelType" + CSV_SEP +
-    "LevelPrice"
-);
 
 // Parse OrderBook::Levels to CSV
 std::string ParseOrderBookLevels(MarketManager* market, OrderBook::Levels levels, const char* group)
@@ -469,55 +520,6 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
         if (errc != ErrorCode::OK)
         { error("Failed AddOrder: " + sstos(&errc)); exit(1); };
     };
-}
-
-/* ############################################################################################################################################# */
-
-/* Command Context */
-
-namespace CommandCtx {
-
-    // Context struct
-    struct Context
-    {
-        bool enable; // Enable operation with context
-        int connection; // File Descriptor for current Connection
-        sqlite3* sqlite_ptr; // Connection to SQLite Database
-        MarketManager* market_ptr; // Pointer to Market Manager
-        MyMarketHandler* handler_ptr; // Pointer to Market Handler
-        std::string command; // Command text
-        std::string order_info; // Order text Id
-        uint64_t order_id; // Order Id
-    };
-
-    // Static context
-    Context& _ctx()
-    {
-        static Context ctx;
-        return ctx;
-    }
-
-    // Get Context
-    Context Get()
-    {
-        auto ctx = _ctx();
-        return Context(ctx);
-    }
-
-    // Set Context
-    void Set(Context& value)
-    {
-        auto ctx = _ctx();
-        auto new_ctx = Context(value);
-        ctx = new_ctx;
-    }
-
-    // Clear Context
-    void Clear()
-    {
-        Context ctx;
-        Set(ctx);
-    }
 }
 
 /* ############################################################################################################################################# */
