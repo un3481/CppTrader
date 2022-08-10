@@ -113,7 +113,7 @@ namespace CommandCtx {
     void Set(Context& value)
     {
         auto ctx = _ctx();
-        auto new_ctx = Context(value);
+        Context new_ctx = value;
         ctx = new_ctx;
     }
 
@@ -127,8 +127,8 @@ namespace CommandCtx {
     // Get Context
     auto Get()
     {
-        auto ctx = _ctx();
-        return Context(ctx);
+        Context ctx = _ctx();
+        return ctx;
     }
 }
 
