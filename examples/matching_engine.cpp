@@ -55,18 +55,6 @@ inline std::string now()
     return std::string(buf);
 }
 
-// Log
-inline void log(const std::string& msg)
-    { std::cout << now() << '\t' << msg << std::endl; }
-
-// Log Error
-inline void error(const std::string& msg)
-    { std::cerr << now() << '\t' << msg << std::endl; }
-
-// Error during the CLI step
-inline void CliError(const char *msg)
-    { perror(msg); exit(1); }
-
 // Convert Objects to string via operator<<
 template <typename T>
 inline std::string sstos(const T* input)
@@ -76,6 +64,18 @@ inline std::string sstos(const T* input)
     ss << (*input); ss >> str;
     return str;
 }
+
+// Log
+inline void log(const std::string& msg)
+{ std::cout << now() << '\t' << msg << std::endl; }
+
+// Log Error
+inline void error(const std::string& msg)
+{ std::cerr << now() << '\t' << msg << std::endl; }
+
+// Error during the CLI step
+inline void CliError(const char *msg)
+{ perror(msg); exit(1); }
 
 /* ############################################################################################################################################# */
 
@@ -286,13 +286,13 @@ static const std::string OrderCSVHeader = (std::string("") +
     "Price" + CSV_SEP +
     "StopPrice" + CSV_SEP +
     "Quantity" + CSV_SEP +
-    "ExecutedQuantity" + CSV_SEP +
-    "LeavesQuantity" + CSV_SEP +
     "TimeInForce" + CSV_SEP +
+    "MaxVisibleQuantity" + CSV_SEP +
+    "Slippage" + CSV_SEP +
     "TrailingDistance" + CSV_SEP +
     "TrailingStep" + CSV_SEP +
-    "MaxVisibleQuantity" + CSV_SEP +
-    "Slippage"
+    "ExecutedQuantity" + CSV_SEP +
+    "LeavesQuantity"
 );
 
 // Parse Order to CSV
@@ -312,19 +312,23 @@ inline std::string ParseOrder(const Order& order)
         std::to_string(order.Price) + CSV_SEP +
         std::to_string(order.StopPrice) + CSV_SEP +
         std::to_string(order.Quantity) + CSV_SEP +
-        std::to_string(order.ExecutedQuantity) + CSV_SEP +
-        std::to_string(order.LeavesQuantity) + CSV_SEP +
         OrderTIFs[(int)order.TimeInForce] + CSV_SEP
     );
+    if (order.IsHidden() || order.IsIceberg())
+        csv.append(std::to_string(order.MaxVisibleQuantity) + CSV_SEP);
+    else csv.append(NullField + CSV_SEP);
+    if (order.IsSlippage())
+        csv.append(std::to_string(order.Slippage));
+    else csv.append(NullField + CSV_SEP);
     if (order.IsTrailingStop() || order.IsTrailingStopLimit()) csv.append(
         std::to_string(order.TrailingDistance) + CSV_SEP +
         std::to_string(order.TrailingStep) + CSV_SEP
     );
     else csv.append(NullField + CSV_SEP + NullField + CSV_SEP);
-    if (order.IsHidden() || order.IsIceberg()) csv.append(std::to_string(order.MaxVisibleQuantity) + CSV_SEP);
-    else csv.append(NullField + CSV_SEP);
-    if (order.IsSlippage()) csv.append(std::to_string(order.Slippage));
-    else csv.append(NullField);
+    csv.append(
+        std::to_string(order.ExecutedQuantity) + CSV_SEP +
+        std::to_string(order.LeavesQuantity)
+    );
     
     return csv;
 }
@@ -448,11 +452,11 @@ namespace CommandCtx {
         bool enable; // Enable operation with context
         int connection; // File Descriptor for current Connection
         sqlite3* sqlite_ptr; // Connection to SQLite Database
-        std::string command; // Command text
         MarketManager* market_ptr; // Pointer to Market Manager
-        MyMarketHandler* market_handler_ptr; // Pointer to Market Handler
+        MyMarketHandler* handler_ptr; // Pointer to Market Handler
+        std::string command; // Command text
+        std::string order_info; // Order text Id
         uint64_t order_id; // Order Id
-        std::string text_id; // Order text Id
     };
 
     // Static context
@@ -516,7 +520,8 @@ private:
         // Prepare query
         auto rdy = sqlite3_prepare(db, query, -1, &result, NULL);
         auto err = sqlite3_errmsg(db);
-        if (rdy != SQLITE_OK) { error("sqlite error: " + sstos(&err)); exit(1); };
+        if (rdy != SQLITE_OK)
+        { error("sqlite error: " + sstos(&err)); exit(1); };
 
         // Get Latest value
         int lts = 1;
@@ -685,8 +690,22 @@ protected:
                 char* err;
                 auto db = CommandCtx::Get().sqlite_ptr;
                 auto query = (std::string("") +
-                    "INSERT () INTO orders " +
-                    "VALUES (" +
+                    "INSERT (" +
+                        "Id," +
+                        "SymbolId," +
+                        "Type," +
+                        "Side," +
+                        "Price," +
+                        "StopPrice," +
+                        "Quantity," +
+                        "ExecutedQuantity," +
+                        "LeavesQuantity," +
+                        "TimeInForce," +
+                        "TrailingDistance," +
+                        "TrailingStep," +
+                        "MaxVisibleQuantity," +
+                        "Slippage" +
+                    ") INTO orders VALUES (" +
                     ")"
                 );
                 int rdy = sqlite3_exec(db, query.c_str(), NULL, 0, &err);
@@ -1350,7 +1369,7 @@ void Execute(MarketManager* market, const std::string& command)
     {
         // Set new Order Id
         auto ctx = CommandCtx::Get();
-        auto handler_ptr = ctx.market_handler_ptr;
+        auto handler_ptr = ctx.handler_ptr;
         ctx.order_id = (*handler_ptr).lts_order_id() + 1; // Generate Order Id
         CommandCtx::Set(ctx); // Set new context
 
@@ -1431,15 +1450,16 @@ int main(int argc, char** argv)
 
     // Set Stdout and Stderr to log and err files
     if (freopen(log_path.string().c_str(), "a+", stdout) == NULL)
-        { error("error opening log file"); exit(1); };
+    { error("error opening log file"); exit(1); };
     
     if (freopen(err_path.string().c_str(), "a+", stderr) == NULL)
-        { error("error opening err file"); exit(1); };
+    { error("error opening err file"); exit(1); };
 
     // Connect to SQLite
     sqlite3* db;
     auto rdy = sqlite3_open(sqlite_path.string().c_str(), &db);
-    if (rdy != SQLITE_OK) { error("error connecting to sqlite"); exit(1); };
+    if (rdy != SQLITE_OK)
+    { error("error connecting to sqlite"); exit(1); };
 
     log("connected to sqlite");
 
@@ -1509,9 +1529,9 @@ int main(int argc, char** argv)
                             enable: true,
                             connection: connfd,
                             sqlite_ptr: db,
-                            command: message,
                             market_ptr: &market,
-                            market_handler_ptr: &market_handler
+                            handler_ptr: &market_handler,
+                            command: message
                         };
                         CommandCtx::Set(ctx);
 
