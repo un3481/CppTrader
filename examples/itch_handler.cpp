@@ -10,7 +10,9 @@
 #include <sys/un.h>
 #include <stdio.h>
 
-#define MSG_SIZE_LARGE 8192 // Buffer size for large messages on socket stream (bytes)
+#define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)
+#define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)
+#define MSG_SIZE_LARGE 1024 // Buffer size for large messages on socket stream (bytes)
 
 void error(const char *msg)
 {
@@ -39,7 +41,7 @@ int ReadSocketStream(int sockfd, std::string* dest)
 
     // Read stream to string
     char buffer[MSG_SIZE_LARGE]; // Read MSG_SIZE bytes
-    if (read(sockfd, buffer, sizeof(buffer)) <= 0) return -1;
+    if (read(sockfd, buffer, MSG_SIZE_LARGE) <= 0) return -1;
     (*dest).append(buffer, strcspn(buffer, "\0")); // buffer is copied to string until the first \0 char is found
 
     return 1;
@@ -76,8 +78,7 @@ int main(int argc, char *argv[])
     if (connect(sockfd, (struct sockaddr *) &serv_addr, servlen) < 0) error("error connecting");
 
     // Set Consts
-    const uint CMDSIZE = 1024; // The size of a Command is set to 1024 bytes
-    char buffer[CMDSIZE];
+    char buffer[MSG_SIZE];
 
     // Set Variables
     char* input;
@@ -86,10 +87,10 @@ int main(int argc, char *argv[])
     // Send message
     while (1)
     {
-        bzero(buffer, sizeof(buffer));
-        input = fgets(buffer, sizeof(buffer), stdin);
+        bzero(buffer, MSG_SIZE);
+        input = fgets(buffer, MSG_SIZE, stdin);
         buffer[strcspn(buffer, "\r\n")] = 0;
-        size = write(sockfd, buffer, sizeof(buffer));
+        size = write(sockfd, buffer, MSG_SIZE);
 
         std::string instr = buffer;
         if (instr.find("get book") != std::string::npos)

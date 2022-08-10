@@ -1633,10 +1633,6 @@ int main(int argc, char** argv)
                     if (message == "exit") enable = false;
                     else
                     {
-                        log("will generate context");
-                        auto c1 = CommandCtx::Get();
-                        log("(1) ctx.enable = " + std::string(c1.enable ? "true" : "false"));
-
                         // Set New Context
                         auto ctx = CommandCtx::Context();
                         ctx.enable = true;
@@ -1648,8 +1644,6 @@ int main(int argc, char** argv)
                         CommandCtx::Set(ctx);
 
                         log("generated context");
-                        auto c2 = CommandCtx::Get();
-                        log("(2) ctx.enable = " + std::string(c2.enable ? "true" : "false"));
 
                         // Execute command
                         Execute(&market, message);
