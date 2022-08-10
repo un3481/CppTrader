@@ -802,21 +802,21 @@ protected:
             char* err;
 
             // Add order to SQLite
-            auto query1 = QueryFromOrder(order).c_str();
-            auto rdy = sqlite3_exec(db, query1, NULL, NULL, &err);
+            auto query1 = QueryFromOrder(order);
+            auto rdy = sqlite3_exec(db, query1.c_str(), NULL, NULL, &err);
             if (rdy != SQLITE_OK)
             { error("sqlite error(6): " + sstos(&err)); };
 
             // Update Latest Id
             auto query2 = (std::string("") +
                 "UPDATE latest SET Id=" + sstos(&order.Id)
-            ).c_str();
-            rdy = sqlite3_exec(db, query2, NULL, NULL, &err);
+            );
+            rdy = sqlite3_exec(db, query2.c_str(), NULL, NULL, &err);
             if (rdy != SQLITE_OK)
             { error("sqlite error(7): " + sstos(&err)); };
 
-            log("add query1: " + sstos(&query1));
-            log("add query2: " + sstos(&query2));
+            log("add query1: " + query1);
+            log("add query2: " + query2);
         };
 
         // Log Add Order
