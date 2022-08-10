@@ -109,13 +109,6 @@ namespace CommandCtx {
         return ctx;
     }
 
-    // Get Context
-    Context Get()
-    {
-        auto ctx = _ctx();
-        return Context(ctx);
-    }
-
     // Set Context
     void Set(Context& value)
     {
@@ -129,6 +122,13 @@ namespace CommandCtx {
     {
         Context ctx;
         Set(ctx);
+    }
+
+    // Get Context
+    auto Get()
+    {
+        auto ctx = _ctx();
+        return Context(ctx);
     }
 }
 
@@ -794,21 +794,20 @@ protected:
         _lts_order_id = std::max((size_t)order.Id, _lts_order_id);
 
         // Check if operation is enabled
-        if (CommandCtx::Get().enable)
+        if (!CommandCtx::Get().enable) return;
+
+        // Check Id Sync
+        uint64_t ctx_id = CommandCtx::Get().order_id;
+        if (ctx_id != order.Id) error("Error at 'onAddOrder' callback: id out of sync");
+        else
         {
-            // Check Id Sync
-            uint64_t ctx_id = CommandCtx::Get().order_id;
-            if (ctx_id != order.Id) error("Error at 'onAddOrder' callback: id out of sync");
-            else
-            {
-                // Add order to SQLite
-                auto db = CommandCtx::Get().sqlite_ptr;
-                auto query = QueryFromOrder(order).c_str();
-                char* err;
-                auto rdy = sqlite3_exec(db, query, NULL, NULL, &err);
-                if (rdy != SQLITE_OK)
-                { error("sqlite error(6): " + sstos(&err)); };
-            };
+            // Add order to SQLite
+            auto db = CommandCtx::Get().sqlite_ptr;
+            auto query = QueryFromOrder(order).c_str();
+            char* err;
+            auto rdy = sqlite3_exec(db, query, NULL, NULL, &err);
+            if (rdy != SQLITE_OK)
+            { error("sqlite error(6): " + sstos(&err)); };
         };
 
         // Log Add Order
@@ -842,19 +841,18 @@ protected:
         ++_updates; --_orders; ++_delete_orders;
 
         // Check if operation is enabled
-        if (CommandCtx::Get().enable)
-        {
-            // Delete order from SQLite
-            auto db = CommandCtx::Get().sqlite_ptr;
-            auto query = (std::string("") +
-                "DELETE FROM orders " +
-                "WHERE Id=" + sstos(&order.Id)
-            ).c_str();
-            char* err;
-            auto rdy = sqlite3_exec(db, query, NULL, NULL, &err);
-            if (rdy != SQLITE_OK)
-            { error("sqlite error(7): " + sstos(&err)); };
-        };
+        if (!CommandCtx::Get().enable) return;
+        
+        // Delete order from SQLite
+        auto db = CommandCtx::Get().sqlite_ptr;
+        auto query = (std::string("") +
+            "DELETE FROM orders " +
+            "WHERE Id=" + sstos(&order.Id)
+        ).c_str();
+        char* err;
+        auto rdy = sqlite3_exec(db, query, NULL, NULL, &err);
+        if (rdy != SQLITE_OK)
+        { error("sqlite error(7): " + sstos(&err)); };
 
         // Log Deleted Order
         log("Delete order: " + sstos(&order));
@@ -1634,8 +1632,10 @@ int main(int argc, char** argv)
                     if (message == "exit") enable = false;
                     else
                     {
+                        log("will generate context");
+
                         // Set New Context
-                        CommandCtx::Context ctx;
+                        auto ctx = CommandCtx::Context();
                         ctx.enable = true;
                         ctx.connection = connfd;
                         ctx.sqlite_ptr = db;
@@ -1643,6 +1643,8 @@ int main(int argc, char** argv)
                         ctx.handler_ptr = &market_handler;
                         ctx.command = message;
                         CommandCtx::Set(ctx);
+
+                        log("generated context");
 
                         // Execute command
                         Execute(&market, message);
