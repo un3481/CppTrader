@@ -1,11 +1,12 @@
 
-if(NOT TARGET sqlite3)
+if(NOT TARGET sqlite)
 
   # Module library
   file(GLOB SOURCE_FILES "SQLite/sqlite3.c")
-  add_library(sqlite3 ${SOURCE_FILES})
+  add_library(sqlite ${SOURCE_FILES})
+  target_include_directories(sqlite PUBLIC "SQLite")
 
-  set(INCLUDE_DIRS "SQLite")
-  include_directories(${INCLUDE_DIRS})
+  # Module folder
+  set_target_properties(sqlite PROPERTIES FOLDER "modules/SQLite")
 
 endif()
