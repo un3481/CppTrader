@@ -451,26 +451,43 @@ std::string ParseOrderBook(MarketManager* market, const OrderBook* order_book_pt
 
 /* ############################################################################################################################################# */
 
+// Parse Number or Null to Query String
+std::string IntNullToQuery(uint64_t value)
+{
+    return (std::string("") + (
+        value == NULL ? "NULL" : std::to_string(value)
+    ));
+}
+
 // Generate Query to insert Order into SQLite
 std::string QueryFromOrder(const Order& order)
 {
     return (std::string("") +
         "INSERT INTO orders (" + OrderCSVHeader + ") VALUES (" +
-            std::to_string((int)order.Id) + CSV_SEP +
-            std::to_string((int)SYMBOL_ID) + CSV_SEP +
+            std::to_string(order.Id) + CSV_SEP +
+            std::to_string(SYMBOL_ID) + CSV_SEP +
             std::to_string((int)order.Type) + CSV_SEP +
             std::to_string((int)order.Side) + CSV_SEP +
-            std::to_string((int)order.Price) + CSV_SEP +
-            std::to_string((int)order.StopPrice) + CSV_SEP +
-            std::to_string((int)order.Quantity) + CSV_SEP +
+            std::to_string(order.Price) + CSV_SEP +
+            std::to_string(order.StopPrice) + CSV_SEP +
+            std::to_string(order.Quantity) + CSV_SEP +
             std::to_string((int)order.TimeInForce) + CSV_SEP +
-            std::to_string((int)order.MaxVisibleQuantity) + CSV_SEP +
-            std::to_string((int)order.Slippage) + CSV_SEP +
-            std::to_string((int)order.TrailingDistance) + CSV_SEP +
-            std::to_string((int)order.TrailingStep) + CSV_SEP +
-            std::to_string((int)order.ExecutedQuantity) + CSV_SEP +
-            std::to_string((int)order.LeavesQuantity) +
+            IntNullToQuery(order.MaxVisibleQuantity) + CSV_SEP +
+            IntNullToQuery(order.Slippage) + CSV_SEP +
+            IntNullToQuery(order.TrailingDistance) + CSV_SEP +
+            IntNullToQuery(order.TrailingStep) + CSV_SEP +
+            std::to_string(order.ExecutedQuantity) + CSV_SEP +
+            std::to_string(order.LeavesQuantity) +
         ")"
+    );
+}
+
+// Parse Query Result to Number or Null
+int QueryToIntNull(sqlite3_stmt* row, int col)
+{
+    return (
+        (sqlite3_column_type(row, col) == SQLITE_NULL) ?
+            NULL : sqlite3_column_int(row, col)
     );
 }
 
@@ -486,10 +503,10 @@ Order OrderFromQuery(sqlite3_stmt* row)
         sqlite3_column_int(row, 5), // Stop Price
         sqlite3_column_int(row, 6), // Quantity
         OrderTimeInForce(sqlite3_column_int(row, 7)), // Time In Force
-        sqlite3_column_int(row, 8), // Max Visible Quantity
-        sqlite3_column_int(row, 9), // Slippage
-        sqlite3_column_int(row, 10), // Trailing Distance
-        sqlite3_column_int(row, 11) // Trailing Step
+        QueryToIntNull(row, 8), // Max Visible Quantity
+        QueryToIntNull(row, 9), // Slippage
+        QueryToIntNull(row, 10), // Trailing Distance
+        QueryToIntNull(row, 11) // Trailing Step
     );
 }
 
