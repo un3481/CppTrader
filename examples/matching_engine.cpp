@@ -515,15 +515,19 @@ static const std::string CreateTableOrdersQuery = (std::string("") +
         "TrailingStep INT" + CSV_SEP +
         "ExecutedQuantity INT NOT NULL" + CSV_SEP +
         "LeavesQuantity INT NOT NULL" +
-    ");"
+    ")"
 );
 
 // Order Book CSV Header
 static const std::string CreateTableLatestQuery = (std::string("") +
-    "CREATE TABLE IF NOT EXISTS latest (Id INT NOT NULL); " +
+    "CREATE TABLE IF NOT EXISTS latest (Id INT NOT NULL)"
+);
+
+// Order Book CSV Header
+static const std::string InsertIntoLatestQuery = (std::string("") +
     "INSERT INTO latest (Id) SELECT 0 WHERE NOT EXISTS (" +
         "SELECT * FROM latest" +
-    ");"
+    ")"
 );
 
 /* ############################################################################################################################################# */
@@ -532,14 +536,19 @@ static const std::string CreateTableLatestQuery = (std::string("") +
 void PopulateDatabase(sqlite3* db)
 {
     // Create Tables in SQLite
-    auto query = (CreateTableLatestQuery + " " + CreateTableOrdersQuery).c_str();
+    auto query1 = CreateTableLatestQuery.c_str();
+    auto query2 = InsertIntoLatestQuery.c_str();
+    auto query3 = CreateTableOrdersQuery.c_str();
     char* err;
-    auto rdy = sqlite3_exec(db, query, NULL, NULL, &err);
+    auto rdy = sqlite3_exec(db, query1, NULL, NULL, &err);
     if (rdy != SQLITE_OK)
-    {
-        error("sqlite error(1): " + sstos(&err));
-        exit(1);
-    };
+    { error("sqlite error(1): " + sstos(&err)); exit(1); };
+    rdy = sqlite3_exec(db, query2, NULL, NULL, &err);
+    if (rdy != SQLITE_OK)
+    { error("sqlite error(2): " + sstos(&err)); exit(1); };
+    rdy = sqlite3_exec(db, query3, NULL, NULL, &err);
+    if (rdy != SQLITE_OK)
+    { error("sqlite error(3): " + sstos(&err)); exit(1); };
 }
 
 // Get Latest Id from Database
@@ -552,7 +561,7 @@ int GetLatestId(sqlite3* db) {
     if (rdy != SQLITE_OK)
     {
         const char* err = sqlite3_errmsg(db);
-        error("sqlite error(2): " + sstos(&err));
+        error("sqlite error(4): " + sstos(&err));
         exit(1);
     };
 
@@ -584,7 +593,7 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
     if (rdy != SQLITE_OK)
     {
         const char* _err = sqlite3_errmsg(db);
-        error("sqlite error(3): " + sstos(&_err));
+        error("sqlite error(5): " + sstos(&_err));
         exit(1);
     };
 
@@ -778,11 +787,11 @@ protected:
             {
                 // Add order to SQLite
                 auto db = CommandCtx::Get().sqlite_ptr;
-                auto query = QueryFromOrder(order);
+                auto query = QueryFromOrder(order).c_str();
                 char* err;
-                auto rdy = sqlite3_exec(db, query.c_str(), NULL, 0, &err);
+                auto rdy = sqlite3_exec(db, query, NULL, NULL, &err);
                 if (rdy != SQLITE_OK)
-                { error("sqlite error(4): " + sstos(&err)); };
+                { error("sqlite error(6): " + sstos(&err)); };
             };
         };
 
@@ -817,11 +826,14 @@ protected:
         {
             // Delete order from SQLite
             auto db = CommandCtx::Get().sqlite_ptr;
-            auto query = "DELETE FROM orders WHERE (Id = " + sstos(&order.Id) + ")";
+            auto query = (std::string("") +
+                "DELETE FROM orders " +
+                "WHERE Id=" + sstos(&order.Id)
+            ).c_str();
             char* err;
-            auto rdy = sqlite3_exec(db, query.c_str(), NULL, 0, &err);
+            auto rdy = sqlite3_exec(db, query, NULL, NULL, &err);
             if (rdy != SQLITE_OK)
-            { error("sqlite error(5): " + sstos(&err)); };
+            { error("sqlite error(7): " + sstos(&err)); };
         };
 
         // Log Deleted Order
