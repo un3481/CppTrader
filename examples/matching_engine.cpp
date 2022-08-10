@@ -584,8 +584,8 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
     auto rdy = sqlite3_prepare(db, query.c_str(), -1, &result, NULL);
     if (rdy != SQLITE_OK)
     {
-        auto err = sqlite3_errmsg(db);
-        error("sqlite error(3): " + sstos(&err));
+        auto _err = sqlite3_errmsg(db);
+        error("sqlite error(3): " + sstos(&_err));
         exit(1);
     };
 
