@@ -92,14 +92,14 @@ namespace CommandCtx {
     // Context struct
     struct Context
     {
-        bool enable; // Enable operation with context
-        int connection; // File Descriptor for current Connection
-        sqlite3* sqlite_ptr; // Connection to SQLite Database
-        MarketManager* market_ptr; // Pointer to Market Manager
-        MyMarketHandler* handler_ptr; // Pointer to Market Handler
-        std::string command; // Command text
-        std::string order_info; // Order text Id
-        uint64_t order_id; // Order Id
+        bool enable = false; // Enable operation with context
+        int connection = NULL; // File Descriptor for current Connection
+        sqlite3* sqlite_ptr = NULL; // Connection to SQLite Database
+        MarketManager* market_ptr = NULL; // Pointer to Market Manager
+        MyMarketHandler* handler_ptr = NULL; // Pointer to Market Handler
+        std::string command = NULL; // Command text
+        std::string order_info = NULL; // Order text Id
+        uint64_t order_id = NULL; // Order Id
     };
 
     // Static context
@@ -1635,7 +1635,7 @@ int main(int argc, char** argv)
                     {
                         log("will generate context");
                         auto c1 = CommandCtx::Get();
-                        log("(1) ctx.enable = " + sstos(&c1.enable));
+                        log("(1) ctx.enable = " + std::string(c1.enable ? "true" : "false"));
 
                         // Set New Context
                         auto ctx = CommandCtx::Context();
@@ -1649,7 +1649,7 @@ int main(int argc, char** argv)
 
                         log("generated context");
                         auto c2 = CommandCtx::Get();
-                        log("(2) ctx.enable = " + sstos(&c2.enable));
+                        log("(2) ctx.enable = " + std::string(c2.enable ? "true" : "false"));
 
                         // Execute command
                         Execute(&market, message);
