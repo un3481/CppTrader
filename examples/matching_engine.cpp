@@ -1198,6 +1198,8 @@ void AddLimitOrder(MarketManager* market, const std::string& command)
         uint64_t price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
 
+        log("add limit Order(id: " + sstos(&id) + ", price: " + sstos(&id) + ", quantity: " + sstos(&quantity) + ")");
+
         Order order;
         if (match[1] == "buy")
             order = Order::BuyLimit(id, SYMBOL_ID, price, quantity);
@@ -1479,6 +1481,8 @@ void Execute(MarketManager* market, const std::string& command)
         auto handler_ptr = ctx.handler_ptr;
         ctx.order_id = (*handler_ptr).lts_order_id() + 1; // Generate Order Id
         CommandCtx::Set(ctx); // Set new context
+
+        log("generated new id: " + sstos(&ctx.order_id));
 
         // Orders: Add
         if (command.find("add market") != std::string::npos) AddMarketOrder(market, command);
