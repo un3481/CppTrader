@@ -800,13 +800,15 @@ protected:
         {
             // Add order to SQLite
             auto db = CommandCtx::Get().sqlite_ptr;
-            auto query1 = QueryFromOrder(order).c_str();
             char* err;
+            auto query1 = QueryFromOrder(order).c_str();
+            log("add query1: " + std::string(query1));
             auto rdy = sqlite3_exec(db, query1, NULL, NULL, &err);
             if (rdy != SQLITE_OK)
             { error("sqlite error(6): " + sstos(&err)); };
             // Update Latest Id
             auto query2 = ("UPDATE latest SET Id=" + sstos(&order.Id)).c_str();
+            log("add query2: " + std::string(query2));
             rdy = sqlite3_exec(db, query2, NULL, NULL, &err);
             if (rdy != SQLITE_OK)
             { error("sqlite error(7): " + sstos(&err)); };
@@ -847,8 +849,9 @@ protected:
         
         // Delete order from SQLite
         auto db = CommandCtx::Get().sqlite_ptr;
-        auto query = ("DELETE FROM orders WHERE Id=" + sstos(&order.Id)).c_str();
         char* err;
+        auto query = ("DELETE FROM orders WHERE Id=" + sstos(&order.Id)).c_str();
+        log("delete query: " + std::string(query));
         auto rdy = sqlite3_exec(db, query, NULL, NULL, &err);
         if (rdy != SQLITE_OK)
         { error("sqlite error(8): " + sstos(&err)); };
@@ -1476,8 +1479,6 @@ void Execute(MarketManager* market, const std::string& command)
         auto handler_ptr = ctx.handler_ptr;
         ctx.order_id = (*handler_ptr).lts_order_id() + 1; // Generate Order Id
         CommandCtx::Set(ctx); // Set new context
-
-        log("generated new id: " + sstos(&ctx.order_id));
 
         // Orders: Add
         if (command.find("add market") != std::string::npos) AddMarketOrder(market, command);
