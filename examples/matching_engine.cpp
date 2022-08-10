@@ -28,7 +28,7 @@ using namespace CppTrader::Matching;
 /* ############################################################################################################################################# */
 // Constants
 
-#define VERSION "2.0.15.0" // Program version
+#define VERSION "2.1.0.0" // Program version
 
 #define CSV_SEP "," // CSV separator
 #define CSV_EOL "\n" // CSV end of line
@@ -456,20 +456,20 @@ std::string QueryFromOrder(const Order& order)
 {
     return (std::string("") +
         "INSERT INTO orders (" + OrderCSVHeader + ") VALUES (" +
-            std::to_string(order.Id) + CSV_SEP +
-            std::to_string(SYMBOL_ID) + CSV_SEP +
+            std::to_string((int)order.Id) + CSV_SEP +
+            std::to_string((int)SYMBOL_ID) + CSV_SEP +
             std::to_string((int)order.Type) + CSV_SEP +
             std::to_string((int)order.Side) + CSV_SEP +
-            std::to_string(order.Price) + CSV_SEP +
-            std::to_string(order.StopPrice) + CSV_SEP +
-            std::to_string(order.Quantity) + CSV_SEP +
+            std::to_string((int)order.Price) + CSV_SEP +
+            std::to_string((int)order.StopPrice) + CSV_SEP +
+            std::to_string((int)order.Quantity) + CSV_SEP +
             std::to_string((int)order.TimeInForce) + CSV_SEP +
-            std::to_string(order.MaxVisibleQuantity) + CSV_SEP +
-            std::to_string(order.Slippage) + CSV_SEP +
-            std::to_string(order.TrailingDistance) + CSV_SEP +
-            std::to_string(order.TrailingStep) + CSV_SEP +
-            std::to_string(order.ExecutedQuantity) + CSV_SEP +
-            std::to_string(order.LeavesQuantity) +
+            std::to_string((int)order.MaxVisibleQuantity) + CSV_SEP +
+            std::to_string((int)order.Slippage) + CSV_SEP +
+            std::to_string((int)order.TrailingDistance) + CSV_SEP +
+            std::to_string((int)order.TrailingStep) + CSV_SEP +
+            std::to_string((int)order.ExecutedQuantity) + CSV_SEP +
+            std::to_string((int)order.LeavesQuantity) +
         ")"
     );
 }
