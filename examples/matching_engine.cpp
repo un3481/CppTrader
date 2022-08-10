@@ -177,11 +177,9 @@ static void Daemonize(const char* root)
     /* or another appropriated directory */
     if (chdir(root) < 0) { error("error changing root directory"); exit(1); };
 
-    /*
     // Close all open file descriptors
     for (int fd = sysconf(_SC_OPEN_MAX); fd >= 0; fd--)
     { close(fd); }
-    */
 }
 
 /* ############################################################################################################################################# */
