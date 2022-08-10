@@ -63,10 +63,8 @@ template <typename T>
 inline std::string sstos(const T* input)
 {
     std::stringstream ss;
-    std::string str;
     ss << (*input);
-    ss >> str;
-    return str;
+    return ss.str();
 }
 
 // Log
