@@ -520,7 +520,7 @@ static const std::string CreateTableOrdersQuery = (std::string("") +
 
 // Order Book CSV Header
 static const std::string CreateTableLatestQuery = (std::string("") +
-    "CREATE TABLE IF NOT EXISTS latest (Id INT NOT NULL);" +
+    "CREATE TABLE IF NOT EXISTS latest (Id INT NOT NULL); " +
     "INSERT INTO latest (Id) SELECT 0 WHERE NOT EXISTS (" +
         "SELECT * FROM latest" +
     ");"
@@ -532,9 +532,9 @@ static const std::string CreateTableLatestQuery = (std::string("") +
 void PopulateDatabase(sqlite3* db)
 {
     // Create Tables in SQLite
-    auto query = (CreateTableLatestQuery + CreateTableOrdersQuery).c_str();
+    auto query = (CreateTableLatestQuery + " " + CreateTableOrdersQuery).c_str();
     char* err;
-    auto rdy = sqlite3_exec(db, query, NULL, 0, &err);
+    auto rdy = sqlite3_exec(db, query, NULL, NULL, &err);
     if (rdy != SQLITE_OK)
     {
         error("sqlite error(1): " + sstos(&err));
@@ -551,7 +551,7 @@ int GetLatestId(sqlite3* db) {
     auto rdy = sqlite3_prepare(db, query.c_str(), -1, &result, NULL);
     if (rdy != SQLITE_OK)
     {
-        auto err = sqlite3_errmsg(db);
+        const char* err = sqlite3_errmsg(db);
         error("sqlite error(2): " + sstos(&err));
         exit(1);
     };
@@ -577,14 +577,13 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
     if (err != ErrorCode::OK)
     { error("Failed AddOrderBook: " + sstos(&err)); exit(1); };
 
+    // Prepare query
     sqlite3_stmt* result;
     const std::string query = "SELECT * FROM orders";
-
-    // Prepare query
     auto rdy = sqlite3_prepare(db, query.c_str(), -1, &result, NULL);
     if (rdy != SQLITE_OK)
     {
-        auto _err = sqlite3_errmsg(db);
+        const char* _err = sqlite3_errmsg(db);
         error("sqlite error(3): " + sstos(&_err));
         exit(1);
     };
