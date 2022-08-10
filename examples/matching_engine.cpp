@@ -1553,14 +1553,11 @@ int main(int argc, char** argv)
     // Change process to Daemon
     Daemonize(root.string().c_str());
 
-    log("switched to daemon");
-
     // Set Stdout and Stderr to log and err files
-    if (freopen(log_path.string().c_str(), "a+", stdout) == NULL)
-    { error("error opening log file"); exit(1); };
-    
-    if (freopen(err_path.string().c_str(), "a+", stderr) == NULL)
-    { error("error opening err file"); exit(1); };
+    if (freopen(log_path.string().c_str(), "a+", stdout) == NULL) exit(1);
+    if (freopen(err_path.string().c_str(), "a+", stderr) == NULL) exit(1);
+
+    log("switched to daemon");
 
     // Connect to SQLite
     sqlite3* db;
