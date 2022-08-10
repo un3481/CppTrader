@@ -19,7 +19,7 @@
 #include <OptionParser.h>
 
 extern "C" {
-    #include <SQLite/sqlite3.h>
+    #include <sqlite/sqlite3.h>
 }
 
 using namespace CppCommon;
@@ -28,7 +28,7 @@ using namespace CppTrader::Matching;
 /* ############################################################################################################################################# */
 // Constants
 
-#define VERSION "2.0.11.0" // Program version
+#define VERSION "2.0.13.0" // Program version
 
 #define CSV_SEP "," // CSV separator
 #define CSV_EOL "\n" // CSV end of line
