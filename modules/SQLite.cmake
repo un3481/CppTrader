@@ -1,7 +1,4 @@
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-
-add_executable(tutorial new.cpp)
 find_package (SQLite3)
 
 if (SQLITE3_FOUND)
