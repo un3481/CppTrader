@@ -1,6 +1,6 @@
 
-set (LIB_DIR_LOCATION modules/SQLite)
-set(INCLUDE_DIRS modules/SQLite)
+set (LIB_DIR_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/modules/SQLite")
+set(INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/modules/SQLite")
 
 find_library(SQLite3 NAMES sqlite3 PATHS ${LIB_DIR_LOCATION})
 
