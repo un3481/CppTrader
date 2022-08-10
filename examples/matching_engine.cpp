@@ -798,20 +798,25 @@ protected:
         if (ctx_id != order.Id) error("Error at 'onAddOrder' callback: id out of sync");
         else
         {
-            // Add order to SQLite
             auto db = CommandCtx::Get().sqlite_ptr;
             char* err;
+
+            // Add order to SQLite
             auto query1 = QueryFromOrder(order).c_str();
-            log("add query1: " + std::string(query1));
             auto rdy = sqlite3_exec(db, query1, NULL, NULL, &err);
             if (rdy != SQLITE_OK)
             { error("sqlite error(6): " + sstos(&err)); };
+
             // Update Latest Id
-            auto query2 = ("UPDATE latest SET Id=" + sstos(&order.Id)).c_str();
-            log("add query2: " + std::string(query2));
+            auto query2 = (std::string("") +
+                "UPDATE latest SET Id=" + sstos(&order.Id)
+            ).c_str();
             rdy = sqlite3_exec(db, query2, NULL, NULL, &err);
             if (rdy != SQLITE_OK)
             { error("sqlite error(7): " + sstos(&err)); };
+
+            log("add query1: " + sstos(&query1));
+            log("add query2: " + sstos(&query2));
         };
 
         // Log Add Order
@@ -847,11 +852,13 @@ protected:
         // Check if operation is enabled
         if (!(CommandCtx::Get().enable)) return;
         
-        // Delete order from SQLite
         auto db = CommandCtx::Get().sqlite_ptr;
         char* err;
-        auto query = ("DELETE FROM orders WHERE Id=" + sstos(&order.Id)).c_str();
-        log("delete query: " + std::string(query));
+
+        // Delete order from SQLite
+        auto query = (std::string("") +
+            "DELETE FROM orders WHERE Id=" + sstos(&order.Id)
+        ).c_str();
         auto rdy = sqlite3_exec(db, query, NULL, NULL, &err);
         if (rdy != SQLITE_OK)
         { error("sqlite error(8): " + sstos(&err)); };
