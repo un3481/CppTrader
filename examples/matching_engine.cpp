@@ -17,7 +17,7 @@
 #include <regex>
 #include <iostream>
 #include <OptionParser.h>
-#include <sqlite/sqlite3.h>
+#include <SQLite/sqlite3.h>
 
 using namespace CppCommon;
 using namespace CppTrader::Matching;
