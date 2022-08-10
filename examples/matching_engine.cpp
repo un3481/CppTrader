@@ -64,7 +64,8 @@ inline std::string sstos(const T* input)
 {
     std::stringstream ss;
     std::string str;
-    ss << (*input); ss >> str;
+    ss << (*input);
+    ss >> str;
     return str;
 }
 
@@ -471,10 +472,7 @@ std::string QueryFromOrder(const Order& order)
             std::to_string((int)order.TrailingStep) + CSV_SEP +
             std::to_string((int)order.ExecutedQuantity) + CSV_SEP +
             std::to_string((int)order.LeavesQuantity) +
-        ");" +
-        "UPDATE latest SET (" +
-            "Id=" + std::to_string((int)order.Id) +
-        ");"
+        ")"
     );
 }
 
@@ -804,11 +802,16 @@ protected:
         {
             // Add order to SQLite
             auto db = CommandCtx::Get().sqlite_ptr;
-            auto query = QueryFromOrder(order).c_str();
+            auto query1 = QueryFromOrder(order).c_str();
             char* err;
-            auto rdy = sqlite3_exec(db, query, NULL, NULL, &err);
+            auto rdy = sqlite3_exec(db, query1, NULL, NULL, &err);
             if (rdy != SQLITE_OK)
             { error("sqlite error(6): " + sstos(&err)); };
+            // Update Latest Id
+            auto query2 = ("UPDATE latest SET Id=" + sstos(&order.Id)).c_str();
+            rdy = sqlite3_exec(db, query2, NULL, NULL, &err);
+            if (rdy != SQLITE_OK)
+            { error("sqlite error(7): " + sstos(&err)); };
         };
 
         // Log Add Order
@@ -846,14 +849,11 @@ protected:
         
         // Delete order from SQLite
         auto db = CommandCtx::Get().sqlite_ptr;
-        auto query = (std::string("") +
-            "DELETE FROM orders " +
-            "WHERE Id=" + sstos(&order.Id)
-        ).c_str();
+        auto query = ("DELETE FROM orders WHERE Id=" + sstos(&order.Id)).c_str();
         char* err;
         auto rdy = sqlite3_exec(db, query, NULL, NULL, &err);
         if (rdy != SQLITE_OK)
-        { error("sqlite error(7): " + sstos(&err)); };
+        { error("sqlite error(8): " + sstos(&err)); };
 
         // Log Deleted Order
         log("Delete order: " + sstos(&order));
@@ -1196,8 +1196,6 @@ void AddLimitOrder(MarketManager* market, const std::string& command)
         uint64_t id = CommandCtx::Get().order_id;
         uint64_t price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
-
-        log("add limit Order(id: " + sstos(&id) + ", price: " + sstos(&id) + ", quantity: " + sstos(&quantity) + ")");
 
         Order order;
         if (match[1] == "buy")
