@@ -28,7 +28,7 @@ using namespace CppTrader::Matching;
 /* ############################################################################################################################################# */
 // Constants
 
-#define VERSION "2.0.13.0" // Program version
+#define VERSION "2.0.15.0" // Program version
 
 #define CSV_SEP "," // CSV separator
 #define CSV_EOL "\n" // CSV end of line
@@ -795,7 +795,7 @@ protected:
         _lts_order_id = std::max((size_t)order.Id, _lts_order_id);
 
         // Check if operation is enabled
-        if (!CommandCtx::Get().enable) return;
+        if (!(CommandCtx::Get().enable)) return;
 
         // Check Id Sync
         uint64_t ctx_id = CommandCtx::Get().order_id;
@@ -842,7 +842,7 @@ protected:
         ++_updates; --_orders; ++_delete_orders;
 
         // Check if operation is enabled
-        if (!CommandCtx::Get().enable) return;
+        if (!(CommandCtx::Get().enable)) return;
         
         // Delete order from SQLite
         auto db = CommandCtx::Get().sqlite_ptr;
