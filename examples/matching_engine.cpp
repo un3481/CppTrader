@@ -454,9 +454,8 @@ std::string ParseOrderBook(MarketManager* market, const OrderBook* order_book_pt
 // Parse Number or Null to Query String
 std::string IntNullToQuery(uint64_t value)
 {
-    return (std::string("") + (
-        value == NULL ? "NULL" : std::to_string(value)
-    ));
+    if (value == NULL) return std::string("NULL");
+    else return std::to_string(value);
 }
 
 // Generate Query to insert Order into SQLite
@@ -485,10 +484,8 @@ std::string QueryFromOrder(const Order& order)
 // Parse Query Result to Number or Null
 int QueryToIntNull(sqlite3_stmt* row, int col)
 {
-    return (
-        (sqlite3_column_type(row, col) == SQLITE_NULL) ?
-            NULL : sqlite3_column_int(row, col)
-    );
+    if (sqlite3_column_type(row, col) == SQLITE_NULL) return NULL;
+    else return sqlite3_column_int(row, col);
 }
 
 // Generate new Order from result of Query
