@@ -2,7 +2,7 @@
 if(NOT TARGET sqlite)
 
   # Module library
-  file(GLOB SOURCE_FILES "SQLite/sqlite3.c")
+  file(GLOB SOURCE_FILES "SQLite/sqlite3.cpp")
   add_library(sqlite ${SOURCE_FILES})
   target_include_directories(sqlite PUBLIC "SQLite")
 
