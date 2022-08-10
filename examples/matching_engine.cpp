@@ -464,7 +464,10 @@ std::string QueryFromOrder(const Order& order)
             std::to_string((int)order.TrailingStep) + CSV_SEP +
             std::to_string((int)order.ExecutedQuantity) + CSV_SEP +
             std::to_string((int)order.LeavesQuantity) +
-        ")"
+        ");" +
+        "UPDATE latest SET (" +
+            "Id=" + std::to_string((int)order.Id) +
+        ");"
     );
 }
 
@@ -490,28 +493,31 @@ Order OrderFromQuery(sqlite3_stmt* row)
 /* ############################################################################################################################################# */
 
 // Order CSV Header
-static const std::string CreateOrdersTableQuery = (std::string("") +
-    "CREATE TABLE orders (" +
+static const std::string CreateTableOrdersQuery = (std::string("") +
+    "CREATE TABLE IF NOT EXISTS orders (" +
         "Id INT PRIMARY KEY NOT NULL" + CSV_SEP +
-        "SymbolId INT NOT NULL" + CSV_SEP +
-        "Type INT NOT NULL" + CSV_SEP +
-        "Side INT NOT NULL" + CSV_SEP +
+        "SymbolId TINYINT NOT NULL" + CSV_SEP +
+        "Type TINYINT NOT NULL" + CSV_SEP +
+        "Side TINYINT NOT NULL" + CSV_SEP +
         "Price INT NOT NULL" + CSV_SEP +
         "StopPrice INT NOT NULL" + CSV_SEP +
         "Quantity INT NOT NULL" + CSV_SEP +
-        "TimeInForce INT NOT NULL" + CSV_SEP +
+        "TimeInForce TINYINT NOT NULL" + CSV_SEP +
         "MaxVisibleQuantity INT" + CSV_SEP +
         "Slippage INT" + CSV_SEP +
         "TrailingDistance INT" + CSV_SEP +
         "TrailingStep INT" + CSV_SEP +
         "ExecutedQuantity INT NOT NULL" + CSV_SEP +
         "LeavesQuantity INT NOT NULL" +
-    ")"
+    ");"
 );
 
 // Order Book CSV Header
-static const std::string CreateLatestTableQuery = (std::string("") +
-    "CREATE TABLE latest (Id INT NOT NULL)"
+static const std::string CreateTableLatestQuery = (std::string("") +
+    "CREATE TABLE IF NOT EXISTS latest (Id INT NOT NULL);" +
+    "INSERT INTO latest (Id) SELECT 0 WHERE NOT EXISTS (" +
+        "SELECT * FROM latest" +
+    ");"
 );
 
 /* ############################################################################################################################################# */
@@ -521,8 +527,8 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
 {
     // Add order to SQLite
     char* err;
-    auto query = CreateOrdersTableQuery.c_str();
-    auto rdy = sqlite3_exec(db, query, NULL, 0, &err);
+    auto query1 = (CreateTableLatestQuery + CreateTableOrdersQuery).c_str();
+    auto rdy = sqlite3_exec(db, query1, NULL, 0, &err);
     if (rdy != SQLITE_OK)
     { error("sqlite error: " + sstos(&err)); };
 
@@ -538,10 +544,10 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
     { error("Failed AddOrderBook: " + sstos(&errc)); exit(1); };
 
     sqlite3_stmt* result;
-    char* query = "SELECT * FROM orders";
+    char* query2 = "SELECT * FROM orders";
 
     // Prepare query
-    rdy = sqlite3_prepare(db, query, -1, &result, NULL);
+    rdy = sqlite3_prepare(db, query2, -1, &result, NULL);
     auto errmsg = sqlite3_errmsg(db);
     if (rdy != SQLITE_OK)
     { error("sqlite error: " + sstos(&errmsg)); exit(1); };
