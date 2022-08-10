@@ -103,31 +103,32 @@ namespace CommandCtx {
     };
 
     // Static context
-    Context& _ctx()
+    Context* _ctx()
     {
         static Context ctx;
-        return ctx;
+        return &ctx;
     }
 
     // Set Context
-    void Set(Context& value)
+    inline void Set(Context& value)
     {
-        auto ctx = _ctx();
         Context new_ctx = value;
-        ctx = new_ctx;
+        auto ctx = _ctx();
+        (*ctx) = new_ctx;
     }
 
     // Clear Context
-    void Clear()
+    inline void Clear()
     {
         Context ctx;
         Set(ctx);
     }
 
     // Get Context
-    auto Get()
+    inline auto Get()
     {
-        Context ctx = _ctx();
+        auto ctx_ptr = _ctx();
+        Context ctx = (*ctx_ptr);
         return ctx;
     }
 }
