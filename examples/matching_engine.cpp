@@ -1633,6 +1633,8 @@ int main(int argc, char** argv)
                     else
                     {
                         log("will generate context");
+                        auto c1 = CommandCtx::Get();
+                        log("(1) ctx.enable = " + sstos(&c1.enable));
 
                         // Set New Context
                         auto ctx = CommandCtx::Context();
@@ -1645,6 +1647,8 @@ int main(int argc, char** argv)
                         CommandCtx::Set(ctx);
 
                         log("generated context");
+                        auto c2 = CommandCtx::Get();
+                        log("(2) ctx.enable = " + sstos(&c2.enable));
 
                         // Execute command
                         Execute(&market, message);
