@@ -314,6 +314,21 @@ int WriteSocketStream(int sockfd, std::string* data)
     return 1;
 }
 
+// Write to stream on Unix socket
+int WriteSocketStreamSmall(int sockfd, std::string* data)
+{
+    // Check if write is available
+    int rdy = SelectWrite(sockfd);
+    if (rdy <= 0) return rdy;
+
+    // Write string to stream
+    char buffer[MSG_SIZE_SMALL]; // Write MSG_SIZE_SMALL bytes
+    strcpy(buffer, (*data).c_str() + '\0'); // string is copied to buffer with a trailing \0 char 
+    if (write(sockfd, buffer, sizeof(buffer)) <= 0) return -1;
+
+    return 1;
+}
+
 /* ############################################################################################################################################# */
 
 // Accept connection on Unix socket (non-blocking)
@@ -816,6 +831,14 @@ protected:
             { error("sqlite error(7): " + sstos(&err)); };
         };
 
+        std::string res = std::to_string(order.Id);
+
+        // Send data back to client
+        auto connfd = CommandCtx::Get().connection;
+        auto rdy = WriteSocketStreamSmall(connfd, &res);
+        if (rdy < 0)
+            error("Failed sending response of 'add order' command");
+
         // Log Add Order
         log("Add order: " + sstos(&order));
 
@@ -1002,11 +1025,11 @@ void GetOrderBook(MarketManager* market, const std::string& command)
         else
         {
             // Get CSV
-            std::string csv = ParseOrderBook(market, order_book_ptr);
+            std::string res = ParseOrderBook(market, order_book_ptr);
 
             // Send data back to client
             auto connfd = CommandCtx::Get().connection;
-            auto rdy = WriteSocketStream(connfd, &csv);
+            auto rdy = WriteSocketStream(connfd, &res);
             if (rdy < 0)
                 error("Failed sending response of 'get book' command");
         }
