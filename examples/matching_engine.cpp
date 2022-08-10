@@ -93,13 +93,13 @@ namespace CommandCtx {
     struct Context
     {
         bool enable = false; // Enable operation with context
-        int connection = NULL; // File Descriptor for current Connection
+        int connection = 0; // File Descriptor for current Connection
         sqlite3* sqlite_ptr = NULL; // Connection to SQLite Database
         MarketManager* market_ptr = NULL; // Pointer to Market Manager
         MyMarketHandler* handler_ptr = NULL; // Pointer to Market Handler
         std::string command = NULL; // Command text
         std::string order_info = NULL; // Order text Id
-        uint64_t order_id = NULL; // Order Id
+        uint64_t order_id = 0; // Order Id
     };
 
     // Static context
