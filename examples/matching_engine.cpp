@@ -97,8 +97,8 @@ namespace CommandCtx {
         sqlite3* sqlite_ptr = NULL; // Connection to SQLite Database
         MarketManager* market_ptr = NULL; // Pointer to Market Manager
         MyMarketHandler* handler_ptr = NULL; // Pointer to Market Handler
-        std::string command = NULL; // Command text
-        std::string order_info = NULL; // Order text Id
+        std::string command = ""; // Command text
+        std::string order_info = ""; // Order text Id
         uint64_t order_id = 0; // Order Id
     };
 
