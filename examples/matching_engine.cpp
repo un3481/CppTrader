@@ -29,7 +29,7 @@ using namespace CppTrader::Matching;
 
 /* Preprocessed */
 
-#define VERSION "2.1.6.0" // Program version
+#define VERSION "2.1.7.0" // Program version
 
 #define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)
 #define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)
@@ -422,10 +422,7 @@ inline int AcceptConnection(int sockfd)
 // Parse Order to CSV
 inline std::string ParseOrder(const Order& order)
 {
-    std::string csv;
-
-    // Format CSV Values
-    csv.append(
+    return (
         std::to_string(order.Id) + CSV_SEP +
         std::to_string(order.SymbolId) + CSV_SEP +
         ORDER_TYPES[(int)order.Type] + CSV_SEP +
@@ -433,25 +430,23 @@ inline std::string ParseOrder(const Order& order)
         std::to_string(order.Price) + CSV_SEP +
         std::to_string(order.StopPrice) + CSV_SEP +
         std::to_string(order.Quantity) + CSV_SEP +
-        ORDER_TIFS[(int)order.TimeInForce] + CSV_SEP
-    );
-    if (order.IsHidden() || order.IsIceberg())
-        csv.append(std::to_string(order.MaxVisibleQuantity) + CSV_SEP);
-    else csv.append(NULL_STR + CSV_SEP);
-    if (order.IsSlippage())
-        csv.append(std::to_string(order.Slippage));
-    else csv.append(NULL_STR + CSV_SEP);
-    if (order.IsTrailingStop() || order.IsTrailingStopLimit()) csv.append(
-        std::to_string(order.TrailingDistance) + CSV_SEP +
-        std::to_string(order.TrailingStep) + CSV_SEP
-    );
-    else csv.append(NULL_STR + CSV_SEP + NULL_STR + CSV_SEP);
-    csv.append(
+        ORDER_TIFS[(int)order.TimeInForce] + CSV_SEP +
+        ((order.IsHidden() || order.IsIceberg())
+            ? std::to_string(order.MaxVisibleQuantity)
+            : NULL_STR
+        ) + CSV_SEP +
+        ((order.IsSlippage())
+            ? std::to_string(order.Slippage)
+            : NULL_STR
+        ) + CSV_SEP +
+        ((order.IsTrailingStop() || order.IsTrailingStopLimit())
+            ? std::to_string(order.TrailingDistance) + CSV_SEP +
+                std::to_string(order.TrailingStep)
+            : NULL_STR + CSV_SEP + NULL_STR
+        ) + CSV_SEP +
         std::to_string(order.ExecutedQuantity) + CSV_SEP +
         std::to_string(order.LeavesQuantity)
     );
-    
-    return csv;
 }
 
 /* ############################################################################################################################################# */
@@ -460,20 +455,22 @@ inline std::string ParseOrder(const Order& order)
 std::string ParseOrderBookLevels(MarketManager* market, OrderBook::Levels levels, const char* group)
 {
     std::string csv;
+    std::string level_props;
     
     // Loop over Levels orders
     for (auto level : levels) {
         // Get Level properties
-        const std::string level_props = (
+        level_props = (
             group + CSV_SEP +
             LEVEL_TYPES[(int)level.Type] + CSV_SEP +
-            std::to_string(level.Price) + CSV_SEP
+            std::to_string(level.Price)
         );
         for (auto node : level.OrderList) {
             auto order = (*market).GetOrder(node.Id);
-            csv.append(level_props); // Insert level properties
-            csv.append(ParseOrder(*order)); // Insert Order properties
-            csv.append(CSV_EOL);
+            csv.append(
+                level_props + CSV_SEP + // Insert level properties
+                ParseOrder(*order) + CSV_EOL // Insert Order properties
+            );
         }
     }
 
