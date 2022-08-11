@@ -10,9 +10,15 @@
 #include <sys/un.h>
 #include <stdio.h>
 
+/* ############################################################################################################################################# */
+
+#define VERSION "1.0.4.0"
+
 #define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)
 #define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)
 #define MSG_SIZE_LARGE 1024 // Buffer size for large messages on socket stream (bytes)
+
+/* ############################################################################################################################################# */
 
 void error(const char *msg)
 {
@@ -47,10 +53,30 @@ int ReadSocketStream(int sockfd, std::string* dest)
     return 1;
 }
 
+// Read stream on Unix socket (non-blocking)
+int ReadSocketStreamSmall(int sockfd, std::string* dest)
+{
+    // Always clear string
+    (*dest).clear();
+
+    // Check if data is available
+    int rdy = SelectReadBlocking(sockfd);
+    if (rdy <= 0) return rdy;
+
+    // Read stream to string
+    char buffer[MSG_SIZE_SMALL]; // Read MSG_SIZE bytes
+    if (read(sockfd, buffer, MSG_SIZE_SMALL) <= 0) return -1;
+    (*dest).append(buffer, strcspn(buffer, "\0")); // buffer is copied to string until the first \0 char is found
+
+    return 1;
+}
+
+/* ############################################################################################################################################# */
+
 int main(int argc, char *argv[])
 {
     // Parse input args 
-    auto parser = optparse::OptionParser().version("1.0.0.0");
+    auto parser = optparse::OptionParser().version(VERSION);
     parser.add_option("-p", "--path").dest("path").help("socket path");
     optparse::Values options = parser.parse_args(argc, argv);
 
@@ -83,6 +109,8 @@ int main(int argc, char *argv[])
     // Set Variables
     char* input;
     ssize_t size;
+
+    /* ############################################################################################################################################# */
     
     // Send message
     while (1)
@@ -93,6 +121,13 @@ int main(int argc, char *argv[])
         size = write(sockfd, buffer, MSG_SIZE);
 
         std::string instr = buffer;
+        if (instr.find("add ") != std::string::npos)
+        {
+            std::string result;
+            int rdy = ReadSocketStreamSmall(sockfd, &result);
+            if (rdy < 0) {};
+            std::cout << result << std::endl;
+        }
         if (instr.find("get book") != std::string::npos)
         {
             std::string result;
@@ -108,3 +143,5 @@ int main(int argc, char *argv[])
     close(sockfd);
     return 0;
 }
+
+/* ############################################################################################################################################# */
