@@ -809,27 +809,28 @@ protected:
         // Check if operation is enabled
         if (!ctx.enable) return;
 
+        // Check if Id is Sync
+        if (order.Id != ctx.order_id)
+        {
+            error("Error at 'onAddOrder' callback: id out of sync");
+            return;
+        }
+
         std::string id = std::to_string((int)order.Id);
 
-        // Check Id Sync
-        if (order.Id != ctx.order_id)
-            error("Error at 'onAddOrder' callback: id out of sync");
-        else
-        {
-            auto db = ctx.sqlite_ptr;
-            char* err;
+        auto db = ctx.sqlite_ptr;
+        char* err;
 
-            // Add order to SQLite
-            const std::string query = (EMPTY_STR +
-                "BEGIN; " +
-                "UPDATE latest SET Id=" + id + "; " +
-                QueryFromOrder(order, ctx.order_info) + "; " +
-                "COMMIT;"
-            );
-            auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
-            if (rdy != SQLITE_OK)
-            { error("sqlite error(4): " + sstos(&err)); };
-        };
+        // Add order to SQLite
+        const std::string query = (EMPTY_STR +
+            "BEGIN; " +
+            "UPDATE latest SET Id=" + id + "; " +
+            QueryFromOrder(order, ctx.order_info) + "; " +
+            "COMMIT;"
+        );
+        auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
+        if (rdy != SQLITE_OK)
+        { error("sqlite error(4): " + sstos(&err)); };
 
         // Send data back to client
         auto connfd = ctx.connection;
@@ -871,13 +872,15 @@ protected:
 
         // Check if operation is enabled
         if (!ctx.enable) return;
+
+        std::string id = std::to_string((int)order.Id);
         
         auto db = ctx.sqlite_ptr;
         char* err;
 
         // Delete order from SQLite
         const std::string query = (
-            "DELETE FROM orders WHERE Id=" + std::to_string((int)order.Id)
+            "DELETE FROM orders WHERE Id=" + id
         );
         auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
@@ -902,7 +905,7 @@ protected:
      	log("Execute order: " + sstos(&order) + " with price " + sstos(&price) + " and quantity " + sstos(&quantity));
 
         /*
-     	std::string csv;
+        std::string csv;
         csv.append(OrderCSVHeader + CSV_SEP + "Price" + CSV_SEP + "Quantity" + CSV_EOL);
         csv.append(ParseOrder(order) + CSV_SEP + std::to_string(price) + CSV_SEP + std::to_string(quantity) + CSV_EOL);
         */
