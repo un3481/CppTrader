@@ -26,24 +26,96 @@ using namespace CppCommon;
 using namespace CppTrader::Matching;
 
 /* ############################################################################################################################################# */
-// Constants
 
-#define VERSION "2.1.5.0" // Program version
+/* Preprocessed */
 
-#define CSV_SEP "," // CSV separator
-#define CSV_EOL "\n" // CSV end of line
-
-#define STATUS_RUN "RUNNING" // Daemon status (RUN)
-#define STATUS_GSTOP "GRACEFULLY_STOPPED" // Daemon status (GSTOP)
-#define STATUS_ABEND "ABEND" // Daemon status (ABEND)
-
-#define MAX_CLIENTS 64 // Max number of simultaneous clients connected to socket
+#define VERSION "2.1.6.0" // Program version
 
 #define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)
 #define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)
 #define MSG_SIZE_LARGE 1024 // Buffer size for large messages on socket stream (bytes)
 
-#define SYMBOL_ID 1 // Symbol Id for the Order Book
+#define MAX_CLIENTS 64 // Max number of simultaneous clients connected to socket
+
+/* ############################################################################################################################################# */
+
+/* Constants */
+
+const uint64_t SYMBOL_ID = 1; // Symbol Id for the Order Book
+
+const std::string STATUS_RUN = "RUNNING"; // Daemon status (RUN)
+const std::string STATUS_GSTOP = "GRACEFULLY_STOPPED"; // Daemon status (GSTOP)
+const std::string STATUS_ABEND = "ABEND"; // Daemon status (ABEND)
+
+const std::string EMPTY_STR = ""; // Empty String
+const std::string NULL_STR = "NULL"; // Null String
+
+const std::string CSV_SEP = ","; // CSV separator
+const std::string CSV_EOL = "\n"; // CSV end of line
+
+// Enums Mapping
+const char* OrderSides[] = {"BUY","SELL"};
+const char* OrderTypes[] = {"MARKET","LIMIT","STOP","STOP_LIMIT","TRAILING_STOP","TRAILING_STOP_LIMIT"};
+const char* OrderTIFs[] = {"GTC","IOC","FOK","AON"};
+const char* LevelTypes[] = {"BID","ASK"};
+
+// Order CSV Header
+const std::string OrderCSVHeader = (
+    "Id" + CSV_SEP +
+    "SymbolId" + CSV_SEP +
+    "Type" + CSV_SEP +
+    "Side" + CSV_SEP +
+    "Price" + CSV_SEP +
+    "StopPrice" + CSV_SEP +
+    "Quantity" + CSV_SEP +
+    "TimeInForce" + CSV_SEP +
+    "MaxVisibleQuantity" + CSV_SEP +
+    "Slippage" + CSV_SEP +
+    "TrailingDistance" + CSV_SEP +
+    "TrailingStep" + CSV_SEP +
+    "ExecutedQuantity" + CSV_SEP +
+    "LeavesQuantity"
+);
+
+// Order Book CSV Header
+const std::string BookCSVHeader = (
+    "Group" + CSV_SEP +
+    "LevelType" + CSV_SEP +
+    "LevelPrice"
+);
+
+// Create Orders Table Query
+const std::string CreateOrdersTableQuery = (EMPTY_STR +
+    "CREATE TABLE IF NOT EXISTS orders (" +
+        "Id INT PRIMARY KEY NOT NULL" + CSV_SEP +
+        "SymbolId TINYINT NOT NULL" + CSV_SEP +
+        "Type TINYINT NOT NULL" + CSV_SEP +
+        "Side TINYINT NOT NULL" + CSV_SEP +
+        "Price INT NOT NULL" + CSV_SEP +
+        "StopPrice INT NOT NULL" + CSV_SEP +
+        "Quantity INT NOT NULL" + CSV_SEP +
+        "TimeInForce TINYINT NOT NULL" + CSV_SEP +
+        "MaxVisibleQuantity INT" + CSV_SEP +
+        "Slippage INT" + CSV_SEP +
+        "TrailingDistance INT" + CSV_SEP +
+        "TrailingStep INT" + CSV_SEP +
+        "ExecutedQuantity INT NOT NULL" + CSV_SEP +
+        "LeavesQuantity INT NOT NULL" + CSV_SEP +
+        "Info CHAR(64) NOT NULL" +
+    ")"
+);
+
+// Create Latest Table Query
+const std::string CreateLatestTableQuery = (
+    "CREATE TABLE IF NOT EXISTS latest (Id INT NOT NULL)"
+);
+
+// Populate Latest Table Query
+const std::string InsertIntoLatestQuery = (EMPTY_STR +
+    "INSERT INTO latest (Id) SELECT 0 WHERE NOT EXISTS (" +
+        "SELECT * FROM latest" +
+    ")"
+);
 
 /* ############################################################################################################################################# */
 
@@ -347,40 +419,9 @@ inline int AcceptConnection(int sockfd)
 
 /* ############################################################################################################################################# */
 
-// Order CSV Header
-static const std::string OrderCSVHeader = (std::string("") +
-    "Id" + CSV_SEP +
-    "SymbolId" + CSV_SEP +
-    "Type" + CSV_SEP +
-    "Side" + CSV_SEP +
-    "Price" + CSV_SEP +
-    "StopPrice" + CSV_SEP +
-    "Quantity" + CSV_SEP +
-    "TimeInForce" + CSV_SEP +
-    "MaxVisibleQuantity" + CSV_SEP +
-    "Slippage" + CSV_SEP +
-    "TrailingDistance" + CSV_SEP +
-    "TrailingStep" + CSV_SEP +
-    "ExecutedQuantity" + CSV_SEP +
-    "LeavesQuantity"
-);
-
-// Order Book CSV Header
-static const std::string OrderBookCSVHeader = (std::string("") +
-    "Group" + CSV_SEP +
-    "LevelType" + CSV_SEP +
-    "LevelPrice"
-);
-
-/* ############################################################################################################################################# */
-
 // Parse Order to CSV
 inline std::string ParseOrder(const Order& order)
 {
-    static const char* OrderSides[] = {"BUY","SELL"};
-    static const char* OrderTypes[] = {"MARKET","LIMIT","STOP","STOP_LIMIT","TRAILING_STOP","TRAILING_STOP_LIMIT"};
-    static const char* OrderTIFs[] = {"GTC","IOC","FOK","AON"};
-    static const std::string NullField = "NULL";
     std::string csv;
 
     // Format CSV Values
@@ -396,15 +437,15 @@ inline std::string ParseOrder(const Order& order)
     );
     if (order.IsHidden() || order.IsIceberg())
         csv.append(std::to_string(order.MaxVisibleQuantity) + CSV_SEP);
-    else csv.append(NullField + CSV_SEP);
+    else csv.append(NULL_STR + CSV_SEP);
     if (order.IsSlippage())
         csv.append(std::to_string(order.Slippage));
-    else csv.append(NullField + CSV_SEP);
+    else csv.append(NULL_STR + CSV_SEP);
     if (order.IsTrailingStop() || order.IsTrailingStopLimit()) csv.append(
         std::to_string(order.TrailingDistance) + CSV_SEP +
         std::to_string(order.TrailingStep) + CSV_SEP
     );
-    else csv.append(NullField + CSV_SEP + NullField + CSV_SEP);
+    else csv.append(NULL_STR + CSV_SEP + NULL_STR + CSV_SEP);
     csv.append(
         std::to_string(order.ExecutedQuantity) + CSV_SEP +
         std::to_string(order.LeavesQuantity)
@@ -418,13 +459,12 @@ inline std::string ParseOrder(const Order& order)
 // Parse OrderBook::Levels to CSV
 std::string ParseOrderBookLevels(MarketManager* market, OrderBook::Levels levels, const char* group)
 {
-    static const char* LevelTypes[] = {"BID","ASK"};
     std::string csv;
     
     // Loop over Levels orders
     for (auto level : levels) {
         // Get Level properties
-        const std::string level_props = (std::string("") +
+        const std::string level_props = (
             group + CSV_SEP +
             LevelTypes[(int)level.Type] + CSV_SEP +
             std::to_string(level.Price) + CSV_SEP
@@ -448,7 +488,7 @@ std::string ParseOrderBook(MarketManager* market, const OrderBook* order_book_pt
     // Insert header
     std::string csv;
     csv.append(
-        OrderBookCSVHeader + CSV_SEP +
+        BookCSVHeader + CSV_SEP +
         OrderCSVHeader + CSV_EOL
     );
 
@@ -468,7 +508,7 @@ std::string ParseOrderBook(MarketManager* market, const OrderBook* order_book_pt
 // Generate Query to insert Order into SQLite
 inline std::string QueryFromOrder(const Order& order, std::string info)
 {
-    return (std::string("") +
+    return (
         "INSERT INTO orders (" + OrderCSVHeader + ",Info) VALUES (" +
             std::to_string((int)order.Id) + CSV_SEP +
             std::to_string((int)SYMBOL_ID) + CSV_SEP +
@@ -510,49 +550,14 @@ inline Order OrderFromQuery(sqlite3_stmt* row)
 
 /* ############################################################################################################################################# */
 
-// Order CSV Header
-static const std::string CreateTableOrdersQuery = (std::string("") +
-    "CREATE TABLE IF NOT EXISTS orders (" +
-        "Id INT PRIMARY KEY NOT NULL" + CSV_SEP +
-        "SymbolId TINYINT NOT NULL" + CSV_SEP +
-        "Type TINYINT NOT NULL" + CSV_SEP +
-        "Side TINYINT NOT NULL" + CSV_SEP +
-        "Price INT NOT NULL" + CSV_SEP +
-        "StopPrice INT NOT NULL" + CSV_SEP +
-        "Quantity INT NOT NULL" + CSV_SEP +
-        "TimeInForce TINYINT NOT NULL" + CSV_SEP +
-        "MaxVisibleQuantity INT" + CSV_SEP +
-        "Slippage INT" + CSV_SEP +
-        "TrailingDistance INT" + CSV_SEP +
-        "TrailingStep INT" + CSV_SEP +
-        "ExecutedQuantity INT NOT NULL" + CSV_SEP +
-        "LeavesQuantity INT NOT NULL" + CSV_SEP +
-        "Info CHAR(64) NOT NULL" +
-    ")"
-);
-
-// Order Book CSV Header
-static const std::string CreateTableLatestQuery = (std::string("") +
-    "CREATE TABLE IF NOT EXISTS latest (Id INT NOT NULL)"
-);
-
-// Order Book CSV Header
-static const std::string InsertIntoLatestQuery = (std::string("") +
-    "INSERT INTO latest (Id) SELECT 0 WHERE NOT EXISTS (" +
-        "SELECT * FROM latest" +
-    ")"
-);
-
-/* ############################################################################################################################################# */
-
 // Populate SQLite Database
 void PopulateDatabase(sqlite3* db)
 {
     // Create Tables in SQLite
-    auto query = (
-        CreateTableLatestQuery + "; " +
+    const auto query = (
+        CreateLatestTableQuery + "; " +
         InsertIntoLatestQuery + "; " +
-        CreateTableOrdersQuery + ";"
+        CreateOrdersTableQuery + ";"
     );
     char* err;
     auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
@@ -816,7 +821,7 @@ protected:
             char* err;
 
             // Add order to SQLite
-            const std::string query = (std::string("") +
+            const std::string query = (EMPTY_STR +
                 "BEGIN; " +
                 "UPDATE latest SET Id=" + sstos(&order.Id) + "; " +
                 QueryFromOrder(order, ctx.order_info) + "; " +
@@ -874,7 +879,7 @@ protected:
         char* err;
 
         // Delete order from SQLite
-        const std::string query = (std::string("") +
+        const std::string query = (
             "DELETE FROM orders WHERE Id=" + sstos(&order.Id)
         );
         auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
