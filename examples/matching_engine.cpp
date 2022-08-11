@@ -54,13 +54,13 @@ const std::string CSV_SEP = ","; // CSV separator
 const std::string CSV_EOL = "\n"; // CSV end of line
 
 // Enums Mapping
-const char* OrderSides[] = {"BUY","SELL"};
-const char* OrderTypes[] = {"MARKET","LIMIT","STOP","STOP_LIMIT","TRAILING_STOP","TRAILING_STOP_LIMIT"};
-const char* OrderTIFs[] = {"GTC","IOC","FOK","AON"};
-const char* LevelTypes[] = {"BID","ASK"};
+const char* LEVEL_TYPES[] = {"BID","ASK"};
+const char* ORDER_SIDES[] = {"BUY","SELL"};
+const char* ORDER_TYPES[] = {"MARKET","LIMIT","STOP","STOP_LIMIT","TRAILING_STOP","TRAILING_STOP_LIMIT"};
+const char* ORDER_TIFS[] = {"GTC","IOC","FOK","AON"};
 
 // Order CSV Header
-const std::string OrderCSVHeader = (
+const std::string CSV_HEADER_FOR_ORDER = (
     "Id" + CSV_SEP +
     "SymbolId" + CSV_SEP +
     "Type" + CSV_SEP +
@@ -78,14 +78,14 @@ const std::string OrderCSVHeader = (
 );
 
 // Order Book CSV Header
-const std::string BookCSVHeader = (
+const std::string CSV_HEADER_FOR_BOOK = (
     "Group" + CSV_SEP +
     "LevelType" + CSV_SEP +
     "LevelPrice"
 );
 
 // Create Orders Table Query
-const std::string CreateOrdersTableQuery = (EMPTY_STR +
+const std::string QUERY_CREATE_TABLE_ORDERS = (EMPTY_STR +
     "CREATE TABLE IF NOT EXISTS orders (" +
         "Id INT PRIMARY KEY NOT NULL" + CSV_SEP +
         "SymbolId TINYINT NOT NULL" + CSV_SEP +
@@ -106,12 +106,12 @@ const std::string CreateOrdersTableQuery = (EMPTY_STR +
 );
 
 // Create Latest Table Query
-const std::string CreateLatestTableQuery = (
+const std::string QUERY_CREATE_TABLE_LATEST = (
     "CREATE TABLE IF NOT EXISTS latest (Id INT NOT NULL)"
 );
 
 // Populate Latest Table Query
-const std::string InsertIntoLatestQuery = (EMPTY_STR +
+const std::string QUERY_INSERT_INTO_LATEST = (EMPTY_STR +
     "INSERT INTO latest (Id) SELECT 0 WHERE NOT EXISTS (" +
         "SELECT * FROM latest" +
     ")"
@@ -428,12 +428,12 @@ inline std::string ParseOrder(const Order& order)
     csv.append(
         std::to_string(order.Id) + CSV_SEP +
         std::to_string(order.SymbolId) + CSV_SEP +
-        OrderTypes[(int)order.Type] + CSV_SEP +
-        OrderSides[(int)order.Side] + CSV_SEP +
+        ORDER_TYPES[(int)order.Type] + CSV_SEP +
+        ORDER_SIDES[(int)order.Side] + CSV_SEP +
         std::to_string(order.Price) + CSV_SEP +
         std::to_string(order.StopPrice) + CSV_SEP +
         std::to_string(order.Quantity) + CSV_SEP +
-        OrderTIFs[(int)order.TimeInForce] + CSV_SEP
+        ORDER_TIFS[(int)order.TimeInForce] + CSV_SEP
     );
     if (order.IsHidden() || order.IsIceberg())
         csv.append(std::to_string(order.MaxVisibleQuantity) + CSV_SEP);
@@ -466,7 +466,7 @@ std::string ParseOrderBookLevels(MarketManager* market, OrderBook::Levels levels
         // Get Level properties
         const std::string level_props = (
             group + CSV_SEP +
-            LevelTypes[(int)level.Type] + CSV_SEP +
+            LEVEL_TYPES[(int)level.Type] + CSV_SEP +
             std::to_string(level.Price) + CSV_SEP
         );
         for (auto node : level.OrderList) {
@@ -488,8 +488,8 @@ std::string ParseOrderBook(MarketManager* market, const OrderBook* order_book_pt
     // Insert header
     std::string csv;
     csv.append(
-        BookCSVHeader + CSV_SEP +
-        OrderCSVHeader + CSV_EOL
+        CSV_HEADER_FOR_BOOK + CSV_SEP +
+        CSV_HEADER_FOR_ORDER + CSV_EOL
     );
 
     // Parse Levels
@@ -509,7 +509,7 @@ std::string ParseOrderBook(MarketManager* market, const OrderBook* order_book_pt
 inline std::string QueryFromOrder(const Order& order, std::string info)
 {
     return (
-        "INSERT INTO orders (" + OrderCSVHeader + ",Info) VALUES (" +
+        "INSERT INTO orders (" + CSV_HEADER_FOR_ORDER + ",Info) VALUES (" +
             std::to_string((int)order.Id) + CSV_SEP +
             std::to_string((int)SYMBOL_ID) + CSV_SEP +
             std::to_string((int)order.Type) + CSV_SEP +
@@ -555,9 +555,9 @@ void PopulateDatabase(sqlite3* db)
 {
     // Create Tables in SQLite
     const auto query = (
-        CreateLatestTableQuery + "; " +
-        InsertIntoLatestQuery + "; " +
-        CreateOrdersTableQuery + ";"
+        QUERY_CREATE_TABLE_LATEST + "; " +
+        QUERY_INSERT_INTO_LATEST + "; " +
+        QUERY_CREATE_TABLE_ORDERS + ";"
     );
     char* err;
     auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
@@ -1170,7 +1170,7 @@ void GetOrder(MarketManager* market, const std::string& command)
         {
             // Get CSV
             std::string res = (
-                OrderCSVHeader + CSV_EOL +
+                CSV_HEADER_FOR_ORDER + CSV_EOL +
                 ParseOrder(*order_ptr) + CSV_EOL
             );
 
