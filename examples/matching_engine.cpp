@@ -28,7 +28,7 @@ using namespace CppTrader::Matching;
 /* ############################################################################################################################################# */
 // Constants
 
-#define VERSION "2.1.4.0" // Program version
+#define VERSION "2.1.5.0" // Program version
 
 #define CSV_SEP "," // CSV separator
 #define CSV_EOL "\n" // CSV end of line
@@ -255,7 +255,7 @@ inline int SelectWrite(int fd)
 /* ############################################################################################################################################# */
 
 // Apply select() on vector of file descriptors
-int SelectVector(std::vector<int>* fdvec)
+inline int SelectVector(std::vector<int>* fdvec)
 {
     int maxfd = 0; // Max descriptor number
     fd_set fdset; // Descriptor set
@@ -270,7 +270,7 @@ int SelectVector(std::vector<int>* fdvec)
 }
 
 // Apply close() on vector of file descriptors
-int CloseVector(std::vector<int>* fdvec)
+inline int CloseVector(std::vector<int>* fdvec)
 {
     int code = 0;
     for (auto it = (*fdvec).rbegin(); it != (*fdvec).rend(); ++it)
@@ -282,7 +282,7 @@ int CloseVector(std::vector<int>* fdvec)
 /* ############################################################################################################################################# */
 
 // Read stream on Unix socket (non-blocking)
-int ReadSocketStream(int sockfd, std::string* dest)
+inline int ReadSocketStream(int sockfd, std::string* dest)
 {
     // Always clear string
     (*dest).clear();
@@ -300,7 +300,7 @@ int ReadSocketStream(int sockfd, std::string* dest)
 }
 
 // Write to stream on Unix socket
-int WriteSocketStream(int sockfd, std::string* data)
+inline int WriteSocketStream(int sockfd, std::string* data)
 {
     // Check if write is available
     int rdy = SelectWrite(sockfd);
@@ -315,7 +315,7 @@ int WriteSocketStream(int sockfd, std::string* data)
 }
 
 // Write to stream on Unix socket
-int WriteSocketStreamSmall(int sockfd, std::string* data)
+inline int WriteSocketStreamSmall(int sockfd, std::string* data)
 {
     // Check if write is available
     int rdy = SelectWrite(sockfd);
@@ -332,7 +332,7 @@ int WriteSocketStreamSmall(int sockfd, std::string* data)
 /* ############################################################################################################################################# */
 
 // Accept connection on Unix socket (non-blocking)
-int AcceptConnection(int sockfd)
+inline int AcceptConnection(int sockfd)
 {
     // Check if connection is available
     int rdy = SelectReadNonBlocking(sockfd);
@@ -419,13 +419,12 @@ inline std::string ParseOrder(const Order& order)
 std::string ParseOrderBookLevels(MarketManager* market, OrderBook::Levels levels, const char* group)
 {
     static const char* LevelTypes[] = {"BID","ASK"};
-    static const std::string empty = "";
     std::string csv;
     
     // Loop over Levels orders
     for (auto level : levels) {
         // Get Level properties
-        const std::string level_props = (empty +
+        const std::string level_props = (std::string("") +
             group + CSV_SEP +
             LevelTypes[(int)level.Type] + CSV_SEP +
             std::to_string(level.Price) + CSV_SEP
@@ -467,7 +466,7 @@ std::string ParseOrderBook(MarketManager* market, const OrderBook* order_book_pt
 /* ############################################################################################################################################# */
 
 // Generate Query to insert Order into SQLite
-std::string QueryFromOrder(const Order& order, std::string info)
+inline std::string QueryFromOrder(const Order& order, std::string info)
 {
     return (std::string("") +
         "INSERT INTO orders (" + OrderCSVHeader + ",Info) VALUES (" +
@@ -491,7 +490,7 @@ std::string QueryFromOrder(const Order& order, std::string info)
 }
 
 // Generate new Order from result of Query
-Order OrderFromQuery(sqlite3_stmt* row)
+inline Order OrderFromQuery(sqlite3_stmt* row)
 {
     return Order(
         sqlite3_column_int(row, 0), // Id
@@ -806,7 +805,7 @@ protected:
         auto ctx = CommandCtx::Get();
 
         // Check if operation is enabled
-        if (!(ctx.enable)) return;
+        if (!ctx.enable) return;
 
         // Check Id Sync
         uint64_t ctx_id = ctx.order_id;
@@ -817,7 +816,8 @@ protected:
             char* err;
 
             // Add order to SQLite
-            const auto query = (std::string("") + "BEGIN;"
+            const std::string query = (std::string("") +
+                "BEGIN; " +
                 "UPDATE latest SET Id=" + sstos(&order.Id) + "; " +
                 QueryFromOrder(order, ctx.order_info) + "; " +
                 "COMMIT;"
@@ -868,13 +868,13 @@ protected:
         auto ctx = CommandCtx::Get();
 
         // Check if operation is enabled
-        if (!(ctx.enable)) return;
+        if (!ctx.enable) return;
         
         auto db = ctx.sqlite_ptr;
         char* err;
 
         // Delete order from SQLite
-        const auto query = (std::string("") +
+        const std::string query = (std::string("") +
             "DELETE FROM orders WHERE Id=" + sstos(&order.Id)
         );
         auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
@@ -1012,12 +1012,14 @@ void DeleteOrderBook(MarketManager* market, const std::string& command)
 // Get OrderBook in CSV format
 void GetOrderBook(MarketManager* market, const std::string& command)
 {
-    static std::regex pattern("^get book$");
+    static std::regex pattern("^get book (\\d+)$");
     std::smatch match;
 
     if (std::regex_search(command, match, pattern))
     {
-        const OrderBook* order_book_ptr = (*market).GetOrderBook(SYMBOL_ID);
+        uint32_t symbol_id = std::stoi(match[1]);
+    
+        const OrderBook* order_book_ptr = (*market).GetOrderBook(symbol_id);
         if (order_book_ptr == NULL)
             error("Failed 'get book' command: Book not found");
         else
@@ -1143,6 +1145,41 @@ void DeleteOrder(MarketManager* market, const std::string& command)
     }
 
     error("Invalid 'delete order' command: " + command);
+}
+
+
+// Get Order in CSV format
+void GetOrder(MarketManager* market, const std::string& command)
+{
+    static std::regex pattern("^get order (\\d+)$");
+    std::smatch match;
+
+    if (std::regex_search(command, match, pattern))
+    {
+        uint32_t id = std::stoi(match[1]);
+    
+        const Order* order_ptr = (*market).GetOrder(id);
+        if (order_ptr == NULL)
+            error("Failed 'get order' command: Order not found");
+        else
+        {
+            // Get CSV
+            std::string res = (
+                OrderCSVHeader + CSV_EOL +
+                ParseOrder(*order_ptr) + CSV_EOL
+            );
+
+            // Send data back to client
+            auto connfd = CommandCtx::Get().connection;
+            auto rdy = WriteSocketStream(connfd, &res);
+            if (rdy < 0)
+                error("Failed sending response of 'get order' command");
+        }
+        
+        return;
+    }
+
+    error("Invalid 'get order' command: " + command);
 }
 
 /* ############################################################################################################################################# */
@@ -1528,7 +1565,7 @@ void AddTrailingStopLimitOrder(MarketManager* market, const std::string& command
 
 /* Execute Command */
 
-void Execute(MarketManager* market, const std::string& command)
+inline void Execute(MarketManager* market, const std::string& command)
 {
     // Matching
     if (command == "enable matching") (*market).EnableMatching();
@@ -1546,6 +1583,7 @@ void Execute(MarketManager* market, const std::string& command)
     else if (command.find("mitigate order") != std::string::npos) MitigateOrder(market, command);
     else if (command.find("replace order") != std::string::npos) ReplaceOrder(market, command);
     else if (command.find("delete order") != std::string::npos) DeleteOrder(market, command);
+    else if (command.find("get order") != std::string::npos) GetOrder(market, command);
     // Prepare to Add
     else if (command.find("add ") != std::string::npos)
     {
