@@ -809,9 +809,11 @@ protected:
         // Check if operation is enabled
         if (!ctx.enable) return;
 
+        std::string id = std::to_string((int)order.Id);
+
         // Check Id Sync
-        uint64_t ctx_id = ctx.order_id;
-        if (ctx_id != order.Id) error("Error at 'onAddOrder' callback: id out of sync");
+        if (order.Id != ctx.order_id)
+            error("Error at 'onAddOrder' callback: id out of sync");
         else
         {
             auto db = ctx.sqlite_ptr;
@@ -820,7 +822,7 @@ protected:
             // Add order to SQLite
             const std::string query = (EMPTY_STR +
                 "BEGIN; " +
-                "UPDATE latest SET Id=" + sstos(&order.Id) + "; " +
+                "UPDATE latest SET Id=" + id + "; " +
                 QueryFromOrder(order, ctx.order_info) + "; " +
                 "COMMIT;"
             );
@@ -829,11 +831,9 @@ protected:
             { error("sqlite error(4): " + sstos(&err)); };
         };
 
-        std::string res = std::to_string(order.Id);
-
         // Send data back to client
         auto connfd = ctx.connection;
-        auto rdy = WriteSocketStreamSmall(connfd, &res);
+        auto rdy = WriteSocketStreamSmall(connfd, &id);
         if (rdy < 0)
             error("Failed sending response of 'add order' command");
 
@@ -877,7 +877,7 @@ protected:
 
         // Delete order from SQLite
         const std::string query = (
-            "DELETE FROM orders WHERE Id=" + sstos(&order.Id)
+            "DELETE FROM orders WHERE Id=" + std::to_string((int)order.Id)
         );
         auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
