@@ -28,7 +28,7 @@ using namespace CppTrader::Matching;
 /* ############################################################################################################################################# */
 // Constants
 
-#define VERSION "2.1.2.0" // Program version
+#define VERSION "2.1.4.0" // Program version
 
 #define CSV_SEP "," // CSV separator
 #define CSV_EOL "\n" // CSV end of line
@@ -550,19 +550,15 @@ static const std::string InsertIntoLatestQuery = (std::string("") +
 void PopulateDatabase(sqlite3* db)
 {
     // Create Tables in SQLite
-    auto query1 = CreateTableLatestQuery.c_str();
-    auto query2 = InsertIntoLatestQuery.c_str();
-    auto query3 = CreateTableOrdersQuery.c_str();
+    auto query = (
+        CreateTableLatestQuery + "; " +
+        InsertIntoLatestQuery + "; " +
+        CreateTableOrdersQuery + ";"
+    );
     char* err;
-    auto rdy = sqlite3_exec(db, query1, NULL, NULL, &err);
+    auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
     if (rdy != SQLITE_OK)
     { error("sqlite error(1): " + sstos(&err)); exit(1); };
-    rdy = sqlite3_exec(db, query2, NULL, NULL, &err);
-    if (rdy != SQLITE_OK)
-    { error("sqlite error(2): " + sstos(&err)); exit(1); };
-    rdy = sqlite3_exec(db, query3, NULL, NULL, &err);
-    if (rdy != SQLITE_OK)
-    { error("sqlite error(3): " + sstos(&err)); exit(1); };
 }
 
 // Get Latest Id from Database
@@ -575,7 +571,7 @@ int GetLatestId(sqlite3* db) {
     if (rdy != SQLITE_OK)
     {
         const char* err = sqlite3_errmsg(db);
-        error("sqlite error(4): " + sstos(&err));
+        error("sqlite error(2): " + sstos(&err));
         exit(1);
     };
 
@@ -607,7 +603,7 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
     if (rdy != SQLITE_OK)
     {
         const char* _err = sqlite3_errmsg(db);
-        error("sqlite error(5): " + sstos(&_err));
+        error("sqlite error(3): " + sstos(&_err));
         exit(1);
     };
 
@@ -821,18 +817,14 @@ protected:
             char* err;
 
             // Add order to SQLite
-            const auto query1 = QueryFromOrder(order, ctx.order_info);
-            auto rdy = sqlite3_exec(db, query1.c_str(), NULL, NULL, &err);
-            if (rdy != SQLITE_OK)
-            { error("sqlite error(6): " + sstos(&err)); };
-
-            // Update Latest Id
-            const auto query2 = (std::string("") +
-                "UPDATE latest SET Id=" + sstos(&order.Id)
+            const auto query = (std::string("") + "BEGIN;"
+                "UPDATE latest SET Id=" + sstos(&order.Id) + "; " +
+                QueryFromOrder(order, ctx.order_info) + "; " +
+                "COMMIT;"
             );
-            rdy = sqlite3_exec(db, query2.c_str(), NULL, NULL, &err);
+            auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
             if (rdy != SQLITE_OK)
-            { error("sqlite error(7): " + sstos(&err)); };
+            { error("sqlite error(4): " + sstos(&err)); };
         };
 
         std::string res = std::to_string(order.Id);
@@ -887,7 +879,7 @@ protected:
         );
         auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
-        { error("sqlite error(8): " + sstos(&err)); };
+        { error("sqlite error(5): " + sstos(&err)); };
 
         // Log Deleted Order
         log("Delete order: " + sstos(&order));
