@@ -29,7 +29,7 @@ using namespace CppTrader::Matching;
 
 /* Preprocessed */
 
-#define VERSION "2.1.7.2" // Program version
+#define VERSION "2.1.8.0" // Program version
 
 #define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)
 #define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)
@@ -1784,7 +1784,7 @@ int main(int argc, char** argv)
 
                         // Send response to client
                         ctx = Context::Get();
-                        auto rdy = WriteSocketStreamSmall(connfd, &ctx.command.response);
+                        rdy = WriteSocketStreamSmall(connfd, &ctx.command.response);
                         if (rdy < 0) error("Failed sending response to client");
                     }
                 }
