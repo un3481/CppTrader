@@ -158,19 +158,35 @@ inline void CliError(const char *msg)
 
 class MyMarketHandler;
 
-namespace CommandCtx {
+namespace Context {
+
+    struct Connection
+    {
+        int sockfd = 0; // File Descriptor for current Connection
+        sqlite3* sqlite_ptr = NULL; // Connection to SQLite Database
+    };
+
+    struct Market
+    {
+        MarketManager* market_ptr = NULL; // Pointer to Market Manager
+        MyMarketHandler* handler_ptr = NULL; // Pointer to Market Handler
+    };
+
+    struct Command
+    {
+        std::string input = ""; // Command Input
+        std::string response = ""; // Command Response
+        std::string order_info = ""; // Order Text Info
+        int order_id = 0; // Order Id
+    };
 
     // Context struct
     struct Context
     {
         bool enable = false; // Enable operation with context
-        int connection = 0; // File Descriptor for current Connection
-        sqlite3* sqlite_ptr = NULL; // Connection to SQLite Database
-        MarketManager* market_ptr = NULL; // Pointer to Market Manager
-        MyMarketHandler* handler_ptr = NULL; // Pointer to Market Handler
-        std::string command = ""; // Command text
-        std::string order_info = ""; // Order text Id
-        uint64_t order_id = 0; // Order Id
+        Connection connection = Connection();
+        Market market = Market();
+        Command command = Command();
     };
 
     // Static context
@@ -804,13 +820,13 @@ protected:
         // Update Unique Id Record
         _lts_order_id = std::max((size_t)order.Id, _lts_order_id);
 
-        auto ctx = CommandCtx::Get();
+        auto ctx = Context::Get();
 
         // Check if operation is enabled
         if (!ctx.enable) return;
 
         // Check if Id is Sync
-        if (order.Id != ctx.order_id)
+        if (order.Id != ctx.command.order_id)
         {
             error("Error at 'onAddOrder' callback: id out of sync");
             return;
@@ -818,32 +834,30 @@ protected:
 
         std::string id = std::to_string((int)order.Id);
 
-        auto db = ctx.sqlite_ptr;
+        auto db = ctx.connection.sqlite_ptr;
         char* err;
 
         // Add order to SQLite
         const std::string query = (EMPTY_STR +
             "BEGIN; " +
             "UPDATE latest SET Id=" + id + "; " +
-            QueryFromOrder(order, ctx.order_info) + "; " +
+            QueryFromOrder(order, ctx.command.order_info) + "; " +
             "COMMIT;"
         );
         auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
         { error("sqlite error(4): " + sstos(&err)); };
 
-        // Send data back to client
-        auto connfd = ctx.connection;
-        auto rdy = WriteSocketStreamSmall(connfd, &id);
-        if (rdy < 0)
-            error("Failed sending response of 'add order' command");
+        // Set response to client
+        ctx.command.response = id;
+        Context.Set(ctx);
 
         // Log Add Order
         log("Add order: " + sstos(&order));
 
         /*
         // Send to server
-        std::string cmd = "/home/sysop/books/BTC_TUSD/server AddOrder " + sstos(&id) + ":" + ctx.order_info;
+        std::string cmd = "/home/sysop/books/BTC_TUSD/server AddOrder " + sstos(&id) + ":" + ctx.command.order_info;
         int iCallResult = system(cmd.c_str());
         if (iCallResult < 0) { error("Error doing system call " + std::string(strerror(errno))); }
         */
@@ -868,14 +882,14 @@ protected:
     {
         ++_updates; --_orders; ++_delete_orders;
 
-        auto ctx = CommandCtx::Get();
+        auto ctx = Context::Get();
 
         // Check if operation is enabled
         if (!ctx.enable) return;
 
         std::string id = std::to_string((int)order.Id);
         
-        auto db = ctx.sqlite_ptr;
+        auto db = ctx.connection.sqlite_ptr;
         char* err;
 
         // Delete order from SQLite
@@ -885,6 +899,10 @@ protected:
         auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
         { error("sqlite error(5): " + sstos(&err)); };
+
+        // Send data back to client
+        ctx.command.response = "OK";
+        Context.Set(ctx);
 
         // Log Deleted Order
         log("Delete order: " + sstos(&order));
@@ -1033,7 +1051,7 @@ void GetOrderBook(MarketManager* market, const std::string& command)
             std::string res = ParseOrderBook(market, order_book_ptr);
 
             // Send data back to client
-            auto connfd = CommandCtx::Get().connection;
+            auto connfd = Context::Get().connection;
             auto rdy = WriteSocketStream(connfd, &res);
             if (rdy < 0)
                 error("Failed sending response of 'get book' command");
@@ -1175,7 +1193,7 @@ void GetOrder(MarketManager* market, const std::string& command)
             );
 
             // Send data back to client
-            auto connfd = CommandCtx::Get().connection;
+            auto connfd = Context::Get().connection;
             auto rdy = WriteSocketStream(connfd, &res);
             if (rdy < 0)
                 error("Failed sending response of 'get order' command");
@@ -1198,13 +1216,13 @@ void AddMarketOrder(MarketManager* market, const std::string& command)
 
     if (std::regex_search(command, match, pattern))
     {
-        auto ctx = CommandCtx::Get();
+        auto ctx = Context::Get();
 
-        uint64_t id = ctx.order_id;
+        uint64_t id = ctx.command.order_id;
         uint64_t quantity = std::stoi(match[2]);
-        ctx.order_info = match[3];
+        ctx.command.order_info = match[3];
 
-        CommandCtx::Set(ctx);
+        Context::Set(ctx);
 
         Order order;
         if (match[1] == "buy")
@@ -1234,14 +1252,14 @@ void AddSlippageMarketOrder(MarketManager* market, const std::string& command)
 
     if (std::regex_search(command, match, pattern))
     {
-        auto ctx = CommandCtx::Get();
+        auto ctx = Context::Get();
 
-        uint64_t id = ctx.order_id;
+        uint64_t id = ctx.command.order_id;
         uint64_t quantity = std::stoi(match[2]);
         uint64_t slippage = std::stoi(match[3]);
-        ctx.order_info = match[4];
+        ctx.command.order_info = match[4];
 
-        CommandCtx::Set(ctx);
+        Context::Set(ctx);
 
         Order order;
         if (match[1] == "buy")
@@ -1271,14 +1289,14 @@ void AddLimitOrder(MarketManager* market, const std::string& command)
 
     if (std::regex_search(command, match, pattern))
     {
-        auto ctx = CommandCtx::Get();
+        auto ctx = Context::Get();
 
-        uint64_t id = ctx.order_id;
+        uint64_t id = ctx.command.order_id;
         uint64_t price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
-        ctx.order_info = match[4];
+        ctx.command.order_info = match[4];
 
-        CommandCtx::Set(ctx);
+        Context::Set(ctx);
 
         Order order;
         if (match[1] == "buy")
@@ -1308,14 +1326,14 @@ void AddIOCLimitOrder(MarketManager* market, const std::string& command)
 
     if (std::regex_search(command, match, pattern))
     {
-        auto ctx = CommandCtx::Get();
+        auto ctx = Context::Get();
 
-        uint64_t id = ctx.order_id;
+        uint64_t id = ctx.command.order_id;
         uint64_t price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
-        ctx.order_info = match[4];
+        ctx.command.order_info = match[4];
 
-        CommandCtx::Set(ctx);
+        Context::Set(ctx);
 
         Order order;
         if (match[1] == "buy")
@@ -1345,14 +1363,14 @@ void AddFOKLimitOrder(MarketManager* market, const std::string& command)
 
     if (std::regex_search(command, match, pattern))
     {
-        auto ctx = CommandCtx::Get();
+        auto ctx = Context::Get();
 
-        uint64_t id = ctx.order_id;
+        uint64_t id = ctx.command.order_id;
         uint64_t price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
-        ctx.order_info = match[4];
+        ctx.command.order_info = match[4];
 
-        CommandCtx::Set(ctx);
+        Context::Set(ctx);
 
         Order order;
         if (match[1] == "buy")
@@ -1382,14 +1400,14 @@ void AddAONLimitOrder(MarketManager* market, const std::string& command)
 
     if (std::regex_search(command, match, pattern))
     {
-        auto ctx = CommandCtx::Get();
+        auto ctx = Context::Get();
 
-        uint64_t id = ctx.order_id;
+        uint64_t id = ctx.command.order_id;
         uint64_t price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
-        ctx.order_info = match[4];
+        ctx.command.order_info = match[4];
 
-        CommandCtx::Set(ctx);
+        Context::Set(ctx);
 
         Order order;
         if (match[1] == "buy")
@@ -1419,14 +1437,14 @@ void AddStopOrder(MarketManager* market, const std::string& command)
 
     if (std::regex_search(command, match, pattern))
     {
-        auto ctx = CommandCtx::Get();
+        auto ctx = Context::Get();
 
-        uint64_t id = ctx.order_id;
+        uint64_t id = ctx.command.order_id;
         uint64_t stop_price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
-        ctx.order_info = match[4];
+        ctx.command.order_info = match[4];
 
-        CommandCtx::Set(ctx);
+        Context::Set(ctx);
 
         Order order;
         if (match[1] == "buy")
@@ -1456,15 +1474,15 @@ void AddStopLimitOrder(MarketManager* market, const std::string& command)
 
     if (std::regex_search(command, match, pattern))
     {
-        auto ctx = CommandCtx::Get();
+        auto ctx = Context::Get();
 
-        uint64_t id = ctx.order_id;
+        uint64_t id = ctx.command.order_id;
         uint64_t stop_price = std::stoi(match[2]);
         uint64_t price = std::stoi(match[3]);
         uint64_t quantity = std::stoi(match[4]);
-        ctx.order_info = match[5];
+        ctx.command.order_info = match[5];
 
-        CommandCtx::Set(ctx);
+        Context::Set(ctx);
 
         Order order;
         if (match[1] == "buy")
@@ -1494,16 +1512,16 @@ void AddTrailingStopOrder(MarketManager* market, const std::string& command)
 
     if (std::regex_search(command, match, pattern))
     {
-        auto ctx = CommandCtx::Get();
+        auto ctx = Context::Get();
 
-        uint64_t id = ctx.order_id;
+        uint64_t id = ctx.command.order_id;
         uint64_t stop_price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
         int64_t trailing_distance = std::stoi(match[4]);
         int64_t trailing_step = std::stoi(match[5]);
-        ctx.order_info = match[6];
+        ctx.command.order_info = match[6];
 
-        CommandCtx::Set(ctx);
+        Context::Set(ctx);
 
         Order order;
         if (match[1] == "buy")
@@ -1533,17 +1551,17 @@ void AddTrailingStopLimitOrder(MarketManager* market, const std::string& command
 
     if (std::regex_search(command, match, pattern))
     {
-        auto ctx = CommandCtx::Get();
+        auto ctx = Context::Get();
 
-        uint64_t id = ctx.order_id;
+        uint64_t id = ctx.command.order_id;
         uint64_t stop_price = std::stoi(match[2]);
         uint64_t price = std::stoi(match[3]);
         uint64_t quantity = std::stoi(match[4]);
         int64_t trailing_distance = std::stoi(match[5]);
         int64_t trailing_step = std::stoi(match[6]);
-        ctx.order_info = match[7];
+        ctx.command.order_info = match[7];
 
-        CommandCtx::Set(ctx);
+        Context::Set(ctx);
 
         Order order;
         if (match[1] == "buy")
@@ -1570,8 +1588,13 @@ void AddTrailingStopLimitOrder(MarketManager* market, const std::string& command
 
 /* Execute Command */
 
-inline void Execute(MarketManager* market, const std::string& command)
+inline void Execute()
 {
+    // Get Context
+    auto ctx = Context::Get();
+    auto command = ctx.command.input;
+    auto market = *ctx.market.market_ptr;
+
     // Matching
     if (command == "enable matching") (*market).EnableMatching();
     else if (command == "disable matching") (*market).DisableMatching();
@@ -1593,10 +1616,8 @@ inline void Execute(MarketManager* market, const std::string& command)
     else if (command.find("add ") != std::string::npos)
     {
         // Set new Order Id
-        auto ctx = CommandCtx::Get();
-        auto handler_ptr = ctx.handler_ptr;
-        ctx.order_id = (*handler_ptr).lts_order_id() + 1; // Generate Order Id
-        CommandCtx::Set(ctx); // Set new context
+        ctx.command.order_id = (*ctx.market.handler_ptr).lts_order_id() + 1;
+        Context::Set(ctx); // Set new context
 
         // Orders: Add
         if (command.find("add market") != std::string::npos) AddMarketOrder(market, command);
@@ -1734,8 +1755,6 @@ int main(int argc, char** argv)
             it = ++connections.begin();
             while ((it < connections.end()) && enable)
             {
-                CommandCtx::Clear(); // Clear Current Context
-                
                 connfd = *it;
                 rdy = ReadSocketStream(connfd, &message); // Read message
                 if (rdy < 0) // Connection closed
@@ -1749,17 +1768,24 @@ int main(int argc, char** argv)
                     else
                     {
                         // Set New Context
-                        auto ctx = CommandCtx::Context();
+                        Context::Clear();
+                        auto ctx = Context::Get();
                         ctx.enable = true;
-                        ctx.connection = connfd;
-                        ctx.sqlite_ptr = db;
-                        ctx.market_ptr = &market;
-                        ctx.handler_ptr = &market_handler;
-                        ctx.command = message;
-                        CommandCtx::Set(ctx);
+                        ctx.connection.sockfd = connfd;
+                        ctx.connection.sqlite_ptr = db;
+                        ctx.market.market_ptr = &market;
+                        ctx.market.handler_ptr = &market_handler;
+                        ctx.command.input = message;
+                        ctx.command.response = NULL_STR;
+                        Context::Set(ctx);
 
                         // Execute command
-                        Execute(&market, message);
+                        Execute();
+
+                        // Send response to client
+                        ctx = Context::Get();
+                        auto rdy = WriteSocketStreamSmall(connfd, &ctx.command.response);
+                        if (rdy < 0) error("Failed sending response to client");
                     }
                 }
                 ++it; // Update iterator
