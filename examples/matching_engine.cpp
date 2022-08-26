@@ -29,7 +29,7 @@ using namespace CppTrader::Matching;
 
 /* Preprocessed */
 
-#define VERSION "2.1.7.0" // Program version
+#define VERSION "2.1.7.2" // Program version
 
 #define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)
 #define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)
@@ -843,9 +843,9 @@ protected:
 
         /*
         // Send to server
-        std::string cmd = "/home/sysop/books/scripts/server AddOrder 123";
+        std::string cmd = "/home/sysop/books/BTC_TUSD/server AddOrder " + sstos(&id) + ":" + ctx.order_info;
         int iCallResult = system(cmd.c_str());
-        if (iCallResult < 0) { error("Error doing system call " + strerror(errno)); }
+        if (iCallResult < 0) { error("Error doing system call " + std::string(strerror(errno))); }
         */
     }
 
@@ -891,9 +891,9 @@ protected:
         
         /*
         // Send to server
-        std::string cmd = "/home/sysop/books/scripts/server DeleteOrder 123";
+        std::string cmd = "/home/sysop/books/BTC_TUSD/server DeleteOrder " + std::to_string((int)order.Id);
         int iCallResult = system(cmd.c_str());
-        if (iCallResult < 0) { error("Error doing system call " + strerror(errno)); }
+        if (iCallResult < 0) { error("Error doing system call " + std::string(strerror(errno))); }
         */
     }
 
@@ -912,9 +912,9 @@ protected:
         
         /*
         // Send to server
-        std::string cmd = "/home/sysop/books/scripts/server ExecuteOrder 123";
+        std::string cmd = "/home/sysop/books/BTC_TUSD/server ExecuteOrder '" + sstos(&price) + "@" + sstos(&quantity) + ":" + sstos(&order) + "'";
         int iCallResult = system(cmd.c_str());
-        if (iCallResult < 0) { error("Error doing system call " + strerror(errno)); }
+        if (iCallResult < 0) { error("Error doing system call " + std::string(strerror(errno))); }
         */
     }
 };
