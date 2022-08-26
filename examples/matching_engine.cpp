@@ -176,12 +176,14 @@ namespace Context {
     {
         std::string input = ""; // Command Input
         std::string response = ""; // Command Response
-        std::string order_info = ""; // Order Text Info
+        int response_size = MSG_SIZE_SMALL; // Response Size
         int order_id = 0; // Order Id
+        std::string order_info = ""; // Order Text Info
+        
     };
 
     // Context struct
-    struct Context
+    struct Ctx
     {
         bool enable = false; // Enable operation with context
         Connection connection = Connection();
@@ -190,16 +192,16 @@ namespace Context {
     };
 
     // Static context
-    Context* _ctx()
+    Ctx* _ctx()
     {
-        static Context ctx;
+        static Ctx ctx;
         return &ctx;
     }
 
     // Set Context
-    inline void Set(Context& value)
+    inline void Set(Ctx& value)
     {
-        Context new_ctx = value;
+        Ctx new_ctx = value;
         auto ctx = _ctx();
         (*ctx) = new_ctx;
     }
@@ -207,7 +209,7 @@ namespace Context {
     // Clear Context
     inline void Clear()
     {
-        Context ctx;
+        Ctx ctx;
         Set(ctx);
     }
 
@@ -215,7 +217,7 @@ namespace Context {
     inline auto Get()
     {
         auto ctx_ptr = _ctx();
-        Context ctx = (*ctx_ptr);
+        Ctx ctx = (*ctx_ptr);
         return ctx;
     }
 }
@@ -370,7 +372,7 @@ inline int CloseVector(std::vector<int>* fdvec)
 /* ############################################################################################################################################# */
 
 // Read stream on Unix socket (non-blocking)
-inline int ReadSocketStream(int sockfd, std::string* dest)
+inline int ReadSocketStream(int sockfd, int size, std::string* dest)
 {
     // Always clear string
     (*dest).clear();
@@ -380,39 +382,24 @@ inline int ReadSocketStream(int sockfd, std::string* dest)
     if (rdy <= 0) return rdy;
 
     // Read stream to string
-    char buffer[MSG_SIZE]; // Read MSG_SIZE bytes
-    if (read(sockfd, buffer, sizeof(buffer)) <= 0) return -1;
+    char buffer[MSG_SIZE_LARGE]; // Read MSG_SIZE bytes
+    if (read(sockfd, buffer, size) <= 0) return -1;
     (*dest).append(buffer, strcspn(buffer, "\0")); // buffer is copied to string until the first \0 char is found
 
     return 1;
 }
 
 // Write to stream on Unix socket
-inline int WriteSocketStream(int sockfd, std::string* data)
+inline int WriteSocketStream(int sockfd, int size, std::string* data)
 {
     // Check if write is available
     int rdy = SelectWrite(sockfd);
     if (rdy <= 0) return rdy;
 
     // Write string to stream
-    char buffer[MSG_SIZE_LARGE]; // Write MSG_SIZE_LARGE bytes
+    char buffer[MSG_SIZE_LARGE]; // Write MSG_SIZE bytes
     strcpy(buffer, (*data).c_str() + '\0'); // string is copied to buffer with a trailing \0 char 
-    if (write(sockfd, buffer, sizeof(buffer)) <= 0) return -1;
-
-    return 1;
-}
-
-// Write to stream on Unix socket
-inline int WriteSocketStreamSmall(int sockfd, std::string* data)
-{
-    // Check if write is available
-    int rdy = SelectWrite(sockfd);
-    if (rdy <= 0) return rdy;
-
-    // Write string to stream
-    char buffer[MSG_SIZE_SMALL]; // Write MSG_SIZE_SMALL bytes
-    strcpy(buffer, (*data).c_str() + '\0'); // string is copied to buffer with a trailing \0 char 
-    if (write(sockfd, buffer, sizeof(buffer)) <= 0) return -1;
+    if (write(sockfd, buffer, size) <= 0) return -1;
 
     return 1;
 }
@@ -850,14 +837,14 @@ protected:
 
         // Set response to client
         ctx.command.response = id;
-        Context.Set(ctx);
+        Context::Set(ctx);
 
         // Log Add Order
         log("Add order: " + sstos(&order));
 
         /*
         // Send to server
-        std::string cmd = "/home/sysop/books/BTC_TUSD/server AddOrder " + sstos(&id) + ":" + ctx.command.order_info;
+        std::string cmd = "/home/sysop/books/BTC_TUSD/server AddOrder " + id + ":" + ctx.command.order_info;
         int iCallResult = system(cmd.c_str());
         if (iCallResult < 0) { error("Error doing system call " + std::string(strerror(errno))); }
         */
@@ -902,14 +889,14 @@ protected:
 
         // Send data back to client
         ctx.command.response = "OK";
-        Context.Set(ctx);
+        Context::Set(ctx);
 
         // Log Deleted Order
         log("Delete order: " + sstos(&order));
         
         /*
         // Send to server
-        std::string cmd = "/home/sysop/books/BTC_TUSD/server DeleteOrder " + std::to_string((int)order.Id);
+        std::string cmd = "/home/sysop/books/BTC_TUSD/server DeleteOrder " + id;
         int iCallResult = system(cmd.c_str());
         if (iCallResult < 0) { error("Error doing system call " + std::string(strerror(errno))); }
         */
@@ -1050,11 +1037,11 @@ void GetOrderBook(MarketManager* market, const std::string& command)
             // Get CSV
             std::string res = ParseOrderBook(market, order_book_ptr);
 
-            // Send data back to client
-            auto connfd = Context::Get().connection;
-            auto rdy = WriteSocketStream(connfd, &res);
-            if (rdy < 0)
-                error("Failed sending response of 'get book' command");
+            // Set response to client
+            auto ctx = Context::Get();
+            ctx.command.response = res;
+            ctx.command.response_size = MSG_SIZE_LARGE;
+            Context::Set(ctx);
         }
         
         return;
@@ -1192,11 +1179,11 @@ void GetOrder(MarketManager* market, const std::string& command)
                 ParseOrder(*order_ptr) + CSV_EOL
             );
 
-            // Send data back to client
-            auto connfd = Context::Get().connection;
-            auto rdy = WriteSocketStream(connfd, &res);
-            if (rdy < 0)
-                error("Failed sending response of 'get order' command");
+            // Set response to client
+            auto ctx = Context::Get();
+            ctx.command.response = res;
+            ctx.command.response_size = MSG_SIZE;
+            Context::Set(ctx);
         }
         
         return;
@@ -1588,12 +1575,12 @@ void AddTrailingStopLimitOrder(MarketManager* market, const std::string& command
 
 /* Execute Command */
 
-inline void Execute()
+void Execute()
 {
     // Get Context
     auto ctx = Context::Get();
     auto command = ctx.command.input;
-    auto market = *ctx.market.market_ptr;
+    auto market = ctx.market.market_ptr;
 
     // Matching
     if (command == "enable matching") (*market).EnableMatching();
@@ -1756,7 +1743,7 @@ int main(int argc, char** argv)
             while ((it < connections.end()) && enable)
             {
                 connfd = *it;
-                rdy = ReadSocketStream(connfd, &message); // Read message
+                rdy = ReadSocketStream(connfd, MSG_SIZE, &message); // Read message
                 if (rdy < 0) // Connection closed
                 {
                     close(connfd);
@@ -1784,7 +1771,9 @@ int main(int argc, char** argv)
 
                         // Send response to client
                         ctx = Context::Get();
-                        rdy = WriteSocketStreamSmall(connfd, &ctx.command.response);
+                        auto res = ctx.command.response;
+                        auto size = ctx.command.response_size;
+                        rdy = WriteSocketStream(connfd, size, &res);
                         if (rdy < 0) error("Failed sending response to client");
                     }
                 }
