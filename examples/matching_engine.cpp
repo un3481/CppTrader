@@ -813,7 +813,7 @@ protected:
         if (!ctx.enable) return;
 
         // Check if Id is Sync
-        if (order.Id != ctx.command.order_id)
+        if ((int)order.Id != ctx.command.order_id)
         {
             error("Error at 'onAddOrder' callback: id out of sync");
             return;
