@@ -99,7 +99,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line"><span class="comment">/* Preprocessed */</span></div>
 <div class="line"> </div>
-<div class="line"><span class="preprocessor">#define VERSION &quot;2.1.7.2&quot; // Program version</span></div>
+<div class="line"><span class="preprocessor">#define VERSION &quot;2.1.8.0&quot; // Program version</span></div>
 <div class="line"> </div>
 <div class="line"><span class="preprocessor">#define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)</span></div>
 <div class="line"><span class="preprocessor">#define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)</span></div>
@@ -1854,7 +1854,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line">                        <span class="comment">// Send response to client</span></div>
 <div class="line">                        ctx = Context::Get();</div>
-<div class="line">                        <span class="keyword">auto</span> rdy = WriteSocketStreamSmall(connfd, &amp;ctx.command.response);</div>
+<div class="line">                        rdy = WriteSocketStreamSmall(connfd, &amp;ctx.command.response);</div>
 <div class="line">                        <span class="keywordflow">if</span> (rdy &lt; 0) error(<span class="stringliteral">&quot;Failed sending response to client&quot;</span>);</div>
 <div class="line">                    }</div>
 <div class="line">                }</div>
