@@ -835,10 +835,6 @@ protected:
         if (rdy != SQLITE_OK)
         { error("sqlite error(4): " + sstos(&err)); };
 
-        // Set response to client
-        ctx.command.response = id;
-        Context::Set(ctx);
-
         // Log Add Order
         log("Add order: " + sstos(&order));
 
@@ -848,6 +844,10 @@ protected:
         int iCallResult = system(cmd.c_str());
         if (iCallResult < 0) { error("Error doing system call " + std::string(strerror(errno))); }
         */
+
+        // Set response to client
+        ctx.command.response = id;
+        Context::Set(ctx);
     }
 
     void onUpdateOrder(const Order& order) override
@@ -887,10 +887,6 @@ protected:
         if (rdy != SQLITE_OK)
         { error("sqlite error(5): " + sstos(&err)); };
 
-        // Send data back to client
-        ctx.command.response = "OK";
-        Context::Set(ctx);
-
         // Log Deleted Order
         log("Delete order: " + sstos(&order));
         
@@ -900,6 +896,13 @@ protected:
         int iCallResult = system(cmd.c_str());
         if (iCallResult < 0) { error("Error doing system call " + std::string(strerror(errno))); }
         */
+
+        auto command = ctx.command.input;
+        if (command.find("delete order") == std::string::npos) return;
+        
+        // Set response to client
+        ctx.command.response = "OK";
+        Context::Set(ctx);
     }
 
     void onExecuteOrder(const Order& order, uint64_t price, uint64_t quantity) override
