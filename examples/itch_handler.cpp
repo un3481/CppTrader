@@ -121,20 +121,11 @@ int main(int argc, char *argv[])
         size = write(sockfd, buffer, MSG_SIZE);
 
         std::string instr = buffer;
-        if (instr.find("add ") != std::string::npos)
-        {
-            std::string result;
-            int rdy = ReadSocketStreamSmall(sockfd, &result);
-            if (rdy < 0) {};
-            std::cout << result << std::endl;
-        }
-        if (instr.find("get book") != std::string::npos)
-        {
-            std::string result;
-            int rdy = ReadSocketStream(sockfd, &result);
-            if (rdy < 0) {};
-            std::cout << result << std::endl;
-        }
+        std::string result;
+        int rdy = ReadSocketStreamSmall(sockfd, &result);
+        if (rdy < 0) {};
+        std::cout << result << std::endl;
+        
 
         if ((input + size) < 0) {}
     }
