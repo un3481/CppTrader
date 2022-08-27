@@ -883,7 +883,7 @@ $(function() {
 <div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Check if Id is Sync</span></div>
-<div class="line">        <span class="keywordflow">if</span> (order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a> != ctx.command.order_id)</div>
+<div class="line">        <span class="keywordflow">if</span> ((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a> != ctx.command.order_id)</div>
 <div class="line">        {</div>
 <div class="line">            error(<span class="stringliteral">&quot;Error at &#39;onAddOrder&#39; callback: id out of sync&quot;</span>);</div>
 <div class="line">            <span class="keywordflow">return</span>;</div>
