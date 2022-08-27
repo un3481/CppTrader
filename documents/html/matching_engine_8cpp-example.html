@@ -905,10 +905,6 @@ $(function() {
 <div class="line">        <span class="keywordflow">if</span> (rdy != SQLITE_OK)</div>
 <div class="line">        { error(<span class="stringliteral">&quot;sqlite error(4): &quot;</span> + sstos(&amp;err)); };</div>
 <div class="line"> </div>
-<div class="line">        <span class="comment">// Set response to client</span></div>
-<div class="line">        ctx.command.response = id;</div>
-<div class="line">        Context::Set(ctx);</div>
-<div class="line"> </div>
 <div class="line">        <span class="comment">// Log Add Order</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Add order: &quot;</span> + sstos(&amp;order));</div>
 <div class="line"> </div>
@@ -918,6 +914,10 @@ $(function() {
 <div class="line"><span class="comment">        int iCallResult = system(cmd.c_str());</span></div>
 <div class="line"><span class="comment">        if (iCallResult &lt; 0) { error(&quot;Error doing system call &quot; + std::string(strerror(errno))); }</span></div>
 <div class="line"><span class="comment">        */</span></div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Set response to client</span></div>
+<div class="line">        ctx.command.response = id;</div>
+<div class="line">        Context::Set(ctx);</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">void</span> onUpdateOrder(<span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>&amp; order)<span class="keyword"> override</span></div>
@@ -957,10 +957,6 @@ $(function() {
 <div class="line">        <span class="keywordflow">if</span> (rdy != SQLITE_OK)</div>
 <div class="line">        { error(<span class="stringliteral">&quot;sqlite error(5): &quot;</span> + sstos(&amp;err)); };</div>
 <div class="line"> </div>
-<div class="line">        <span class="comment">// Send data back to client</span></div>
-<div class="line">        ctx.command.response = <span class="stringliteral">&quot;OK&quot;</span>;</div>
-<div class="line">        Context::Set(ctx);</div>
-<div class="line"> </div>
 <div class="line">        <span class="comment">// Log Deleted Order</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Delete order: &quot;</span> + sstos(&amp;order));</div>
 <div class="line">        </div>
@@ -970,6 +966,13 @@ $(function() {
 <div class="line"><span class="comment">        int iCallResult = system(cmd.c_str());</span></div>
 <div class="line"><span class="comment">        if (iCallResult &lt; 0) { error(&quot;Error doing system call &quot; + std::string(strerror(errno))); }</span></div>
 <div class="line"><span class="comment">        */</span></div>
+<div class="line"> </div>
+<div class="line">        <span class="keyword">auto</span> command = ctx.command.input;</div>
+<div class="line">        <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;delete order&quot;</span>) == std::string::npos) <span class="keywordflow">return</span>;</div>
+<div class="line">        </div>
+<div class="line">        <span class="comment">// Set response to client</span></div>
+<div class="line">        ctx.command.response = <span class="stringliteral">&quot;OK&quot;</span>;</div>
+<div class="line">        Context::Set(ctx);</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">void</span> onExecuteOrder(<span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>&amp; order, uint64_t price, uint64_t quantity)<span class="keyword"> override</span></div>
