@@ -1640,7 +1640,7 @@ void AddTrailingStopLimitOrder(MarketManager* market, const std::string& command
 
 /* Execute Command */
 
-inline void UpdateOrders()
+void UpdateOrders()
 {
     auto ctx = Context::Get();
 
@@ -1719,6 +1719,7 @@ void Execute()
     }
 
     // Update changed orders
+    if (ctx.market.changes.empty()) return;
     UpdateOrders();
 }
 
