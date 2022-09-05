@@ -602,7 +602,7 @@ $(function() {
 <div class="line"><span class="comment">// Generate new Order from result of Query</span></div>
 <div class="line"><span class="keyword">inline</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a> OrderFromQuery(sqlite3_stmt* row)</div>
 <div class="line">{</div>
-<div class="line">    <span class="keywordflow">return</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>(</div>
+<div class="line">    <span class="keyword">auto</span> order = <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>(</div>
 <div class="line">        sqlite3_column_int(row, 0), <span class="comment">// Id</span></div>
 <div class="line">        SYMBOL_ID, <span class="comment">// Symbol</span></div>
 <div class="line">        <a name="a22"></a><a class="code" href="namespace_cpp_trader_1_1_matching.html#a3f665b3bd035eb7a647258ce0ca1dd43">OrderType</a>(sqlite3_column_int(row, 2)), <span class="comment">// Type</span></div>
@@ -616,6 +616,10 @@ $(function() {
 <div class="line">        sqlite3_column_int(row, 10), <span class="comment">// Trailing Distance</span></div>
 <div class="line">        sqlite3_column_int(row, 11) <span class="comment">// Trailing Step</span></div>
 <div class="line">    );</div>
+<div class="line">    order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a555135d11f7188cb08d51be8455ada85">ExecutedQuantity</a> = sqlite3_column_int(row, 12); <span class="comment">// Executed Quantity</span></div>
+<div class="line">    order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a798b7777f5c575a301c6174af2c23e94">LeavesQuantity</a> = sqlite3_column_int(row, 13); <span class="comment">// Leaves Quantity</span></div>
+<div class="line"> </div>
+<div class="line">    <span class="keywordflow">return</span> order;</div>
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
