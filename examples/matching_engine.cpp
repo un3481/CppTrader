@@ -1644,8 +1644,6 @@ void UpdateOrders()
 {
     auto ctx = Context::Get();
 
-    if (ctx.market.changes.empty()) return;
-
     std::string updates;
     for (auto id : ctx.market.changes)
     {
@@ -1718,9 +1716,10 @@ void Execute()
         else if (command.find("add trailing stop") != std::string::npos) AddTrailingStopOrder(market, command);
     }
 
+    ctx = Context::Get();
+
     // Update changed orders
-    if (ctx.market.changes.empty()) return;
-    UpdateOrders();
+    if (!ctx.market.changes.empty()) UpdateOrders();
 }
 
 /* ############################################################################################################################################# */
