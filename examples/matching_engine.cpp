@@ -119,6 +119,17 @@ const std::string QUERY_INSERT_INTO_LATEST = (EMPTY_STR +
 
 /* ############################################################################################################################################# */
 
+/* Helper Functions */
+
+// Convert Objects to string via operator<<
+template <typename T>
+inline std::string sstos(const T* input)
+{
+    std::stringstream ss;
+    ss << (*input);
+    return ss.str();
+}
+
 // Get Timestamp for Logs
 inline std::string now()
 {
@@ -128,15 +139,6 @@ inline std::string now()
     tstruct = *localtime(&ct);
     strftime(buf, sizeof(buf), "%Y-%m-%d %X", &tstruct);
     return std::string(buf);
-}
-
-// Convert Objects to string via operator<<
-template <typename T>
-inline std::string sstos(const T* input)
-{
-    std::stringstream ss;
-    ss << (*input);
-    return ss.str();
 }
 
 // Log
@@ -150,7 +152,6 @@ inline void error(const std::string& msg)
 // Error during the CLI step
 inline void CliError(const char *msg)
 { perror(msg); exit(1); }
-
 
 /* ############################################################################################################################################# */
 
@@ -506,7 +507,7 @@ std::string ParseOrderBook(MarketManager* market, const OrderBook* order_book_pt
 /* ############################################################################################################################################# */
 
 // Generate Query to insert Order into SQLite
-inline std::string QueryFromOrder(const Order& order, std::string info)
+inline std::string InsertQueryFromOrder(const Order& order, std::string info)
 {
     return (
         "INSERT INTO orders (" + CSV_HEADER_FOR_ORDER + ",Info) VALUES (" +
@@ -526,6 +527,28 @@ inline std::string QueryFromOrder(const Order& order, std::string info)
             std::to_string((int)order.LeavesQuantity) + CSV_SEP +
             "'" + info + "'" +
         ")"
+    );
+}
+
+// Generate Query to update Order into SQLite
+inline std::string UpdateQueryFromOrder(const Order& order)
+{
+    return (
+        "UPDATE orders SET " + EMPTY_STR +
+            "Type=" + std::to_string((int)order.Type) + CSV_SEP +
+            "Side=" + std::to_string((int)order.Side) + CSV_SEP +
+            "Price=" + std::to_string((int)order.Price) + CSV_SEP +
+            "StopPrice=" + std::to_string((int)order.StopPrice) + CSV_SEP +
+            "Quantity=" + std::to_string((int)order.Quantity) + CSV_SEP +
+            "TimeInForce=" + std::to_string((int)order.TimeInForce) + CSV_SEP +
+            "MaxVisibleQuantity=" + std::to_string((int)order.MaxVisibleQuantity) + CSV_SEP +
+            "Slippage=" + std::to_string((int)order.Slippage) + CSV_SEP +
+            "TrailingDistance=" + std::to_string((int)order.TrailingDistance) + CSV_SEP +
+            "TrailingStep=" + std::to_string((int)order.TrailingStep) + CSV_SEP +
+            "ExecutedQuantity=" + std::to_string((int)order.ExecutedQuantity) + CSV_SEP +
+            "LeavesQuantity=" + std::to_string((int)order.LeavesQuantity) +
+        " WHERE " +
+            "Id=" + std::to_string((int)order.Id)
     );
 }
 
@@ -832,7 +855,7 @@ protected:
         const std::string query = (EMPTY_STR +
             "BEGIN; " +
             "UPDATE latest SET Id=" + id + "; " +
-            QueryFromOrder(order, ctx.command.order_info) + "; " +
+            InsertQueryFromOrder(order, ctx.command.order_info) + "; " +
             "COMMIT;"
         );
         auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
@@ -864,11 +887,6 @@ protected:
         // Check if operation is enabled
         if (!ctx.enable) return;
 
-        // Get order id to update
-        std::string id = std::to_string((int)order.Id);
-        std::string ExecutedQuantity = std::to_string((int)order.ExecutedQuantity);
-        std::string LeavesQuantity = std::to_string((int)order.LeavesQuantity);
-
         // Log Order Update
         // log("Update order (SOURCE): " + sstos(&order));
         // log("Update order (DEBUG id): " + id);
@@ -877,7 +895,7 @@ protected:
         auto db = ctx.connection.sqlite_ptr;
         char* err;
 
-        const std::string query = ("update orders set ExecutedQuantity = " + ExecutedQuantity + ", LeavesQuantity = " + LeavesQuantity + " WHERE Id=" + id);
+        const std::string query = UpdateQueryFromOrder(order);
         auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
         { error("sqlite error(6): " + sstos(&err)); };
