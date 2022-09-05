@@ -99,7 +99,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line"><span class="comment">/* Preprocessed */</span></div>
 <div class="line"> </div>
-<div class="line"><span class="preprocessor">#define VERSION &quot;2.1.8.4&quot; // Program version</span></div>
+<div class="line"><span class="preprocessor">#define VERSION &quot;2.1.9.0&quot; // Program version</span></div>
 <div class="line"> </div>
 <div class="line"><span class="preprocessor">#define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)</span></div>
 <div class="line"><span class="preprocessor">#define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)</span></div>
@@ -1714,8 +1714,6 @@ $(function() {
 <div class="line">{</div>
 <div class="line">    <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
-<div class="line">    <span class="keywordflow">if</span> (ctx.market.changes.empty()) <span class="keywordflow">return</span>;</div>
-<div class="line"> </div>
 <div class="line">    std::string updates;</div>
 <div class="line">    <span class="keywordflow">for</span> (<span class="keyword">auto</span> <span class="keywordtype">id</span> : ctx.market.changes)</div>
 <div class="line">    {</div>
@@ -1788,9 +1786,10 @@ $(function() {
 <div class="line">        <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;add trailing stop&quot;</span>) != std::string::npos) AddTrailingStopOrder(market, command);</div>
 <div class="line">    }</div>
 <div class="line"> </div>
+<div class="line">    ctx = Context::Get();</div>
+<div class="line"> </div>
 <div class="line">    <span class="comment">// Update changed orders</span></div>
-<div class="line">    <span class="keywordflow">if</span> (ctx.market.changes.empty()) <span class="keywordflow">return</span>;</div>
-<div class="line">    UpdateOrders();</div>
+<div class="line">    <span class="keywordflow">if</span> (!ctx.market.changes.empty()) UpdateOrders();</div>
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
