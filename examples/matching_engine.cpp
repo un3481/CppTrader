@@ -29,7 +29,7 @@ using namespace CppTrader::Matching;
 
 /* Preprocessed */
 
-#define VERSION "2.1.8.0" // Program version
+#define VERSION "2.1.8.2" // Program version
 
 #define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)
 #define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)
@@ -101,7 +101,7 @@ const std::string QUERY_CREATE_TABLE_ORDERS = (EMPTY_STR +
         "TrailingStep INT" + CSV_SEP +
         "ExecutedQuantity INT NOT NULL" + CSV_SEP +
         "LeavesQuantity INT NOT NULL" + CSV_SEP +
-        "Info CHAR(64) NOT NULL" +
+        "Info CHAR(200) NOT NULL" +
     ")"
 );
 
@@ -854,12 +854,33 @@ protected:
         Context::Set(ctx);
     }
 
+    /* Update orders when half filled */
     void onUpdateOrder(const Order& order) override
     {
         ++_updates; ++_update_orders;
 
+        // Update SQLite
+        auto ctx = Context::Get();
+
+        if (!ctx.enable) return;
+
+        // Get order id to update
+        std::string id = std::to_string((int)order.Id);
+        std::string ExecutedQuantity = std::to_string((int)order.ExecutedQuantity);
+        std::string LeavesQuantity = std::to_string((int)order.LeavesQuantity);
+
         // Log Order Update
-        log("Update order: " + sstos(&order)); 
+        // log("Update order (SOURCE): " + sstos(&order)); 
+        // log("Update order (DEBUG id): " + id); 
+        // log("Update order (DEBUG LeavesQuantity): " + LeavesQuantity); 
+
+        auto db = ctx.connection.sqlite_ptr;
+        char* err;
+
+        const std::string query = ("update orders set ExecutedQuantity = " + ExecutedQuantity + ", LeavesQuantity = " + LeavesQuantity + " WHERE Id=" + id);
+        auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
+        if (rdy != SQLITE_OK)
+        { error("sqlite error(6): " + sstos(&err)); };
 
         /*
         // Send to server
@@ -924,7 +945,7 @@ protected:
         
         /*
         // Send to server
-        std::string cmd = "/home/sysop/books/BTC_TUSD/server ExecuteOrder '" + sstos(&price) + "@" + sstos(&quantity) + ":" + sstos(&order) + "'";
+        std::string cmd = "/home/sysop/books/BTC_TUSD/execute_processor ExecuteOrder '" + sstos(&price) + "@" + sstos(&quantity) + ":" + sstos(&order) + "'";
         int iCallResult = system(cmd.c_str());
         if (iCallResult < 0) { error("Error doing system call " + std::string(strerror(errno))); }
         */
