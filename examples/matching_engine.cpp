@@ -171,6 +171,13 @@ namespace Context {
     {
         MarketManager* market_ptr = NULL; // Pointer to Market Manager
         MyMarketHandler* handler_ptr = NULL; // Pointer to Market Handler
+        std::vector<int> changes = {}; // List of changed orders
+    };
+
+    struct Order
+    {
+        int id = 0; // Order Id
+        std::string info = ""; // Order Text Info
     };
 
     struct Command
@@ -178,9 +185,6 @@ namespace Context {
         std::string input = ""; // Command Input
         std::string response = ""; // Command Response
         int response_size = MSG_SIZE_SMALL; // Response Size
-        int order_id = 0; // Order Id
-        std::string order_info = ""; // Order Text Info
-        
     };
 
     // Context struct
@@ -190,6 +194,7 @@ namespace Context {
         Connection connection = Connection();
         Market market = Market();
         Command command = Command();
+        Order order = Order();
     };
 
     // Static context
@@ -462,14 +467,16 @@ std::string ParseOrderBookLevels(MarketManager* market, OrderBook::Levels levels
     std::string level_props;
     
     // Loop over Levels orders
-    for (auto level : levels) {
+    for (auto level : levels)
+    {
         // Get Level properties
         level_props = (
             group + CSV_SEP +
             LEVEL_TYPES[(int)level.Type] + CSV_SEP +
             std::to_string(level.Price)
         );
-        for (auto node : level.OrderList) {
+        for (auto node : level.OrderList)
+        {
             auto order = (*market).GetOrder(node.Id);
             csv.append(
                 level_props + CSV_SEP + // Insert level properties
@@ -840,7 +847,7 @@ protected:
         if (!ctx.enable) return;
 
         // Check if Id is Sync
-        if ((int)order.Id != ctx.command.order_id)
+        if ((int)order.Id != ctx.order.id)
         {
             error("Error at 'onAddOrder' callback: id out of sync");
             return;
@@ -855,7 +862,7 @@ protected:
         const std::string query = (EMPTY_STR +
             "BEGIN; " +
             "UPDATE latest SET Id=" + id + "; " +
-            InsertQueryFromOrder(order, ctx.command.order_info) + "; " +
+            InsertQueryFromOrder(order, ctx.order.info) + "; " +
             "COMMIT;"
         );
         auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
@@ -867,7 +874,7 @@ protected:
 
         /*
         // Send to server
-        std::string cmd = "/home/sysop/books/BTC_TUSD/server AddOrder " + id + ":" + ctx.command.order_info;
+        std::string cmd = "/home/sysop/books/BTC_TUSD/server AddOrder " + id + ":" + ctx.order.info;
         int iCallResult = system(cmd.c_str());
         if (iCallResult < 0) { error("Error doing system call " + std::string(strerror(errno))); }
         */
@@ -951,6 +958,18 @@ protected:
     void onExecuteOrder(const Order& order, uint64_t price, uint64_t quantity) override
     {
         ++_updates; ++_execute_orders;
+
+        auto ctx = Context::Get();
+
+        // Check if operation is enabled
+        if (!ctx.enable) return;
+
+        // Add Order Id to changes if not already added
+        auto ch = ctx.market.changes;
+        auto chit = find(ch.begin(), ch.end(), (int)order.Id);
+        if (chit == ch.end()) ctx.market.changes.push_back((int)order.Id);
+
+        Context::Set(ctx);
 
         // Log Executed Order
      	log("Execute order: " + sstos(&order) + " with price " + sstos(&price) + " and quantity " + sstos(&quantity));
@@ -1251,9 +1270,9 @@ void AddMarketOrder(MarketManager* market, const std::string& command)
     {
         auto ctx = Context::Get();
 
-        uint64_t id = ctx.command.order_id;
+        uint64_t id = ctx.order.id;
         uint64_t quantity = std::stoi(match[2]);
-        ctx.command.order_info = match[3];
+        ctx.order.info = match[3];
 
         Context::Set(ctx);
 
@@ -1287,10 +1306,10 @@ void AddSlippageMarketOrder(MarketManager* market, const std::string& command)
     {
         auto ctx = Context::Get();
 
-        uint64_t id = ctx.command.order_id;
+        uint64_t id = ctx.order.id;
         uint64_t quantity = std::stoi(match[2]);
         uint64_t slippage = std::stoi(match[3]);
-        ctx.command.order_info = match[4];
+        ctx.order.info = match[4];
 
         Context::Set(ctx);
 
@@ -1324,10 +1343,10 @@ void AddLimitOrder(MarketManager* market, const std::string& command)
     {
         auto ctx = Context::Get();
 
-        uint64_t id = ctx.command.order_id;
+        uint64_t id = ctx.order.id;
         uint64_t price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
-        ctx.command.order_info = match[4];
+        ctx.order.info = match[4];
 
         Context::Set(ctx);
 
@@ -1361,10 +1380,10 @@ void AddIOCLimitOrder(MarketManager* market, const std::string& command)
     {
         auto ctx = Context::Get();
 
-        uint64_t id = ctx.command.order_id;
+        uint64_t id = ctx.order.id;
         uint64_t price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
-        ctx.command.order_info = match[4];
+        ctx.order.info = match[4];
 
         Context::Set(ctx);
 
@@ -1398,10 +1417,10 @@ void AddFOKLimitOrder(MarketManager* market, const std::string& command)
     {
         auto ctx = Context::Get();
 
-        uint64_t id = ctx.command.order_id;
+        uint64_t id = ctx.order.id;
         uint64_t price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
-        ctx.command.order_info = match[4];
+        ctx.order.info = match[4];
 
         Context::Set(ctx);
 
@@ -1435,10 +1454,10 @@ void AddAONLimitOrder(MarketManager* market, const std::string& command)
     {
         auto ctx = Context::Get();
 
-        uint64_t id = ctx.command.order_id;
+        uint64_t id = ctx.order.id;
         uint64_t price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
-        ctx.command.order_info = match[4];
+        ctx.order.info = match[4];
 
         Context::Set(ctx);
 
@@ -1472,10 +1491,10 @@ void AddStopOrder(MarketManager* market, const std::string& command)
     {
         auto ctx = Context::Get();
 
-        uint64_t id = ctx.command.order_id;
+        uint64_t id = ctx.order.id;
         uint64_t stop_price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
-        ctx.command.order_info = match[4];
+        ctx.order.info = match[4];
 
         Context::Set(ctx);
 
@@ -1509,11 +1528,11 @@ void AddStopLimitOrder(MarketManager* market, const std::string& command)
     {
         auto ctx = Context::Get();
 
-        uint64_t id = ctx.command.order_id;
+        uint64_t id = ctx.order.id;
         uint64_t stop_price = std::stoi(match[2]);
         uint64_t price = std::stoi(match[3]);
         uint64_t quantity = std::stoi(match[4]);
-        ctx.command.order_info = match[5];
+        ctx.order.info = match[5];
 
         Context::Set(ctx);
 
@@ -1547,12 +1566,12 @@ void AddTrailingStopOrder(MarketManager* market, const std::string& command)
     {
         auto ctx = Context::Get();
 
-        uint64_t id = ctx.command.order_id;
+        uint64_t id = ctx.order.id;
         uint64_t stop_price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
         int64_t trailing_distance = std::stoi(match[4]);
         int64_t trailing_step = std::stoi(match[5]);
-        ctx.command.order_info = match[6];
+        ctx.order.info = match[6];
 
         Context::Set(ctx);
 
@@ -1586,13 +1605,13 @@ void AddTrailingStopLimitOrder(MarketManager* market, const std::string& command
     {
         auto ctx = Context::Get();
 
-        uint64_t id = ctx.command.order_id;
+        uint64_t id = ctx.order.id;
         uint64_t stop_price = std::stoi(match[2]);
         uint64_t price = std::stoi(match[3]);
         uint64_t quantity = std::stoi(match[4]);
         int64_t trailing_distance = std::stoi(match[5]);
         int64_t trailing_step = std::stoi(match[6]);
-        ctx.command.order_info = match[7];
+        ctx.order.info = match[7];
 
         Context::Set(ctx);
 
@@ -1620,6 +1639,40 @@ void AddTrailingStopLimitOrder(MarketManager* market, const std::string& command
 /* ############################################################################################################################################# */
 
 /* Execute Command */
+
+inline void UpdateOrders()
+{
+    auto ctx = Context::Get();
+
+    if (ctx.market.changes.empty()) return;
+
+    std::string updates;
+    for (auto id : ctx.market.changes)
+    {
+        auto order = (*ctx.market.market_ptr).GetOrder(id);
+        if (order == NULL) continue;
+        updates.append(UpdateQueryFromOrder(*order) + "; ");
+    }
+
+    if (updates.empty())
+    {
+        ctx.market.changes.clear();
+        Context::Set(ctx);
+        return;
+    }
+
+    auto db = ctx.connection.sqlite_ptr;
+    char* err;
+
+    const std::string query = "BEGIN; " + updates + "COMMIT;";
+    auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
+    if (rdy != SQLITE_OK)
+    { error("sqlite error(7): " + sstos(&err)); };
+
+    // Clear changes
+    ctx.market.changes = {};
+    Context::Set(ctx);
+}
 
 void Execute()
 {
@@ -1649,7 +1702,7 @@ void Execute()
     else if (command.find("add ") != std::string::npos)
     {
         // Set new Order Id
-        ctx.command.order_id = (*ctx.market.handler_ptr).lts_order_id() + 1;
+        ctx.order.id = (*ctx.market.handler_ptr).lts_order_id() + 1;
         Context::Set(ctx); // Set new context
 
         // Orders: Add
@@ -1664,6 +1717,9 @@ void Execute()
         else if (command.find("add trailing stop-limit") != std::string::npos) AddTrailingStopLimitOrder(market, command);
         else if (command.find("add trailing stop") != std::string::npos) AddTrailingStopOrder(market, command);
     }
+
+    // Update changed orders
+    UpdateOrders();
 }
 
 /* ############################################################################################################################################# */
