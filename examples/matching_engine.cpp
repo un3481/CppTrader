@@ -533,8 +533,8 @@ inline std::string InsertQueryFromOrder(const Order& order, std::string info)
 // Generate Query to update Order into SQLite
 inline std::string UpdateQueryFromOrder(const Order& order)
 {
-    return (
-        "UPDATE orders SET " + EMPTY_STR +
+    return (EMPTY_STR +
+        "UPDATE orders SET " +
             "Type=" + std::to_string((int)order.Type) + CSV_SEP +
             "Side=" + std::to_string((int)order.Side) + CSV_SEP +
             "Price=" + std::to_string((int)order.Price) + CSV_SEP +
