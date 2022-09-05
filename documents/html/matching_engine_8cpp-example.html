@@ -99,7 +99,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line"><span class="comment">/* Preprocessed */</span></div>
 <div class="line"> </div>
-<div class="line"><span class="preprocessor">#define VERSION &quot;2.1.8.2&quot; // Program version</span></div>
+<div class="line"><span class="preprocessor">#define VERSION &quot;2.1.8.4&quot; // Program version</span></div>
 <div class="line"> </div>
 <div class="line"><span class="preprocessor">#define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)</span></div>
 <div class="line"><span class="preprocessor">#define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)</span></div>
@@ -189,6 +189,17 @@ $(function() {
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
 <div class="line"> </div>
+<div class="line"><span class="comment">/* Helper Functions */</span></div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Convert Objects to string via operator&lt;&lt;</span></div>
+<div class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><span class="keyword">inline</span> std::string sstos(<span class="keyword">const</span> T* input)</div>
+<div class="line">{</div>
+<div class="line">    std::stringstream ss;</div>
+<div class="line">    ss &lt;&lt; (*input);</div>
+<div class="line">    <span class="keywordflow">return</span> ss.str();</div>
+<div class="line">}</div>
+<div class="line"> </div>
 <div class="line"><span class="comment">// Get Timestamp for Logs</span></div>
 <div class="line"><span class="keyword">inline</span> std::string now()</div>
 <div class="line">{</div>
@@ -198,15 +209,6 @@ $(function() {
 <div class="line">    tstruct = *localtime(&amp;ct);</div>
 <div class="line">    strftime(buf, <span class="keyword">sizeof</span>(buf), <span class="stringliteral">&quot;%Y-%m-%d %X&quot;</span>, &amp;tstruct);</div>
 <div class="line">    <span class="keywordflow">return</span> std::string(buf);</div>
-<div class="line">}</div>
-<div class="line"> </div>
-<div class="line"><span class="comment">// Convert Objects to string via operator&lt;&lt;</span></div>
-<div class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><span class="keyword">inline</span> std::string sstos(<span class="keyword">const</span> T* input)</div>
-<div class="line">{</div>
-<div class="line">    std::stringstream ss;</div>
-<div class="line">    ss &lt;&lt; (*input);</div>
-<div class="line">    <span class="keywordflow">return</span> ss.str();</div>
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Log</span></div>
@@ -220,7 +222,6 @@ $(function() {
 <div class="line"><span class="comment">// Error during the CLI step</span></div>
 <div class="line"><span class="keyword">inline</span> <span class="keywordtype">void</span> CliError(<span class="keyword">const</span> <span class="keywordtype">char</span> *msg)</div>
 <div class="line">{ perror(msg); exit(1); }</div>
-<div class="line"> </div>
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
 <div class="line"> </div>
@@ -576,7 +577,7 @@ $(function() {
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Generate Query to insert Order into SQLite</span></div>
-<div class="line"><span class="keyword">inline</span> std::string QueryFromOrder(<span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>&amp; order, std::string info)</div>
+<div class="line"><span class="keyword">inline</span> std::string InsertQueryFromOrder(<span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>&amp; order, std::string info)</div>
 <div class="line">{</div>
 <div class="line">    <span class="keywordflow">return</span> (</div>
 <div class="line">        <span class="stringliteral">&quot;INSERT INTO orders (&quot;</span> + CSV_HEADER_FOR_ORDER + <span class="stringliteral">&quot;,Info) VALUES (&quot;</span> +</div>
@@ -596,6 +597,28 @@ $(function() {
 <div class="line">            std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a798b7777f5c575a301c6174af2c23e94">LeavesQuantity</a>) + CSV_SEP +</div>
 <div class="line">            <span class="stringliteral">&quot;&#39;&quot;</span> + info + <span class="stringliteral">&quot;&#39;&quot;</span> +</div>
 <div class="line">        <span class="stringliteral">&quot;)&quot;</span></div>
+<div class="line">    );</div>
+<div class="line">}</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Generate Query to update Order into SQLite</span></div>
+<div class="line"><span class="keyword">inline</span> std::string UpdateQueryFromOrder(<span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>&amp; order)</div>
+<div class="line">{</div>
+<div class="line">    <span class="keywordflow">return</span> (EMPTY_STR +</div>
+<div class="line">        <span class="stringliteral">&quot;UPDATE orders SET &quot;</span> +</div>
+<div class="line">            <span class="stringliteral">&quot;Type=&quot;</span> + std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a8f9a2bd4403993d06556167258a3ed95">Type</a>) + CSV_SEP +</div>
+<div class="line">            <span class="stringliteral">&quot;Side=&quot;</span> + std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a326726dbed270af12b64bc1eefd42673">Side</a>) + CSV_SEP +</div>
+<div class="line">            <span class="stringliteral">&quot;Price=&quot;</span> + std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a38c3dbc9e2e9ca4d91827a7f3a195dc7">Price</a>) + CSV_SEP +</div>
+<div class="line">            <span class="stringliteral">&quot;StopPrice=&quot;</span> + std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a8780a90b1a61f2866eb78182e306db12">StopPrice</a>) + CSV_SEP +</div>
+<div class="line">            <span class="stringliteral">&quot;Quantity=&quot;</span> + std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#aeb6dd457fd9f343d0f9da913cc1f199c">Quantity</a>) + CSV_SEP +</div>
+<div class="line">            <span class="stringliteral">&quot;TimeInForce=&quot;</span> + std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a9f0f38e28183909ed38c970ad9c8f96c">TimeInForce</a>) + CSV_SEP +</div>
+<div class="line">            <span class="stringliteral">&quot;MaxVisibleQuantity=&quot;</span> + std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a3d51591547fdb6db893771bf0f00d118">MaxVisibleQuantity</a>) + CSV_SEP +</div>
+<div class="line">            <span class="stringliteral">&quot;Slippage=&quot;</span> + std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ae3c50002ba4f8486d6e288e4cee9d0fa">Slippage</a>) + CSV_SEP +</div>
+<div class="line">            <span class="stringliteral">&quot;TrailingDistance=&quot;</span> + std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#aacaa8f37a245bb45e4fc1e1372517920">TrailingDistance</a>) + CSV_SEP +</div>
+<div class="line">            <span class="stringliteral">&quot;TrailingStep=&quot;</span> + std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a50407e3856a81f25cc2da01599f15f02">TrailingStep</a>) + CSV_SEP +</div>
+<div class="line">            <span class="stringliteral">&quot;ExecutedQuantity=&quot;</span> + std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a555135d11f7188cb08d51be8455ada85">ExecutedQuantity</a>) + CSV_SEP +</div>
+<div class="line">            <span class="stringliteral">&quot;LeavesQuantity=&quot;</span> + std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a798b7777f5c575a301c6174af2c23e94">LeavesQuantity</a>) +</div>
+<div class="line">        <span class="stringliteral">&quot; WHERE &quot;</span> +</div>
+<div class="line">            <span class="stringliteral">&quot;Id=&quot;</span> + std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>)</div>
 <div class="line">    );</div>
 <div class="line">}</div>
 <div class="line"> </div>
@@ -902,7 +925,7 @@ $(function() {
 <div class="line">        <span class="keyword">const</span> std::string query = (EMPTY_STR +</div>
 <div class="line">            <span class="stringliteral">&quot;BEGIN; &quot;</span> +</div>
 <div class="line">            <span class="stringliteral">&quot;UPDATE latest SET Id=&quot;</span> + <span class="keywordtype">id</span> + <span class="stringliteral">&quot;; &quot;</span> +</div>
-<div class="line">            QueryFromOrder(order, ctx.command.order_info) + <span class="stringliteral">&quot;; &quot;</span> +</div>
+<div class="line">            InsertQueryFromOrder(order, ctx.command.order_info) + <span class="stringliteral">&quot;; &quot;</span> +</div>
 <div class="line">            <span class="stringliteral">&quot;COMMIT;&quot;</span></div>
 <div class="line">        );</div>
 <div class="line">        <span class="keyword">auto</span> rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &amp;err);</div>
@@ -929,25 +952,20 @@ $(function() {
 <div class="line"><span class="keyword">    </span>{</div>
 <div class="line">        ++_updates; ++_update_orders;</div>
 <div class="line"> </div>
-<div class="line">        <span class="comment">// Update SQLite</span></div>
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
+<div class="line">        <span class="comment">// Check if operation is enabled</span></div>
 <div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
-<div class="line">        <span class="comment">// Get order id to update</span></div>
-<div class="line">        std::string <span class="keywordtype">id</span> = std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
-<div class="line">        std::string ExecutedQuantity = std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a555135d11f7188cb08d51be8455ada85">ExecutedQuantity</a>);</div>
-<div class="line">        std::string LeavesQuantity = std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a798b7777f5c575a301c6174af2c23e94">LeavesQuantity</a>);</div>
-<div class="line"> </div>
 <div class="line">        <span class="comment">// Log Order Update</span></div>
-<div class="line">        <span class="comment">// log(&quot;Update order (SOURCE): &quot; + sstos(&amp;order)); </span></div>
-<div class="line">        <span class="comment">// log(&quot;Update order (DEBUG id): &quot; + id); </span></div>
-<div class="line">        <span class="comment">// log(&quot;Update order (DEBUG LeavesQuantity): &quot; + LeavesQuantity); </span></div>
+<div class="line">        <span class="comment">// log(&quot;Update order (SOURCE): &quot; + sstos(&amp;order));</span></div>
+<div class="line">        <span class="comment">// log(&quot;Update order (DEBUG id): &quot; + id);</span></div>
+<div class="line">        <span class="comment">// log(&quot;Update order (DEBUG LeavesQuantity): &quot; + LeavesQuantity);</span></div>
 <div class="line"> </div>
 <div class="line">        <span class="keyword">auto</span> db = ctx.connection.sqlite_ptr;</div>
 <div class="line">        <span class="keywordtype">char</span>* err;</div>
 <div class="line"> </div>
-<div class="line">        <span class="keyword">const</span> std::string query = (<span class="stringliteral">&quot;update orders set ExecutedQuantity = &quot;</span> + ExecutedQuantity + <span class="stringliteral">&quot;, LeavesQuantity = &quot;</span> + LeavesQuantity + <span class="stringliteral">&quot; WHERE Id=&quot;</span> + id);</div>
+<div class="line">        <span class="keyword">const</span> std::string query = UpdateQueryFromOrder(order);</div>
 <div class="line">        <span class="keyword">auto</span> rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &amp;err);</div>
 <div class="line">        <span class="keywordflow">if</span> (rdy != SQLITE_OK)</div>
 <div class="line">        { error(<span class="stringliteral">&quot;sqlite error(6): &quot;</span> + sstos(&amp;err)); };</div>
