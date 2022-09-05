@@ -29,7 +29,7 @@ using namespace CppTrader::Matching;
 
 /* Preprocessed */
 
-#define VERSION "2.1.8.2" // Program version
+#define VERSION "2.1.8.4" // Program version
 
 #define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)
 #define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)
@@ -859,9 +859,9 @@ protected:
     {
         ++_updates; ++_update_orders;
 
-        // Update SQLite
         auto ctx = Context::Get();
 
+        // Check if operation is enabled
         if (!ctx.enable) return;
 
         // Get order id to update
@@ -870,9 +870,9 @@ protected:
         std::string LeavesQuantity = std::to_string((int)order.LeavesQuantity);
 
         // Log Order Update
-        // log("Update order (SOURCE): " + sstos(&order)); 
-        // log("Update order (DEBUG id): " + id); 
-        // log("Update order (DEBUG LeavesQuantity): " + LeavesQuantity); 
+        // log("Update order (SOURCE): " + sstos(&order));
+        // log("Update order (DEBUG id): " + id);
+        // log("Update order (DEBUG LeavesQuantity): " + LeavesQuantity);
 
         auto db = ctx.connection.sqlite_ptr;
         char* err;
