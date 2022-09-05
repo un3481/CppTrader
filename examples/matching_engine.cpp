@@ -532,7 +532,7 @@ inline std::string QueryFromOrder(const Order& order, std::string info)
 // Generate new Order from result of Query
 inline Order OrderFromQuery(sqlite3_stmt* row)
 {
-    return Order(
+    auto order = Order(
         sqlite3_column_int(row, 0), // Id
         SYMBOL_ID, // Symbol
         OrderType(sqlite3_column_int(row, 2)), // Type
@@ -546,6 +546,10 @@ inline Order OrderFromQuery(sqlite3_stmt* row)
         sqlite3_column_int(row, 10), // Trailing Distance
         sqlite3_column_int(row, 11) // Trailing Step
     );
+    order.ExecutedQuantity = sqlite3_column_int(row, 12); // Executed Quantity
+    order.LeavesQuantity = sqlite3_column_int(row, 13); // Leaves Quantity
+
+    return order;
 }
 
 /* ############################################################################################################################################# */
