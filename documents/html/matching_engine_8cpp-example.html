@@ -1722,23 +1722,19 @@ $(function() {
 <div class="line">        updates.append(UpdateQueryFromOrder(*order) + <span class="stringliteral">&quot;; &quot;</span>);</div>
 <div class="line">    }</div>
 <div class="line"> </div>
-<div class="line">    <span class="keywordflow">if</span> (updates.empty())</div>
+<div class="line">    <span class="keywordflow">if</span> (!updates.empty())</div>
 <div class="line">    {</div>
-<div class="line">        ctx.market.changes.clear();</div>
-<div class="line">        Context::Set(ctx);</div>
-<div class="line">        <span class="keywordflow">return</span>;</div>
+<div class="line">        <span class="keyword">auto</span> db = ctx.connection.sqlite_ptr;</div>
+<div class="line">        <span class="keywordtype">char</span>* err;</div>
+<div class="line"> </div>
+<div class="line">        <span class="keyword">const</span> std::string query = <span class="stringliteral">&quot;BEGIN; &quot;</span> + updates + <span class="stringliteral">&quot;COMMIT;&quot;</span>;</div>
+<div class="line">        <span class="keyword">auto</span> rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &amp;err);</div>
+<div class="line">        <span class="keywordflow">if</span> (rdy != SQLITE_OK)</div>
+<div class="line">        { error(<span class="stringliteral">&quot;sqlite error(7): &quot;</span> + sstos(&amp;err)); };</div>
 <div class="line">    }</div>
 <div class="line"> </div>
-<div class="line">    <span class="keyword">auto</span> db = ctx.connection.sqlite_ptr;</div>
-<div class="line">    <span class="keywordtype">char</span>* err;</div>
-<div class="line"> </div>
-<div class="line">    <span class="keyword">const</span> std::string query = <span class="stringliteral">&quot;BEGIN; &quot;</span> + updates + <span class="stringliteral">&quot;COMMIT;&quot;</span>;</div>
-<div class="line">    <span class="keyword">auto</span> rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &amp;err);</div>
-<div class="line">    <span class="keywordflow">if</span> (rdy != SQLITE_OK)</div>
-<div class="line">    { error(<span class="stringliteral">&quot;sqlite error(7): &quot;</span> + sstos(&amp;err)); };</div>
-<div class="line"> </div>
 <div class="line">    <span class="comment">// Clear changes</span></div>
-<div class="line">    ctx.market.changes = {};</div>
+<div class="line">    ctx.market.changes.clear();</div>
 <div class="line">    Context::Set(ctx);</div>
 <div class="line">}</div>
 <div class="line"> </div>
