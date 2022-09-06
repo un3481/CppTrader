@@ -1644,6 +1644,7 @@ void UpdateOrders()
 {
     auto ctx = Context::Get();
 
+    // Generate all update queries
     std::string updates;
     for (auto id : ctx.market.changes)
     {
