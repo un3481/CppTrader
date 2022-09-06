@@ -1652,23 +1652,19 @@ void UpdateOrders()
         updates.append(UpdateQueryFromOrder(*order) + "; ");
     }
 
-    if (updates.empty())
+    if (!updates.empty())
     {
-        ctx.market.changes.clear();
-        Context::Set(ctx);
-        return;
+        auto db = ctx.connection.sqlite_ptr;
+        char* err;
+
+        const std::string query = "BEGIN; " + updates + "COMMIT;";
+        auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
+        if (rdy != SQLITE_OK)
+        { error("sqlite error(7): " + sstos(&err)); };
     }
 
-    auto db = ctx.connection.sqlite_ptr;
-    char* err;
-
-    const std::string query = "BEGIN; " + updates + "COMMIT;";
-    auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
-    if (rdy != SQLITE_OK)
-    { error("sqlite error(7): " + sstos(&err)); };
-
     // Clear changes
-    ctx.market.changes = {};
+    ctx.market.changes.clear();
     Context::Set(ctx);
 }
 
