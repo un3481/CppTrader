@@ -99,7 +99,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line"><span class="comment">/* Preprocessed */</span></div>
 <div class="line"> </div>
-<div class="line"><span class="preprocessor">#define VERSION &quot;2.1.9.5&quot; // Program version</span></div>
+<div class="line"><span class="preprocessor">#define VERSION &quot;2.2.0.0&quot; // Program version</span></div>
 <div class="line"> </div>
 <div class="line"><span class="preprocessor">#define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)</span></div>
 <div class="line"><span class="preprocessor">#define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)</span></div>
@@ -269,8 +269,8 @@ $(function() {
 <div class="line">        </div>
 <div class="line">    };</div>
 <div class="line"> </div>
-<div class="line">    <span class="comment">// Static context</span></div>
-<div class="line">    Ctx* _ctx()</div>
+<div class="line">    <span class="comment">// Get Context</span></div>
+<div class="line">    Ctx* Get()</div>
 <div class="line">    {</div>
 <div class="line">        <span class="keyword">static</span> Ctx ctx;</div>
 <div class="line">        <span class="keywordflow">return</span> &amp;ctx;</div>
@@ -280,7 +280,7 @@ $(function() {
 <div class="line">    <span class="keyword">inline</span> <span class="keywordtype">void</span> Set(Ctx&amp; value)</div>
 <div class="line">    {</div>
 <div class="line">        Ctx new_ctx = value;</div>
-<div class="line">        <span class="keyword">auto</span> ctx = _ctx();</div>
+<div class="line">        <span class="keyword">auto</span> ctx = Get();</div>
 <div class="line">        (*ctx) = new_ctx;</div>
 <div class="line">    }</div>
 <div class="line"> </div>
@@ -289,14 +289,6 @@ $(function() {
 <div class="line">    {</div>
 <div class="line">        Ctx ctx;</div>
 <div class="line">        Set(ctx);</div>
-<div class="line">    }</div>
-<div class="line"> </div>
-<div class="line">    <span class="comment">// Get Context</span></div>
-<div class="line">    <span class="keyword">inline</span> <span class="keyword">auto</span> Get()</div>
-<div class="line">    {</div>
-<div class="line">        <span class="keyword">auto</span> ctx_ptr = _ctx();</div>
-<div class="line">        Ctx ctx = (*ctx_ptr);</div>
-<div class="line">        <span class="keywordflow">return</span> ctx;</div>
 <div class="line">    }</div>
 <div class="line">}</div>
 <div class="line"> </div>
@@ -726,17 +718,14 @@ $(function() {
 <div class="line">        <span class="comment">// Add Order</span></div>
 <div class="line">        <span class="keyword">auto</span> order = OrderFromQuery(result);</div>
 <div class="line">        <span class="keyword">auto</span> info = sqlite3_column_text(result, 14);</div>
-<div class="line">        ctx.order.info = std::string((<span class="keywordtype">char</span> <span class="keyword">const</span>*)info);</div>
-<div class="line">        ctx.order.id = (int)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>;</div>
-<div class="line">        Context::Set(ctx);</div>
+<div class="line">        (*ctx).order.info = std::string((<span class="keywordtype">char</span> <span class="keyword">const</span>*)info);</div>
+<div class="line">        (*ctx).order.id = (int)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>;</div>
 <div class="line">        err = (*market).AddOrder(order);</div>
 <div class="line">        <span class="keywordflow">if</span> (err != ErrorCode::OK)</div>
 <div class="line">        { error(<span class="stringliteral">&quot;Failed AddOrder: &quot;</span> + sstos(&amp;err)); exit(1); };</div>
-<div class="line">        ctx = Context::Get();</div>
 <div class="line">    };</div>
 <div class="line"> </div>
-<div class="line">    ctx.order = Context::Order();</div>
-<div class="line">    Context::Set(ctx);</div>
+<div class="line">    (*ctx).order = Context::Order();</div>
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
@@ -804,7 +793,7 @@ $(function() {
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Check if operation is enabled</span></div>
-<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
+<div class="line">        <span class="keywordflow">if</span> (!(*ctx).enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Add Symbol</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Add symbol: &quot;</span> + sstos(&amp;symbol));</div>
@@ -824,7 +813,7 @@ $(function() {
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Check if operation is enabled</span></div>
-<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
+<div class="line">        <span class="keywordflow">if</span> (!(*ctx).enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Delete Symbol</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Delete symbol: &quot;</span> + sstos(&amp;symbol)); </div>
@@ -844,7 +833,7 @@ $(function() {
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Check if operation is enabled</span></div>
-<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
+<div class="line">        <span class="keywordflow">if</span> (!(*ctx).enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Add Order Book</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Add order book: &quot;</span> + sstos(&amp;order_book)); </div>
@@ -864,7 +853,7 @@ $(function() {
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Check if operation is enabled</span></div>
-<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
+<div class="line">        <span class="keywordflow">if</span> (!(*ctx).enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Update Order Book</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Update order book: &quot;</span> + sstos(&amp;order_book) + (top ? <span class="stringliteral">&quot; - Top of the book!&quot;</span> : <span class="stringliteral">&quot;&quot;</span>)); </div>
@@ -884,7 +873,7 @@ $(function() {
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Check if operation is enabled</span></div>
-<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
+<div class="line">        <span class="keywordflow">if</span> (!(*ctx).enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Delete Order Book</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Delete order book: &quot;</span> + sstos(&amp;order_book)); </div>
@@ -904,7 +893,7 @@ $(function() {
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Check if operation is enabled</span></div>
-<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
+<div class="line">        <span class="keywordflow">if</span> (!(*ctx).enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Add Level</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Add level: &quot;</span> + sstos(&amp;level) + (top ? <span class="stringliteral">&quot; - Top of the book!&quot;</span> : <span class="stringliteral">&quot;&quot;</span>)); </div>
@@ -924,7 +913,7 @@ $(function() {
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Check if operation is enabled</span></div>
-<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
+<div class="line">        <span class="keywordflow">if</span> (!(*ctx).enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Update Level</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Update level: &quot;</span> + sstos(&amp;level) + (top ? <span class="stringliteral">&quot; - Top of the book!&quot;</span> : <span class="stringliteral">&quot;&quot;</span>)); </div>
@@ -944,7 +933,7 @@ $(function() {
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Check if operation is enabled</span></div>
-<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
+<div class="line">        <span class="keywordflow">if</span> (!(*ctx).enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Delete Leve</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Delete level: &quot;</span> + sstos(&amp;level) + (top ? <span class="stringliteral">&quot; - Top of the book!&quot;</span> : <span class="stringliteral">&quot;&quot;</span>)); </div>
@@ -967,31 +956,30 @@ $(function() {
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Check if Id is Sync</span></div>
-<div class="line">        <span class="keywordflow">if</span> ((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a> != ctx.order.id)</div>
+<div class="line">        <span class="keywordflow">if</span> ((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a> != (*ctx).order.id)</div>
 <div class="line">        {</div>
 <div class="line">            error(<span class="stringliteral">&quot;Error at &#39;onAddOrder&#39; callback: id out of sync&quot;</span>);</div>
 <div class="line">            <span class="keywordflow">return</span>;</div>
 <div class="line">        }</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Store Order Info</span></div>
-<div class="line">        ctx.market.info.insert(</div>
-<div class="line">            std::make_pair((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>, ctx.order.info)</div>
+<div class="line">        (*ctx).market.info.insert(</div>
+<div class="line">            std::make_pair((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>, (*ctx).order.info)</div>
 <div class="line">        );</div>
-<div class="line">        Context::Set(ctx);</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Check if operation is enabled</span></div>
-<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
+<div class="line">        <span class="keywordflow">if</span> (!(*ctx).enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line">        std::string <span class="keywordtype">id</span> = std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
 <div class="line"> </div>
-<div class="line">        <span class="keyword">auto</span> db = ctx.connection.sqlite_ptr;</div>
+<div class="line">        <span class="keyword">auto</span> db = (*ctx).connection.sqlite_ptr;</div>
 <div class="line">        <span class="keywordtype">char</span>* err;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Add order to SQLite</span></div>
 <div class="line">        <span class="keyword">const</span> std::string query = (EMPTY_STR +</div>
 <div class="line">            <span class="stringliteral">&quot;BEGIN; &quot;</span> +</div>
 <div class="line">            <span class="stringliteral">&quot;UPDATE latest SET Id=&quot;</span> + <span class="keywordtype">id</span> + <span class="stringliteral">&quot;; &quot;</span> +</div>
-<div class="line">            InsertQueryFromOrder(order, ctx.order.info) + <span class="stringliteral">&quot;; &quot;</span> +</div>
+<div class="line">            InsertQueryFromOrder(order, (*ctx).order.info) + <span class="stringliteral">&quot;; &quot;</span> +</div>
 <div class="line">            <span class="stringliteral">&quot;COMMIT;&quot;</span></div>
 <div class="line">        );</div>
 <div class="line">        <span class="keyword">auto</span> rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &amp;err);</div>
@@ -1003,14 +991,13 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <span class="comment">/*</span></div>
 <div class="line"><span class="comment">        // Send to server</span></div>
-<div class="line"><span class="comment">        std::string cmd = &quot;/home/sysop/books/BTC_TUSD/server AddOrder &quot; + id + &quot;:&quot; + ctx.order.info;</span></div>
+<div class="line"><span class="comment">        std::string cmd = &quot;/home/sysop/books/BTC_TUSD/server AddOrder &quot; + id + &quot;:&quot; + (*ctx).order.info;</span></div>
 <div class="line"><span class="comment">        int iCallResult = system(cmd.c_str());</span></div>
 <div class="line"><span class="comment">        if (iCallResult &lt; 0) { error(&quot;Error doing system call &quot; + std::string(strerror(errno))); }</span></div>
 <div class="line"><span class="comment">        */</span></div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Set response to client</span></div>
-<div class="line">        ctx.command.response = id;</div>
-<div class="line">        Context::Set(ctx);</div>
+<div class="line">        (*ctx).command.response = id;</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">/* Update orders when half filled */</span></div>
@@ -1021,15 +1008,14 @@ $(function() {
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Delete Order Info</span></div>
-<div class="line">        ctx.market.info.erase(</div>
-<div class="line">            ctx.market.info.find((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>)</div>
+<div class="line">        (*ctx).market.info.erase(</div>
+<div class="line">            (*ctx).market.info.find((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>)</div>
 <div class="line">        );</div>
-<div class="line">        Context::Set(ctx);</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Check if operation is enabled</span></div>
-<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
+<div class="line">        <span class="keywordflow">if</span> (!(*ctx).enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
-<div class="line">        <span class="keyword">auto</span> db = ctx.connection.sqlite_ptr;</div>
+<div class="line">        <span class="keyword">auto</span> db = (*ctx).connection.sqlite_ptr;</div>
 <div class="line">        <span class="keywordtype">char</span>* err;</div>
 <div class="line"> </div>
 <div class="line">        <span class="keyword">const</span> std::string query = UpdateQueryFromOrder(order);</div>
@@ -1052,11 +1038,11 @@ $(function() {
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Check if operation is enabled</span></div>
-<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
+<div class="line">        <span class="keywordflow">if</span> (!(*ctx).enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line">        std::string <span class="keywordtype">id</span> = std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
 <div class="line"> </div>
-<div class="line">        <span class="keyword">auto</span> db = ctx.connection.sqlite_ptr;</div>
+<div class="line">        <span class="keyword">auto</span> db = (*ctx).connection.sqlite_ptr;</div>
 <div class="line">        <span class="keywordtype">char</span>* err;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Delete order from SQLite</span></div>
@@ -1078,12 +1064,11 @@ $(function() {
 <div class="line"><span class="comment">        // *** Send to server end</span></div>
 <div class="line"><span class="comment">        */</span></div>
 <div class="line"> </div>
-<div class="line">        <span class="keyword">auto</span> command = ctx.command.input;</div>
+<div class="line">        <span class="keyword">auto</span> command = (*ctx).command.input;</div>
 <div class="line">        <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;delete order&quot;</span>) == std::string::npos) <span class="keywordflow">return</span>;</div>
 <div class="line">        </div>
 <div class="line">        <span class="comment">// Set response to client</span></div>
-<div class="line">        ctx.command.response = <span class="stringliteral">&quot;OK&quot;</span>;</div>
-<div class="line">        Context::Set(ctx);</div>
+<div class="line">        (*ctx).command.response = <span class="stringliteral">&quot;OK&quot;</span>;</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">void</span> onExecuteOrder(<span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>&amp; order, uint64_t price, uint64_t quantity)<span class="keyword"> override</span></div>
@@ -1092,15 +1077,13 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
-<div class="line">        <span class="comment">// Check if operation is enabled</span></div>
-<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
-<div class="line"> </div>
 <div class="line">        <span class="comment">// Add Order Id to changes if not already added</span></div>
-<div class="line">        <span class="keyword">auto</span> ch = ctx.market.changes;</div>
+<div class="line">        <span class="keyword">auto</span> ch = (*ctx).market.changes;</div>
 <div class="line">        <span class="keyword">auto</span> chit = find(ch.begin(), ch.end(), (<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
-<div class="line">        <span class="keywordflow">if</span> (chit == ch.end()) ctx.market.changes.push_back((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
+<div class="line">        <span class="keywordflow">if</span> (chit == ch.end()) (*ctx).market.changes.push_back((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
 <div class="line"> </div>
-<div class="line">        Context::Set(ctx);</div>
+<div class="line">        <span class="comment">// Check if operation is enabled</span></div>
+<div class="line">        <span class="keywordflow">if</span> (!(*ctx).enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Executed Order</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Execute order: &quot;</span> + sstos(&amp;order) + <span class="stringliteral">&quot; with price &quot;</span> + sstos(&amp;price) + <span class="stringliteral">&quot; and quantity &quot;</span> + sstos(&amp;quantity));</div>
@@ -1236,9 +1219,8 @@ $(function() {
 <div class="line"> </div>
 <div class="line">            <span class="comment">// Set response to client</span></div>
 <div class="line">            <span class="keyword">auto</span> ctx = Context::Get();</div>
-<div class="line">            ctx.command.response = res;</div>
-<div class="line">            ctx.command.response_size = MSG_SIZE_LARGE;</div>
-<div class="line">            Context::Set(ctx);</div>
+<div class="line">            (*ctx).command.response = res;</div>
+<div class="line">            (*ctx).command.response_size = MSG_SIZE_LARGE;</div>
 <div class="line">        }</div>
 <div class="line">        </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
@@ -1378,9 +1360,8 @@ $(function() {
 <div class="line"> </div>
 <div class="line">            <span class="comment">// Set response to client</span></div>
 <div class="line">            <span class="keyword">auto</span> ctx = Context::Get();</div>
-<div class="line">            ctx.command.response = res;</div>
-<div class="line">            ctx.command.response_size = MSG_SIZE;</div>
-<div class="line">            Context::Set(ctx);</div>
+<div class="line">            (*ctx).command.response = res;</div>
+<div class="line">            (*ctx).command.response_size = MSG_SIZE;</div>
 <div class="line">        }</div>
 <div class="line">        </div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
@@ -1402,11 +1383,9 @@ $(function() {
 <div class="line">    {</div>
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
-<div class="line">        uint64_t <span class="keywordtype">id</span> = ctx.order.id;</div>
+<div class="line">        uint64_t <span class="keywordtype">id</span> = (*ctx).order.id;</div>
 <div class="line">        uint64_t quantity = std::stoi(match[2]);</div>
-<div class="line">        ctx.order.info = match[3];</div>
-<div class="line"> </div>
-<div class="line">        Context::Set(ctx);</div>
+<div class="line">        (*ctx).order.info = match[3];</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a> order;</div>
 <div class="line">        <span class="keywordflow">if</span> (match[1] == <span class="stringliteral">&quot;buy&quot;</span>)</div>
@@ -1438,12 +1417,10 @@ $(function() {
 <div class="line">    {</div>
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
-<div class="line">        uint64_t <span class="keywordtype">id</span> = ctx.order.id;</div>
+<div class="line">        uint64_t <span class="keywordtype">id</span> = (*ctx).order.id;</div>
 <div class="line">        uint64_t quantity = std::stoi(match[2]);</div>
 <div class="line">        uint64_t slippage = std::stoi(match[3]);</div>
-<div class="line">        ctx.order.info = match[4];</div>
-<div class="line"> </div>
-<div class="line">        Context::Set(ctx);</div>
+<div class="line">        (*ctx).order.info = match[4];</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a> order;</div>
 <div class="line">        <span class="keywordflow">if</span> (match[1] == <span class="stringliteral">&quot;buy&quot;</span>)</div>
@@ -1475,12 +1452,10 @@ $(function() {
 <div class="line">    {</div>
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
-<div class="line">        uint64_t <span class="keywordtype">id</span> = ctx.order.id;</div>
+<div class="line">        uint64_t <span class="keywordtype">id</span> = (*ctx).order.id;</div>
 <div class="line">        uint64_t price = std::stoi(match[2]);</div>
 <div class="line">        uint64_t quantity = std::stoi(match[3]);</div>
-<div class="line">        ctx.order.info = match[4];</div>
-<div class="line"> </div>
-<div class="line">        Context::Set(ctx);</div>
+<div class="line">        (*ctx).order.info = match[4];</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a> order;</div>
 <div class="line">        <span class="keywordflow">if</span> (match[1] == <span class="stringliteral">&quot;buy&quot;</span>)</div>
@@ -1512,12 +1487,10 @@ $(function() {
 <div class="line">    {</div>
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
-<div class="line">        uint64_t <span class="keywordtype">id</span> = ctx.order.id;</div>
+<div class="line">        uint64_t <span class="keywordtype">id</span> = (*ctx).order.id;</div>
 <div class="line">        uint64_t price = std::stoi(match[2]);</div>
 <div class="line">        uint64_t quantity = std::stoi(match[3]);</div>
-<div class="line">        ctx.order.info = match[4];</div>
-<div class="line"> </div>
-<div class="line">        Context::Set(ctx);</div>
+<div class="line">        (*ctx).order.info = match[4];</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a> order;</div>
 <div class="line">        <span class="keywordflow">if</span> (match[1] == <span class="stringliteral">&quot;buy&quot;</span>)</div>
@@ -1549,12 +1522,10 @@ $(function() {
 <div class="line">    {</div>
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
-<div class="line">        uint64_t <span class="keywordtype">id</span> = ctx.order.id;</div>
+<div class="line">        uint64_t <span class="keywordtype">id</span> = (*ctx).order.id;</div>
 <div class="line">        uint64_t price = std::stoi(match[2]);</div>
 <div class="line">        uint64_t quantity = std::stoi(match[3]);</div>
-<div class="line">        ctx.order.info = match[4];</div>
-<div class="line"> </div>
-<div class="line">        Context::Set(ctx);</div>
+<div class="line">        (*ctx).order.info = match[4];</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a> order;</div>
 <div class="line">        <span class="keywordflow">if</span> (match[1] == <span class="stringliteral">&quot;buy&quot;</span>)</div>
@@ -1586,12 +1557,10 @@ $(function() {
 <div class="line">    {</div>
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
-<div class="line">        uint64_t <span class="keywordtype">id</span> = ctx.order.id;</div>
+<div class="line">        uint64_t <span class="keywordtype">id</span> = (*ctx).order.id;</div>
 <div class="line">        uint64_t price = std::stoi(match[2]);</div>
 <div class="line">        uint64_t quantity = std::stoi(match[3]);</div>
-<div class="line">        ctx.order.info = match[4];</div>
-<div class="line"> </div>
-<div class="line">        Context::Set(ctx);</div>
+<div class="line">        (*ctx).order.info = match[4];</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a> order;</div>
 <div class="line">        <span class="keywordflow">if</span> (match[1] == <span class="stringliteral">&quot;buy&quot;</span>)</div>
@@ -1623,12 +1592,10 @@ $(function() {
 <div class="line">    {</div>
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
-<div class="line">        uint64_t <span class="keywordtype">id</span> = ctx.order.id;</div>
+<div class="line">        uint64_t <span class="keywordtype">id</span> = (*ctx).order.id;</div>
 <div class="line">        uint64_t stop_price = std::stoi(match[2]);</div>
 <div class="line">        uint64_t quantity = std::stoi(match[3]);</div>
-<div class="line">        ctx.order.info = match[4];</div>
-<div class="line"> </div>
-<div class="line">        Context::Set(ctx);</div>
+<div class="line">        (*ctx).order.info = match[4];</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a> order;</div>
 <div class="line">        <span class="keywordflow">if</span> (match[1] == <span class="stringliteral">&quot;buy&quot;</span>)</div>
@@ -1660,13 +1627,11 @@ $(function() {
 <div class="line">    {</div>
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
-<div class="line">        uint64_t <span class="keywordtype">id</span> = ctx.order.id;</div>
+<div class="line">        uint64_t <span class="keywordtype">id</span> = (*ctx).order.id;</div>
 <div class="line">        uint64_t stop_price = std::stoi(match[2]);</div>
 <div class="line">        uint64_t price = std::stoi(match[3]);</div>
 <div class="line">        uint64_t quantity = std::stoi(match[4]);</div>
-<div class="line">        ctx.order.info = match[5];</div>
-<div class="line"> </div>
-<div class="line">        Context::Set(ctx);</div>
+<div class="line">        (*ctx).order.info = match[5];</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a> order;</div>
 <div class="line">        <span class="keywordflow">if</span> (match[1] == <span class="stringliteral">&quot;buy&quot;</span>)</div>
@@ -1698,14 +1663,12 @@ $(function() {
 <div class="line">    {</div>
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
-<div class="line">        uint64_t <span class="keywordtype">id</span> = ctx.order.id;</div>
+<div class="line">        uint64_t <span class="keywordtype">id</span> = (*ctx).order.id;</div>
 <div class="line">        uint64_t stop_price = std::stoi(match[2]);</div>
 <div class="line">        uint64_t quantity = std::stoi(match[3]);</div>
 <div class="line">        int64_t trailing_distance = std::stoi(match[4]);</div>
 <div class="line">        int64_t trailing_step = std::stoi(match[5]);</div>
-<div class="line">        ctx.order.info = match[6];</div>
-<div class="line"> </div>
-<div class="line">        Context::Set(ctx);</div>
+<div class="line">        (*ctx).order.info = match[6];</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a> order;</div>
 <div class="line">        <span class="keywordflow">if</span> (match[1] == <span class="stringliteral">&quot;buy&quot;</span>)</div>
@@ -1737,15 +1700,13 @@ $(function() {
 <div class="line">    {</div>
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
-<div class="line">        uint64_t <span class="keywordtype">id</span> = ctx.order.id;</div>
+<div class="line">        uint64_t <span class="keywordtype">id</span> = (*ctx).order.id;</div>
 <div class="line">        uint64_t stop_price = std::stoi(match[2]);</div>
 <div class="line">        uint64_t price = std::stoi(match[3]);</div>
 <div class="line">        uint64_t quantity = std::stoi(match[4]);</div>
 <div class="line">        int64_t trailing_distance = std::stoi(match[5]);</div>
 <div class="line">        int64_t trailing_step = std::stoi(match[6]);</div>
-<div class="line">        ctx.order.info = match[7];</div>
-<div class="line"> </div>
-<div class="line">        Context::Set(ctx);</div>
+<div class="line">        (*ctx).order.info = match[7];</div>
 <div class="line"> </div>
 <div class="line">        <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a> order;</div>
 <div class="line">        <span class="keywordflow">if</span> (match[1] == <span class="stringliteral">&quot;buy&quot;</span>)</div>
@@ -1778,16 +1739,16 @@ $(function() {
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Generate all update queries</span></div>
 <div class="line">    std::string updates;</div>
-<div class="line">    <span class="keywordflow">for</span> (<span class="keyword">auto</span> <span class="keywordtype">id</span> : ctx.market.changes)</div>
+<div class="line">    <span class="keywordflow">for</span> (<span class="keyword">auto</span> <span class="keywordtype">id</span> : (*ctx).market.changes)</div>
 <div class="line">    {</div>
-<div class="line">        <span class="keyword">auto</span> order = (*ctx.market.market_ptr).GetOrder(<span class="keywordtype">id</span>);</div>
+<div class="line">        <span class="keyword">auto</span> order = (*(*ctx).market.market_ptr).GetOrder(<span class="keywordtype">id</span>);</div>
 <div class="line">        <span class="keywordflow">if</span> (order == NULL) <span class="keywordflow">continue</span>;</div>
 <div class="line">        updates.append(UpdateQueryFromOrder(*order) + <span class="stringliteral">&quot;; &quot;</span>);</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordflow">if</span> (!updates.empty())</div>
 <div class="line">    {</div>
-<div class="line">        <span class="keyword">auto</span> db = ctx.connection.sqlite_ptr;</div>
+<div class="line">        <span class="keyword">auto</span> db = (*ctx).connection.sqlite_ptr;</div>
 <div class="line">        <span class="keywordtype">char</span>* err;</div>
 <div class="line"> </div>
 <div class="line">        <span class="keyword">const</span> std::string query = <span class="stringliteral">&quot;BEGIN; &quot;</span> + updates + <span class="stringliteral">&quot;COMMIT;&quot;</span>;</div>
@@ -1797,16 +1758,15 @@ $(function() {
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Clear changes</span></div>
-<div class="line">    ctx.market.changes.clear();</div>
-<div class="line">    Context::Set(ctx);</div>
+<div class="line">    (*ctx).market.changes.clear();</div>
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">void</span> Execute()</div>
 <div class="line">{</div>
 <div class="line">    <span class="comment">// Get Context</span></div>
 <div class="line">    <span class="keyword">auto</span> ctx = Context::Get();</div>
-<div class="line">    <span class="keyword">auto</span> command = ctx.command.input;</div>
-<div class="line">    <span class="keyword">auto</span> market = ctx.market.market_ptr;</div>
+<div class="line">    <span class="keyword">auto</span> command = (*ctx).command.input;</div>
+<div class="line">    <span class="keyword">auto</span> market = (*ctx).market.market_ptr;</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Matching</span></div>
 <div class="line">    <span class="keywordflow">if</span> (command == <span class="stringliteral">&quot;enable matching&quot;</span>) (*market).<a name="a31"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a4bd7f531ee55fdd76974d75115e18687">EnableMatching</a>();</div>
@@ -1829,8 +1789,7 @@ $(function() {
 <div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;add &quot;</span>) != std::string::npos)</div>
 <div class="line">    {</div>
 <div class="line">        <span class="comment">// Set new Order Id</span></div>
-<div class="line">        ctx.order.id = (*ctx.market.handler_ptr).lts_order_id() + 1;</div>
-<div class="line">        Context::Set(ctx); <span class="comment">// Set new context</span></div>
+<div class="line">        (*ctx).order.id = (*(*ctx).market.handler_ptr).lts_order_id() + 1;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Orders: Add</span></div>
 <div class="line">        <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;add market&quot;</span>) != std::string::npos) AddMarketOrder(market, command);</div>
@@ -1845,10 +1804,8 @@ $(function() {
 <div class="line">        <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;add trailing stop&quot;</span>) != std::string::npos) AddTrailingStopOrder(market, command);</div>
 <div class="line">    }</div>
 <div class="line"> </div>
-<div class="line">    ctx = Context::Get();</div>
-<div class="line"> </div>
 <div class="line">    <span class="comment">// Update changed orders</span></div>
-<div class="line">    <span class="keywordflow">if</span> (!ctx.market.changes.empty()) UpdateOrders();</div>
+<div class="line">    <span class="keywordflow">if</span> (!(*ctx).market.changes.empty()) UpdateOrders();</div>
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
@@ -1960,11 +1917,10 @@ $(function() {
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Set New Context</span></div>
 <div class="line">    <span class="keyword">auto</span> ctx = Context::Get();</div>
-<div class="line">    ctx.market.market_ptr = &amp;market;</div>
-<div class="line">    ctx.market.handler_ptr = &amp;market_handler;</div>
-<div class="line">    ctx.connection.sqlite_ptr = db;</div>
-<div class="line">    ctx.enable = <span class="keyword">true</span>;</div>
-<div class="line">    Context::Set(ctx);</div>
+<div class="line">    (*ctx).market.market_ptr = &amp;market;</div>
+<div class="line">    (*ctx).market.handler_ptr = &amp;market_handler;</div>
+<div class="line">    (*ctx).connection.sqlite_ptr = db;</div>
+<div class="line">    (*ctx).enable = <span class="keyword">true</span>;</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Handle connections</span></div>
 <div class="line">    <span class="keywordflow">while</span> (enable)</div>
@@ -1997,27 +1953,23 @@ $(function() {
 <div class="line">                    <span class="keywordflow">else</span></div>
 <div class="line">                    {</div>
 <div class="line">                        <span class="comment">// Update Context</span></div>
-<div class="line">                        ctx = Context::Get();</div>
-<div class="line">                        ctx.connection.sockfd = connfd;</div>
-<div class="line">                        ctx.command.input = message;</div>
-<div class="line">                        ctx.command.response = NULL_STR;</div>
-<div class="line">                        Context::Set(ctx);</div>
+<div class="line">                        (*ctx).connection.sockfd = connfd;</div>
+<div class="line">                        (*ctx).command.input = message;</div>
+<div class="line">                        (*ctx).command.response = NULL_STR;</div>
 <div class="line"> </div>
 <div class="line">                        <span class="comment">// Execute command</span></div>
 <div class="line">                        Execute();</div>
 <div class="line"> </div>
 <div class="line">                        <span class="comment">// Send response to client</span></div>
-<div class="line">                        ctx = Context::Get();</div>
-<div class="line">                        <span class="keyword">auto</span> res = ctx.command.response;</div>
-<div class="line">                        <span class="keyword">auto</span> size = ctx.command.response_size;</div>
+<div class="line">                        <span class="keyword">auto</span> res = (*ctx).command.response;</div>
+<div class="line">                        <span class="keyword">auto</span> size = (*ctx).command.response_size;</div>
 <div class="line">                        rdy = WriteSocketStream(connfd, size, &amp;res);</div>
 <div class="line">                        <span class="keywordflow">if</span> (rdy &lt; 0) error(<span class="stringliteral">&quot;Failed sending response to client&quot;</span>);</div>
 <div class="line"> </div>
 <div class="line">                        <span class="comment">// Clear Context</span></div>
-<div class="line">                        ctx.connection.sockfd = 0;</div>
-<div class="line">                        ctx.order = Context::Order();</div>
-<div class="line">                        ctx.command = Context::Command();</div>
-<div class="line">                        Context::Set(ctx);</div>
+<div class="line">                        (*ctx).connection.sockfd = 0;</div>
+<div class="line">                        (*ctx).order = Context::Order();</div>
+<div class="line">                        (*ctx).command = Context::Command();</div>
 <div class="line">                    }</div>
 <div class="line">                }</div>
 <div class="line">                ++it; <span class="comment">// Update iterator</span></div>
