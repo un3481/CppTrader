@@ -230,7 +230,7 @@ namespace Context {
 void chld_handler(int signum)
 {
     signal(SIGCHLD, chld_handler);
-	int wstat; pid_t pid;
+	pid_t pid; int wstat;
     pid = wait3(&wstat, WNOHANG, NULL);
 }
 
