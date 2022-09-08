@@ -123,10 +123,10 @@ const std::string QUERY_INSERT_INTO_LATEST = (EMPTY_STR +
 
 // Convert Objects to string via operator<<
 template <typename T>
-inline std::string sstos(const T input)
+inline std::string sstos(const T* input)
 {
     std::stringstream ss;
-    ss << input;
+    ss << (*input);
     return ss.str();
 }
 
@@ -589,7 +589,7 @@ void PopulateDatabase(sqlite3* db)
     char* err;
     auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
     if (rdy != SQLITE_OK)
-    { error("sqlite error(1): " + sstos(err)); exit(1); };
+    { error("sqlite error(1): " + sstos(&err)); exit(1); };
 }
 
 // Get Latest Id from Database
@@ -603,7 +603,7 @@ int GetLatestId(sqlite3* db)
     if (rdy != SQLITE_OK)
     {
         const char* err = sqlite3_errmsg(db);
-        error("sqlite error(2): " + sstos(err));
+        error("sqlite error(2): " + sstos(&err));
         exit(1);
     };
 
@@ -621,12 +621,12 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
     Symbol symbol(SYMBOL_ID, name);
     auto err = (*market).AddSymbol(symbol);
     if (err != ErrorCode::OK)
-    { error("Failed AddSymbol: " + sstos(err)); exit(1); };
+    { error("Failed AddSymbol: " + sstos(&err)); exit(1); };
 
     // Add Book
     err = (*market).AddOrderBook(symbol);
     if (err != ErrorCode::OK)
-    { error("Failed AddOrderBook: " + sstos(err)); exit(1); };
+    { error("Failed AddOrderBook: " + sstos(&err)); exit(1); };
 
     // Prepare query
     sqlite3_stmt* result;
@@ -635,7 +635,7 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
     if (rdy != SQLITE_OK)
     {
         const char* _err = sqlite3_errmsg(db);
-        error("sqlite error(3): " + sstos(_err));
+        error("sqlite error(3): " + sstos(&_err));
         exit(1);
     };
 
@@ -651,7 +651,7 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
         ctx.order.id = (int)order.Id;
         err = (*market).AddOrder(order);
         if (err != ErrorCode::OK)
-        { error("Failed AddOrder: " + sstos(err)); exit(1); };
+        { error("Failed AddOrder: " + sstos(&err)); exit(1); };
     };
 
     ctx.order = Context::Order();
@@ -725,7 +725,7 @@ protected:
         if (!ctx.enable) return;
 
         // Log Add Symbol
-        log("Add symbol: " + sstos(symbol));
+        log("Add symbol: " + sstos(&symbol));
 
         /*
         // Send to server
@@ -745,7 +745,7 @@ protected:
         if (!ctx.enable) return;
 
         // Log Delete Symbol
-        log("Delete symbol: " + sstos(symbol)); 
+        log("Delete symbol: " + sstos(&symbol)); 
 
         /*
         // Send to server
@@ -825,7 +825,7 @@ protected:
         if (!ctx.enable) return;
 
         // Log Add Level
-        log("Add level: " + sstos(level) + (top ? " - Top of the book!" : "")); 
+        log("Add level: " + sstos(&level) + (top ? " - Top of the book!" : "")); 
 
         /*
         // Send to server
@@ -845,7 +845,7 @@ protected:
         if (!ctx.enable) return;
 
         // Log Update Level
-        log("Update level: " + sstos(level) + (top ? " - Top of the book!" : "")); 
+        log("Update level: " + sstos(&level) + (top ? " - Top of the book!" : "")); 
 
         /*
         // Send to server
@@ -865,7 +865,7 @@ protected:
         if (!ctx.enable) return;
 
         // Log Delete Leve
-        log("Delete level: " + sstos(level) + (top ? " - Top of the book!" : "")); 
+        log("Delete level: " + sstos(&level) + (top ? " - Top of the book!" : "")); 
 
         /*
         // Send to server
@@ -913,10 +913,10 @@ protected:
         );
         auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
-        { error("sqlite error(4): " + sstos(err)); };
+        { error("sqlite error(4): " + sstos(&err)); };
 
         // Log Add Order
-        log("Add order: " + sstos(order));
+        log("Add order: " + sstos(&order));
 
         /*
         // Send to server
@@ -950,7 +950,7 @@ protected:
         const std::string query = UpdateQueryFromOrder(order);
         auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
-        { error("sqlite error(6): " + sstos(err)); };
+        { error("sqlite error(6): " + sstos(&err)); };
 
         /*
         // Send to server
@@ -980,10 +980,10 @@ protected:
         );
         auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
-        { error("sqlite error(5): " + sstos(err)); };
+        { error("sqlite error(5): " + sstos(&err)); };
 
         // Log Deleted Order
-        log("Delete order: " + sstos(order));
+        log("Delete order: " + sstos(&order));
         
         /*
         // *** Send to server
@@ -1015,7 +1015,7 @@ protected:
         if (!ctx.enable) return;
 
         // Log Executed Order
-     	log("Execute order: " + sstos(order) + " with price " + sstos(price) + " and quantity " + sstos(quantity));
+     	log("Execute order: " + sstos(&order) + " with price " + sstos(&price) + " and quantity " + sstos(&quantity));
 
         /*
         std::string csv;
@@ -1025,7 +1025,7 @@ protected:
         
         /*
         // *** Send to server
-        std::string cmd = "/home/sysop/books/BTC_TUSD/execute_processor ExecuteOrder '" + sstos(price) + "@" + sstos(quantity) + ":" + sstos(order) + "'";
+        std::string cmd = "/home/sysop/books/BTC_TUSD/execute_processor ExecuteOrder '" + sstos(&price) + "@" + sstos(&quantity) + ":" + sstos(&order) + "'";
         int iCallResult = system(cmd.c_str());
         if (iCallResult < 0 && iCallResult != -1) { error("Error doing system call (AA832): " + std::string(strerror(errno)) + " " + std::to_string(iCallResult)); }
         // *** Send to server end
@@ -1054,7 +1054,7 @@ void AddSymbol(MarketManager* market, const std::string& command)
 
         ErrorCode result = (*market).AddSymbol(symbol);
         if (result != ErrorCode::OK)
-            error("Failed 'add symbol' command: " + sstos(result));
+            error("Failed 'add symbol' command: " + sstos(&result));
 
         return;
     }
@@ -1073,7 +1073,7 @@ void DeleteSymbol(MarketManager* market, const std::string& command)
 
         ErrorCode result = (*market).DeleteSymbol(id);
         if (result != ErrorCode::OK)
-            error("Failed 'delete symbol' command: " + sstos(result));
+            error("Failed 'delete symbol' command: " + sstos(&result));
 
         return;
     }
@@ -1101,7 +1101,7 @@ void AddOrderBook(MarketManager* market, const std::string& command)
 
         ErrorCode result = (*market).AddOrderBook(symbol);
         if (result != ErrorCode::OK)
-            error("Failed 'add book' command: " + sstos(result));
+            error("Failed 'add book' command: " + sstos(&result));
 
         return;
     }
@@ -1120,7 +1120,7 @@ void DeleteOrderBook(MarketManager* market, const std::string& command)
 
         ErrorCode result = (*market).DeleteOrderBook(id);
         if (result != ErrorCode::OK)
-            error("Failed 'delete book' command: " + sstos(result));
+            error("Failed 'delete book' command: " + sstos(&result));
 
         return;
     }
@@ -1174,7 +1174,7 @@ void ReduceOrder(MarketManager* market, const std::string& command)
 
         ErrorCode result = (*market).ReduceOrder(id, quantity);
         if (result != ErrorCode::OK)
-            error("Failed 'reduce order' command: " + sstos(result));
+            error("Failed 'reduce order' command: " + sstos(&result));
 
         return;
     }
@@ -1195,7 +1195,7 @@ void ModifyOrder(MarketManager* market, const std::string& command)
 
         ErrorCode result = (*market).ModifyOrder(id, new_price, new_quantity);
         if (result != ErrorCode::OK)
-            error("Failed 'modify order' command: " + sstos(result));
+            error("Failed 'modify order' command: " + sstos(&result));
 
         return;
     }
@@ -1216,7 +1216,7 @@ void MitigateOrder(MarketManager* market, const std::string& command)
 
         ErrorCode result = (*market).MitigateOrder(id, new_price, new_quantity);
         if (result != ErrorCode::OK)
-            error("Failed 'mitigate order' command: " + sstos(result));
+            error("Failed 'mitigate order' command: " + sstos(&result));
 
         return;
     }
@@ -1238,7 +1238,7 @@ void ReplaceOrder(MarketManager* market, const std::string& command)
 
         ErrorCode result = (*market).ReplaceOrder(id, new_id, new_price, new_quantity);
         if (result != ErrorCode::OK)
-            error("Failed 'replace order' command: " + sstos(result));
+            error("Failed 'replace order' command: " + sstos(&result));
 
         return;
     }
@@ -1257,7 +1257,7 @@ void DeleteOrder(MarketManager* market, const std::string& command)
 
         ErrorCode result = (*market).DeleteOrder(id);
         if (result != ErrorCode::OK)
-            error("Failed 'delete order' command: " + sstos(result));
+            error("Failed 'delete order' command: " + sstos(&result));
 
         return;
     }
@@ -1323,13 +1323,13 @@ void AddMarketOrder(MarketManager* market, const std::string& command)
             order = Order::SellMarket(id, SYMBOL_ID, quantity);
         else
         {
-            error("Invalid market order side: " + sstos(match[1]));
+            error("Invalid market order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add market' command: " + sstos(result));
+            error("Failed 'add market' command: " + sstos(&result));
 
         return;
     }
@@ -1358,13 +1358,13 @@ void AddSlippageMarketOrder(MarketManager* market, const std::string& command)
             order = Order::SellMarket(id, SYMBOL_ID, quantity, slippage);
         else
         {
-            error("Invalid market order side: " + sstos(match[1]));
+            error("Invalid market order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add slippage market' command: " + sstos(result));
+            error("Failed 'add slippage market' command: " + sstos(&result));
 
         return;
     }
@@ -1393,13 +1393,13 @@ void AddLimitOrder(MarketManager* market, const std::string& command)
             order = Order::SellLimit(id, SYMBOL_ID, price, quantity);
         else
         {
-            error("Invalid limit order side: " + sstos(match[1]));
+            error("Invalid limit order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add limit' command: " + sstos(result));
+            error("Failed 'add limit' command: " + sstos(&result));
 
         return;
     }
@@ -1428,13 +1428,13 @@ void AddIOCLimitOrder(MarketManager* market, const std::string& command)
             order = Order::SellLimit(id, SYMBOL_ID, price, quantity, OrderTimeInForce::IOC);
         else
         {
-            error("Invalid limit order side: " + sstos(match[1]));
+            error("Invalid limit order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add ioc limit' command: " + sstos(result));
+            error("Failed 'add ioc limit' command: " + sstos(&result));
 
         return;
     }
@@ -1463,13 +1463,13 @@ void AddFOKLimitOrder(MarketManager* market, const std::string& command)
             order = Order::SellLimit(id, SYMBOL_ID, price, quantity, OrderTimeInForce::FOK);
         else
         {
-            error("Invalid limit order side: " + sstos(match[1]));
+            error("Invalid limit order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add fok limit' command: " + sstos(result));
+            error("Failed 'add fok limit' command: " + sstos(&result));
 
         return;
     }
@@ -1498,13 +1498,13 @@ void AddAONLimitOrder(MarketManager* market, const std::string& command)
             order = Order::SellLimit(id, SYMBOL_ID, price, quantity, OrderTimeInForce::AON);
         else
         {
-            error("Invalid limit order side: " + sstos(match[1]));
+            error("Invalid limit order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add aon limit' command: " + sstos(result));
+            error("Failed 'add aon limit' command: " + sstos(&result));
 
         return;
     }
@@ -1533,13 +1533,13 @@ void AddStopOrder(MarketManager* market, const std::string& command)
             order = Order::SellStop(id, SYMBOL_ID, stop_price, quantity);
         else
         {
-            error("Invalid stop order side: " + sstos(match[1]));
+            error("Invalid stop order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add stop' command: " + sstos(result));
+            error("Failed 'add stop' command: " + sstos(&result));
 
         return;
     }
@@ -1569,13 +1569,13 @@ void AddStopLimitOrder(MarketManager* market, const std::string& command)
             order = Order::SellStopLimit(id, SYMBOL_ID, stop_price, price, quantity);
         else
         {
-            error("Invalid stop-limit order side: " + sstos(match[1]));
+            error("Invalid stop-limit order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add stop-limit' command: " + sstos(result));
+            error("Failed 'add stop-limit' command: " + sstos(&result));
 
         return;
     }
@@ -1606,13 +1606,13 @@ void AddTrailingStopOrder(MarketManager* market, const std::string& command)
             order = Order::TrailingSellStop(id, SYMBOL_ID, stop_price, quantity, trailing_distance, trailing_step);
         else
         {
-            error("Invalid stop order side: " + sstos(match[1]));
+            error("Invalid stop order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add trailing stop' command: " + sstos(result));
+            error("Failed 'add trailing stop' command: " + sstos(&result));
 
         return;
     }
@@ -1644,13 +1644,13 @@ void AddTrailingStopLimitOrder(MarketManager* market, const std::string& command
             order = Order::TrailingSellStopLimit(id, SYMBOL_ID, stop_price, price, quantity, trailing_distance, trailing_step);
         else
         {
-            error("Invalid stop-limit order side: " + sstos(match[1]));
+            error("Invalid stop-limit order side: " + sstos(&match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add trailing stop-limit' command: " + sstos(result));
+            error("Failed 'add trailing stop-limit' command: " + sstos(&result));
 
         return;
     }
@@ -1683,7 +1683,7 @@ void UpdateOrders()
         const std::string query = "BEGIN; " + updates + "COMMIT;";
         auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
-        { error("sqlite error(7): " + sstos(err)); };
+        { error("sqlite error(7): " + sstos(&err)); };
     }
 
     // Clear changes
@@ -1900,7 +1900,7 @@ int main(int argc, char** argv)
                         ctx.order = Context::Order();
                         ctx.command = Context::Command();
 
-                        log("info: " + sstos(ctx.market.info));
+                        log("info: " + sstos(&ctx.market.info));
                     }
                 }
                 ++it; // Update iterator
