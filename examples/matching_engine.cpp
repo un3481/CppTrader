@@ -1,22 +1,26 @@
 /* a server in the unix domain */
 
 #include "trader/matching/market_manager.h"
+#include <OptionParser.h>
 
 #include "system/stream.h"
 #include "filesystem/file.h"
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
+
 #include <signal.h>
 #include <unistd.h>
 #include <stdlib.h>
+
 #include <sys/un.h>
+#include <sys/wait.h>
+#include <sys/resource.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
 
 #include <string>
 #include <vector>
 #include <regex>
 #include <iostream>
-#include <OptionParser.h>
 
 extern "C" {
     #include <sqlite3/sqlite3.h>
@@ -223,8 +227,15 @@ namespace Context {
 
 /* ############################################################################################################################################# */
 
+void chld_handler(int signum)
+{
+    signal(SIGCHLD, chld_handler);
+	int wstat; pid_t pid;
+    pid = wait3(&wstat, WNOHANG, NULL);
+}
+
 // Change current process to Daemon
-static void Daemonize(const char* root)
+void Daemonize(const char* root)
 {
     pid_t pid;
 
@@ -245,7 +256,7 @@ static void Daemonize(const char* root)
 
     /* Catch, ignore and handle signals */
     //TODO: Implement a working signal handler */
-    signal(SIGCHLD, SIG_IGN);
+    signal(SIGCHLD, chld_handler);
     signal(SIGHUP, SIG_IGN);
 
     /* Fork off for the second time*/
@@ -581,7 +592,7 @@ inline Order OrderFromQuery(sqlite3_stmt* row)
 void PopulateDatabase(sqlite3* db)
 {
     // Create Tables in SQLite
-    const auto query = (
+    static const auto query = (
         QUERY_CREATE_TABLE_LATEST + "; " +
         QUERY_INSERT_INTO_LATEST + "; " +
         QUERY_CREATE_TABLE_ORDERS + ";"
@@ -596,7 +607,7 @@ void PopulateDatabase(sqlite3* db)
 int GetLatestId(sqlite3* db) 
 {
     sqlite3_stmt* result;
-    const char* query = "SELECT * FROM latest";
+    static const char* query = "SELECT * FROM latest";
 
     // Prepare query
     auto rdy = sqlite3_prepare(db, query, -1, &result, NULL);
@@ -1899,19 +1910,6 @@ int main(int argc, char** argv)
                         (*ctx).connection.sockfd = 0;
                         (*ctx).order = Context::Order();
                         (*ctx).command = Context::Command();
-
-                        bool first = true;
-                        std::string logtext = "info: {";
-                        for (auto el : (*ctx).market.info)
-                        {
-                            if (!first) logtext.append(",");
-                            first = false;
-                            logtext.append(" ");
-                            logtext.append(std::to_string(el.first));
-                            logtext.append(": '" + el.second + "'");
-                        }
-                        logtext.append(" }");
-                        log(logtext);
                     }
                 }
                 ++it; // Update iterator
