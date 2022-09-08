@@ -99,7 +99,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line"><span class="comment">/* Preprocessed */</span></div>
 <div class="line"> </div>
-<div class="line"><span class="preprocessor">#define VERSION &quot;2.1.9.0&quot; // Program version</span></div>
+<div class="line"><span class="preprocessor">#define VERSION &quot;2.1.9.5&quot; // Program version</span></div>
 <div class="line"> </div>
 <div class="line"><span class="preprocessor">#define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)</span></div>
 <div class="line"><span class="preprocessor">#define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)</span></div>
@@ -233,8 +233,8 @@ $(function() {
 <div class="line"> </div>
 <div class="line">    <span class="keyword">struct </span>Connection</div>
 <div class="line">    {</div>
-<div class="line">        <span class="keywordtype">int</span> sockfd = 0; <span class="comment">// File Descriptor for current Connection</span></div>
 <div class="line">        sqlite3* sqlite_ptr = NULL; <span class="comment">// Connection to SQLite Database</span></div>
+<div class="line">        <span class="keywordtype">int</span> sockfd = 0; <span class="comment">// File Descriptor for current Connection</span></div>
 <div class="line">    };</div>
 <div class="line"> </div>
 <div class="line">    <span class="keyword">struct </span>Market</div>
@@ -242,12 +242,13 @@ $(function() {
 <div class="line">        <a name="_a0"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a>* market_ptr = NULL; <span class="comment">// Pointer to Market Manager</span></div>
 <div class="line">        MyMarketHandler* handler_ptr = NULL; <span class="comment">// Pointer to Market Handler</span></div>
 <div class="line">        std::vector&lt;int&gt; changes = {}; <span class="comment">// List of changed orders</span></div>
+<div class="line">        std::map&lt;int, std::string&gt; info = {}; <span class="comment">// Info</span></div>
 <div class="line">    };</div>
 <div class="line"> </div>
 <div class="line">    <span class="keyword">struct </span><a name="_a1"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a></div>
 <div class="line">    {</div>
 <div class="line">        <span class="keywordtype">int</span> <span class="keywordtype">id</span> = 0; <span class="comment">// Order Id</span></div>
-<div class="line">        std::string info = <span class="stringliteral">&quot;&quot;</span>; <span class="comment">// Order Text Info</span></div>
+<div class="line">        std::string info = <span class="stringliteral">&quot;&quot;</span>; <span class="comment">// Order Info</span></div>
 <div class="line">    };</div>
 <div class="line"> </div>
 <div class="line">    <span class="keyword">struct </span>Command</div>
@@ -263,8 +264,9 @@ $(function() {
 <div class="line">        <span class="keywordtype">bool</span> enable = <span class="keyword">false</span>; <span class="comment">// Enable operation with context</span></div>
 <div class="line">        Connection connection = Connection();</div>
 <div class="line">        Market market = Market();</div>
-<div class="line">        Command command = Command();</div>
 <div class="line">        <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a> order = <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>();</div>
+<div class="line">        Command command = Command();</div>
+<div class="line">        </div>
 <div class="line">    };</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Static context</span></div>
@@ -670,7 +672,8 @@ $(function() {
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Get Latest Id from Database</span></div>
-<div class="line"><span class="keywordtype">int</span> GetLatestId(sqlite3* db) {</div>
+<div class="line"><span class="keywordtype">int</span> GetLatestId(sqlite3* db) </div>
+<div class="line">{</div>
 <div class="line">    sqlite3_stmt* result;</div>
 <div class="line">    <span class="keyword">const</span> <span class="keywordtype">char</span>* query = <span class="stringliteral">&quot;SELECT * FROM latest&quot;</span>;</div>
 <div class="line"> </div>
@@ -715,15 +718,25 @@ $(function() {
 <div class="line">        exit(1);</div>
 <div class="line">    };</div>
 <div class="line"> </div>
+<div class="line">    <span class="keyword">auto</span> ctx = Context::Get();</div>
+<div class="line"> </div>
 <div class="line">    <span class="comment">// Get Orders</span></div>
 <div class="line">    <span class="keywordflow">while</span> (sqlite3_step(result) == SQLITE_ROW)</div>
 <div class="line">    {</div>
 <div class="line">        <span class="comment">// Add Order</span></div>
 <div class="line">        <span class="keyword">auto</span> order = OrderFromQuery(result);</div>
+<div class="line">        <span class="keyword">auto</span> info = sqlite3_column_text(result, 14);</div>
+<div class="line">        ctx.order.info = std::string((<span class="keywordtype">char</span> <span class="keyword">const</span>*)info);</div>
+<div class="line">        ctx.order.id = (int)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>;</div>
+<div class="line">        Context::Set(ctx);</div>
 <div class="line">        err = (*market).AddOrder(order);</div>
 <div class="line">        <span class="keywordflow">if</span> (err != ErrorCode::OK)</div>
 <div class="line">        { error(<span class="stringliteral">&quot;Failed AddOrder: &quot;</span> + sstos(&amp;err)); exit(1); };</div>
+<div class="line">        ctx = Context::Get();</div>
 <div class="line">    };</div>
+<div class="line"> </div>
+<div class="line">    ctx.order = Context::Order();</div>
+<div class="line">    Context::Set(ctx);</div>
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
@@ -788,6 +801,11 @@ $(function() {
 <div class="line"><span class="keyword">    </span>{</div>
 <div class="line">        ++_updates; ++_symbols; _max_symbols = std::max(_symbols, _max_symbols);</div>
 <div class="line"> </div>
+<div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Check if operation is enabled</span></div>
+<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
+<div class="line"> </div>
 <div class="line">        <span class="comment">// Log Add Symbol</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Add symbol: &quot;</span> + sstos(&amp;symbol));</div>
 <div class="line"> </div>
@@ -802,6 +820,11 @@ $(function() {
 <div class="line">    <span class="keywordtype">void</span> onDeleteSymbol(<span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_symbol.html">Symbol</a>&amp; symbol)<span class="keyword"> override</span></div>
 <div class="line"><span class="keyword">    </span>{</div>
 <div class="line">        ++_updates; --_symbols;</div>
+<div class="line"> </div>
+<div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Check if operation is enabled</span></div>
+<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Delete Symbol</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Delete symbol: &quot;</span> + sstos(&amp;symbol)); </div>
@@ -818,6 +841,11 @@ $(function() {
 <div class="line"><span class="keyword">    </span>{</div>
 <div class="line">        ++_updates; ++_order_books; _max_order_books = std::max(_order_books, _max_order_books);</div>
 <div class="line"> </div>
+<div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Check if operation is enabled</span></div>
+<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
+<div class="line"> </div>
 <div class="line">        <span class="comment">// Log Add Order Book</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Add order book: &quot;</span> + sstos(&amp;order_book)); </div>
 <div class="line"> </div>
@@ -832,6 +860,11 @@ $(function() {
 <div class="line">    <span class="keywordtype">void</span> onUpdateOrderBook(<span class="keyword">const</span> <a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html">OrderBook</a>&amp; order_book, <span class="keywordtype">bool</span> top)<span class="keyword"> override</span></div>
 <div class="line"><span class="keyword">    </span>{</div>
 <div class="line">        _max_order_book_levels = std::max(std::max(order_book.<a name="a27"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html#a613c21ef0c5097641a559032b0d1df3d">bids</a>().size(), order_book.<a name="a28"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html#a5dc10173d986f48d519c5da0e4d8d29b">asks</a>().size()), _max_order_book_levels);</div>
+<div class="line"> </div>
+<div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Check if operation is enabled</span></div>
+<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Update Order Book</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Update order book: &quot;</span> + sstos(&amp;order_book) + (top ? <span class="stringliteral">&quot; - Top of the book!&quot;</span> : <span class="stringliteral">&quot;&quot;</span>)); </div>
@@ -848,6 +881,11 @@ $(function() {
 <div class="line"><span class="keyword">    </span>{</div>
 <div class="line">        ++_updates; --_order_books;</div>
 <div class="line"> </div>
+<div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Check if operation is enabled</span></div>
+<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
+<div class="line"> </div>
 <div class="line">        <span class="comment">// Log Delete Order Book</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Delete order book: &quot;</span> + sstos(&amp;order_book)); </div>
 <div class="line"> </div>
@@ -862,6 +900,11 @@ $(function() {
 <div class="line">    <span class="keywordtype">void</span> onAddLevel(<span class="keyword">const</span> <a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html">OrderBook</a>&amp; order_book, <span class="keyword">const</span> <a name="_a29"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_level.html">Level</a>&amp; level, <span class="keywordtype">bool</span> top)<span class="keyword"> override</span></div>
 <div class="line"><span class="keyword">    </span>{</div>
 <div class="line">        ++_updates;</div>
+<div class="line"> </div>
+<div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Check if operation is enabled</span></div>
+<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Add Level</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Add level: &quot;</span> + sstos(&amp;level) + (top ? <span class="stringliteral">&quot; - Top of the book!&quot;</span> : <span class="stringliteral">&quot;&quot;</span>)); </div>
@@ -878,6 +921,11 @@ $(function() {
 <div class="line"><span class="keyword">    </span>{</div>
 <div class="line">        ++_updates; _max_order_book_orders = std::max(level.<a name="a30"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_level.html#a164155ae2b8f0c691be8292c5e39084b">Orders</a>, _max_order_book_orders);</div>
 <div class="line"> </div>
+<div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Check if operation is enabled</span></div>
+<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
+<div class="line"> </div>
 <div class="line">        <span class="comment">// Log Update Level</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Update level: &quot;</span> + sstos(&amp;level) + (top ? <span class="stringliteral">&quot; - Top of the book!&quot;</span> : <span class="stringliteral">&quot;&quot;</span>)); </div>
 <div class="line"> </div>
@@ -892,6 +940,11 @@ $(function() {
 <div class="line">    <span class="keywordtype">void</span> onDeleteLevel(<span class="keyword">const</span> <a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html">OrderBook</a>&amp; order_book, <span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_level.html">Level</a>&amp; level, <span class="keywordtype">bool</span> top)<span class="keyword"> override</span></div>
 <div class="line"><span class="keyword">    </span>{</div>
 <div class="line">        ++_updates;</div>
+<div class="line"> </div>
+<div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Check if operation is enabled</span></div>
+<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Delete Leve</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Delete level: &quot;</span> + sstos(&amp;level) + (top ? <span class="stringliteral">&quot; - Top of the book!&quot;</span> : <span class="stringliteral">&quot;&quot;</span>)); </div>
@@ -913,15 +966,21 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
-<div class="line">        <span class="comment">// Check if operation is enabled</span></div>
-<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
-<div class="line"> </div>
 <div class="line">        <span class="comment">// Check if Id is Sync</span></div>
 <div class="line">        <span class="keywordflow">if</span> ((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a> != ctx.order.id)</div>
 <div class="line">        {</div>
 <div class="line">            error(<span class="stringliteral">&quot;Error at &#39;onAddOrder&#39; callback: id out of sync&quot;</span>);</div>
 <div class="line">            <span class="keywordflow">return</span>;</div>
 <div class="line">        }</div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Store Order Info</span></div>
+<div class="line">        ctx.market.info.insert(</div>
+<div class="line">            std::make_pair((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>, ctx.order.info)</div>
+<div class="line">        );</div>
+<div class="line">        Context::Set(ctx);</div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Check if operation is enabled</span></div>
+<div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line">        std::string <span class="keywordtype">id</span> = std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
 <div class="line"> </div>
@@ -961,13 +1020,14 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
+<div class="line">        <span class="comment">// Delete Order Info</span></div>
+<div class="line">        ctx.market.info.erase(</div>
+<div class="line">            ctx.market.info.find((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>)</div>
+<div class="line">        );</div>
+<div class="line">        Context::Set(ctx);</div>
+<div class="line"> </div>
 <div class="line">        <span class="comment">// Check if operation is enabled</span></div>
 <div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
-<div class="line"> </div>
-<div class="line">        <span class="comment">// Log Order Update</span></div>
-<div class="line">        <span class="comment">// log(&quot;Update order (SOURCE): &quot; + sstos(&amp;order));</span></div>
-<div class="line">        <span class="comment">// log(&quot;Update order (DEBUG id): &quot; + id);</span></div>
-<div class="line">        <span class="comment">// log(&quot;Update order (DEBUG LeavesQuantity): &quot; + LeavesQuantity);</span></div>
 <div class="line"> </div>
 <div class="line">        <span class="keyword">auto</span> db = ctx.connection.sqlite_ptr;</div>
 <div class="line">        <span class="keywordtype">char</span>* err;</div>
@@ -995,7 +1055,7 @@ $(function() {
 <div class="line">        <span class="keywordflow">if</span> (!ctx.enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line">        std::string <span class="keywordtype">id</span> = std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
-<div class="line">        </div>
+<div class="line"> </div>
 <div class="line">        <span class="keyword">auto</span> db = ctx.connection.sqlite_ptr;</div>
 <div class="line">        <span class="keywordtype">char</span>* err;</div>
 <div class="line"> </div>
@@ -1011,10 +1071,11 @@ $(function() {
 <div class="line">        log(<span class="stringliteral">&quot;Delete order: &quot;</span> + sstos(&amp;order));</div>
 <div class="line">        </div>
 <div class="line">        <span class="comment">/*</span></div>
-<div class="line"><span class="comment">        // Send to server</span></div>
-<div class="line"><span class="comment">        std::string cmd = &quot;/home/sysop/books/BTC_TUSD/server DeleteOrder &quot; + id;</span></div>
+<div class="line"><span class="comment">        // *** Send to server</span></div>
+<div class="line"><span class="comment">        std::string cmd = &quot;/home/sysop/books/BTC_TUSD/execute_processor DeleteOrder &quot; + id;</span></div>
 <div class="line"><span class="comment">        int iCallResult = system(cmd.c_str());</span></div>
-<div class="line"><span class="comment">        if (iCallResult &lt; 0) { error(&quot;Error doing system call &quot; + std::string(strerror(errno))); }</span></div>
+<div class="line"><span class="comment">        if (iCallResult &lt; 0 &amp;&amp; iCallResult != -1) { error(&quot;Error doing system call (BB332): &quot; + std::string(strerror(errno)) + &quot; &quot; + std::to_string(iCallResult)); }</span></div>
+<div class="line"><span class="comment">        // *** Send to server end</span></div>
 <div class="line"><span class="comment">        */</span></div>
 <div class="line"> </div>
 <div class="line">        <span class="keyword">auto</span> command = ctx.command.input;</div>
@@ -1051,10 +1112,11 @@ $(function() {
 <div class="line"><span class="comment">        */</span></div>
 <div class="line">        </div>
 <div class="line">        <span class="comment">/*</span></div>
-<div class="line"><span class="comment">        // Send to server</span></div>
+<div class="line"><span class="comment">        // *** Send to server</span></div>
 <div class="line"><span class="comment">        std::string cmd = &quot;/home/sysop/books/BTC_TUSD/execute_processor ExecuteOrder &#39;&quot; + sstos(&amp;price) + &quot;@&quot; + sstos(&amp;quantity) + &quot;:&quot; + sstos(&amp;order) + &quot;&#39;&quot;;</span></div>
 <div class="line"><span class="comment">        int iCallResult = system(cmd.c_str());</span></div>
-<div class="line"><span class="comment">        if (iCallResult &lt; 0) { error(&quot;Error doing system call &quot; + std::string(strerror(errno))); }</span></div>
+<div class="line"><span class="comment">        if (iCallResult &lt; 0 &amp;&amp; iCallResult != -1) { error(&quot;Error doing system call (AA832): &quot; + std::string(strerror(errno)) + &quot; &quot; + std::to_string(iCallResult)); }</span></div>
+<div class="line"><span class="comment">        // *** Send to server end</span></div>
 <div class="line"><span class="comment">        */</span></div>
 <div class="line">    }</div>
 <div class="line">};</div>
@@ -1854,6 +1916,9 @@ $(function() {
 <div class="line"> </div>
 <div class="line">    log(<span class="stringliteral">&quot;switched to daemon&quot;</span>);</div>
 <div class="line"> </div>
+<div class="line">    <span class="comment">// Initialize Context</span></div>
+<div class="line">    Context::Clear();</div>
+<div class="line"> </div>
 <div class="line">    <span class="comment">// Connect to SQLite</span></div>
 <div class="line">    sqlite3* db;</div>
 <div class="line">    rdy = sqlite3_open(sqlite_path.string().c_str(), &amp;db);</div>
@@ -1893,6 +1958,14 @@ $(function() {
 <div class="line">    <span class="keywordtype">bool</span> enable = <span class="keyword">true</span>; <span class="comment">// Run condition</span></div>
 <div class="line">    std::string message;</div>
 <div class="line"> </div>
+<div class="line">    <span class="comment">// Set New Context</span></div>
+<div class="line">    <span class="keyword">auto</span> ctx = Context::Get();</div>
+<div class="line">    ctx.market.market_ptr = &amp;market;</div>
+<div class="line">    ctx.market.handler_ptr = &amp;market_handler;</div>
+<div class="line">    ctx.connection.sqlite_ptr = db;</div>
+<div class="line">    ctx.enable = <span class="keyword">true</span>;</div>
+<div class="line">    Context::Set(ctx);</div>
+<div class="line"> </div>
 <div class="line">    <span class="comment">// Handle connections</span></div>
 <div class="line">    <span class="keywordflow">while</span> (enable)</div>
 <div class="line">    {</div>
@@ -1923,14 +1996,9 @@ $(function() {
 <div class="line">                    <span class="keywordflow">if</span> (message == <span class="stringliteral">&quot;exit&quot;</span>) enable = <span class="keyword">false</span>;</div>
 <div class="line">                    <span class="keywordflow">else</span></div>
 <div class="line">                    {</div>
-<div class="line">                        <span class="comment">// Set New Context</span></div>
-<div class="line">                        Context::Clear();</div>
-<div class="line">                        <span class="keyword">auto</span> ctx = Context::Get();</div>
-<div class="line">                        ctx.enable = <span class="keyword">true</span>;</div>
+<div class="line">                        <span class="comment">// Update Context</span></div>
+<div class="line">                        ctx = Context::Get();</div>
 <div class="line">                        ctx.connection.sockfd = connfd;</div>
-<div class="line">                        ctx.connection.sqlite_ptr = db;</div>
-<div class="line">                        ctx.market.market_ptr = &amp;market;</div>
-<div class="line">                        ctx.market.handler_ptr = &amp;market_handler;</div>
 <div class="line">                        ctx.command.input = message;</div>
 <div class="line">                        ctx.command.response = NULL_STR;</div>
 <div class="line">                        Context::Set(ctx);</div>
@@ -1944,6 +2012,12 @@ $(function() {
 <div class="line">                        <span class="keyword">auto</span> size = ctx.command.response_size;</div>
 <div class="line">                        rdy = WriteSocketStream(connfd, size, &amp;res);</div>
 <div class="line">                        <span class="keywordflow">if</span> (rdy &lt; 0) error(<span class="stringliteral">&quot;Failed sending response to client&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line">                        <span class="comment">// Clear Context</span></div>
+<div class="line">                        ctx.connection.sockfd = 0;</div>
+<div class="line">                        ctx.order = Context::Order();</div>
+<div class="line">                        ctx.command = Context::Command();</div>
+<div class="line">                        Context::Set(ctx);</div>
 <div class="line">                    }</div>
 <div class="line">                }</div>
 <div class="line">                ++it; <span class="comment">// Update iterator</span></div>
