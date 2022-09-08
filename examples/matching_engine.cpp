@@ -936,11 +936,6 @@ protected:
 
         auto ctx = Context::Get();
 
-        // Delete Order Info
-        (*ctx).market.info.erase(
-            (*ctx).market.info.find((int)order.Id)
-        );
-
         // Check if operation is enabled
         if (!(*ctx).enable) return;
 
@@ -965,6 +960,11 @@ protected:
         ++_updates; --_orders; ++_delete_orders;
 
         auto ctx = Context::Get();
+
+        // Delete Order Info
+        (*ctx).market.info.erase(
+            (*ctx).market.info.find((int)order.Id)
+        );
 
         // Check if operation is enabled
         if (!(*ctx).enable) return;
