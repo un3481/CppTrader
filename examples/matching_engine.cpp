@@ -1900,7 +1900,18 @@ int main(int argc, char** argv)
                         ctx.order = Context::Order();
                         ctx.command = Context::Command();
 
-                        log("info: " + sstos(&ctx.market.info));
+                        bool first = true;
+                        std::string logtext = "info: {";
+                        for (auto el : ctx.market.info)
+                        {
+                            if (!first) logtext.append(",");
+                            first = false;
+                            logtext.append(" ");
+                            logtext.append(std::to_string(el.first));
+                            logtext.append(": '" + el.second + "'");
+                        }
+                        logtext.append(" }");
+                        log(logtext);
                     }
                 }
                 ++it; // Update iterator
