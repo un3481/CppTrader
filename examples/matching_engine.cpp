@@ -29,7 +29,7 @@ using namespace CppTrader::Matching;
 
 /* Preprocessed */
 
-#define VERSION "2.1.9.0" // Program version
+#define VERSION "2.1.9.5" // Program version
 
 #define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)
 #define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)
@@ -163,8 +163,8 @@ namespace Context {
 
     struct Connection
     {
-        int sockfd = 0; // File Descriptor for current Connection
         sqlite3* sqlite_ptr = NULL; // Connection to SQLite Database
+        int sockfd = 0; // File Descriptor for current Connection
     };
 
     struct Market
@@ -172,12 +172,13 @@ namespace Context {
         MarketManager* market_ptr = NULL; // Pointer to Market Manager
         MyMarketHandler* handler_ptr = NULL; // Pointer to Market Handler
         std::vector<int> changes = {}; // List of changed orders
+        std::map<int, std::string> info = {}; // Info
     };
 
     struct Order
     {
         int id = 0; // Order Id
-        std::string info = ""; // Order Text Info
+        std::string info = ""; // Order Info
     };
 
     struct Command
@@ -193,8 +194,9 @@ namespace Context {
         bool enable = false; // Enable operation with context
         Connection connection = Connection();
         Market market = Market();
-        Command command = Command();
         Order order = Order();
+        Command command = Command();
+        
     };
 
     // Static context
@@ -600,7 +602,8 @@ void PopulateDatabase(sqlite3* db)
 }
 
 // Get Latest Id from Database
-int GetLatestId(sqlite3* db) {
+int GetLatestId(sqlite3* db) 
+{
     sqlite3_stmt* result;
     const char* query = "SELECT * FROM latest";
 
@@ -645,15 +648,25 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
         exit(1);
     };
 
+    auto ctx = Context::Get();
+
     // Get Orders
     while (sqlite3_step(result) == SQLITE_ROW)
     {
         // Add Order
         auto order = OrderFromQuery(result);
+        auto info = sqlite3_column_text(result, 14);
+        ctx.order.info = std::string((char const*)info);
+        ctx.order.id = (int)order.Id;
+        Context::Set(ctx);
         err = (*market).AddOrder(order);
         if (err != ErrorCode::OK)
         { error("Failed AddOrder: " + sstos(&err)); exit(1); };
+        ctx = Context::Get();
     };
+
+    ctx.order = Context::Order();
+    Context::Set(ctx);
 }
 
 /* ############################################################################################################################################# */
@@ -718,6 +731,11 @@ protected:
     {
         ++_updates; ++_symbols; _max_symbols = std::max(_symbols, _max_symbols);
 
+        auto ctx = Context::Get();
+
+        // Check if operation is enabled
+        if (!ctx.enable) return;
+
         // Log Add Symbol
         log("Add symbol: " + sstos(&symbol));
 
@@ -732,6 +750,11 @@ protected:
     void onDeleteSymbol(const Symbol& symbol) override
     {
         ++_updates; --_symbols;
+
+        auto ctx = Context::Get();
+
+        // Check if operation is enabled
+        if (!ctx.enable) return;
 
         // Log Delete Symbol
         log("Delete symbol: " + sstos(&symbol)); 
@@ -748,6 +771,11 @@ protected:
     {
         ++_updates; ++_order_books; _max_order_books = std::max(_order_books, _max_order_books);
 
+        auto ctx = Context::Get();
+
+        // Check if operation is enabled
+        if (!ctx.enable) return;
+
         // Log Add Order Book
         log("Add order book: " + sstos(&order_book)); 
 
@@ -762,6 +790,11 @@ protected:
     void onUpdateOrderBook(const OrderBook& order_book, bool top) override
     {
         _max_order_book_levels = std::max(std::max(order_book.bids().size(), order_book.asks().size()), _max_order_book_levels);
+
+        auto ctx = Context::Get();
+
+        // Check if operation is enabled
+        if (!ctx.enable) return;
 
         // Log Update Order Book
         log("Update order book: " + sstos(&order_book) + (top ? " - Top of the book!" : "")); 
@@ -778,6 +811,11 @@ protected:
     {
         ++_updates; --_order_books;
 
+        auto ctx = Context::Get();
+
+        // Check if operation is enabled
+        if (!ctx.enable) return;
+
         // Log Delete Order Book
         log("Delete order book: " + sstos(&order_book)); 
 
@@ -792,6 +830,11 @@ protected:
     void onAddLevel(const OrderBook& order_book, const Level& level, bool top) override
     {
         ++_updates;
+
+        auto ctx = Context::Get();
+
+        // Check if operation is enabled
+        if (!ctx.enable) return;
 
         // Log Add Level
         log("Add level: " + sstos(&level) + (top ? " - Top of the book!" : "")); 
@@ -808,6 +851,11 @@ protected:
     {
         ++_updates; _max_order_book_orders = std::max(level.Orders, _max_order_book_orders);
 
+        auto ctx = Context::Get();
+
+        // Check if operation is enabled
+        if (!ctx.enable) return;
+
         // Log Update Level
         log("Update level: " + sstos(&level) + (top ? " - Top of the book!" : "")); 
 
@@ -822,6 +870,11 @@ protected:
     void onDeleteLevel(const OrderBook& order_book, const Level& level, bool top) override
     {
         ++_updates;
+
+        auto ctx = Context::Get();
+
+        // Check if operation is enabled
+        if (!ctx.enable) return;
 
         // Log Delete Leve
         log("Delete level: " + sstos(&level) + (top ? " - Top of the book!" : "")); 
@@ -843,15 +896,21 @@ protected:
 
         auto ctx = Context::Get();
 
-        // Check if operation is enabled
-        if (!ctx.enable) return;
-
         // Check if Id is Sync
         if ((int)order.Id != ctx.order.id)
         {
             error("Error at 'onAddOrder' callback: id out of sync");
             return;
         }
+
+        // Store Order Info
+        ctx.market.info.insert(
+            std::make_pair((int)order.Id, ctx.order.info)
+        );
+        Context::Set(ctx);
+
+        // Check if operation is enabled
+        if (!ctx.enable) return;
 
         std::string id = std::to_string((int)order.Id);
 
@@ -891,13 +950,14 @@ protected:
 
         auto ctx = Context::Get();
 
+        // Delete Order Info
+        ctx.market.info.erase(
+            ctx.market.info.find((int)order.Id)
+        );
+        Context::Set(ctx);
+
         // Check if operation is enabled
         if (!ctx.enable) return;
-
-        // Log Order Update
-        // log("Update order (SOURCE): " + sstos(&order));
-        // log("Update order (DEBUG id): " + id);
-        // log("Update order (DEBUG LeavesQuantity): " + LeavesQuantity);
 
         auto db = ctx.connection.sqlite_ptr;
         char* err;
@@ -925,7 +985,7 @@ protected:
         if (!ctx.enable) return;
 
         std::string id = std::to_string((int)order.Id);
-        
+
         auto db = ctx.connection.sqlite_ptr;
         char* err;
 
@@ -941,10 +1001,11 @@ protected:
         log("Delete order: " + sstos(&order));
         
         /*
-        // Send to server
-        std::string cmd = "/home/sysop/books/BTC_TUSD/server DeleteOrder " + id;
+        // *** Send to server
+        std::string cmd = "/home/sysop/books/BTC_TUSD/execute_processor DeleteOrder " + id;
         int iCallResult = system(cmd.c_str());
-        if (iCallResult < 0) { error("Error doing system call " + std::string(strerror(errno))); }
+        if (iCallResult < 0 && iCallResult != -1) { error("Error doing system call (BB332): " + std::string(strerror(errno)) + " " + std::to_string(iCallResult)); }
+        // *** Send to server end
         */
 
         auto command = ctx.command.input;
@@ -981,10 +1042,11 @@ protected:
         */
         
         /*
-        // Send to server
+        // *** Send to server
         std::string cmd = "/home/sysop/books/BTC_TUSD/execute_processor ExecuteOrder '" + sstos(&price) + "@" + sstos(&quantity) + ":" + sstos(&order) + "'";
         int iCallResult = system(cmd.c_str());
-        if (iCallResult < 0) { error("Error doing system call " + std::string(strerror(errno))); }
+        if (iCallResult < 0 && iCallResult != -1) { error("Error doing system call (AA832): " + std::string(strerror(errno)) + " " + std::to_string(iCallResult)); }
+        // *** Send to server end
         */
     }
 };
@@ -1784,6 +1846,9 @@ int main(int argc, char** argv)
 
     log("switched to daemon");
 
+    // Initialize Context
+    Context::Clear();
+
     // Connect to SQLite
     sqlite3* db;
     rdy = sqlite3_open(sqlite_path.string().c_str(), &db);
@@ -1823,6 +1888,14 @@ int main(int argc, char** argv)
     bool enable = true; // Run condition
     std::string message;
 
+    // Set New Context
+    auto ctx = Context::Get();
+    ctx.market.market_ptr = &market;
+    ctx.market.handler_ptr = &market_handler;
+    ctx.connection.sqlite_ptr = db;
+    ctx.enable = true;
+    Context::Set(ctx);
+
     // Handle connections
     while (enable)
     {
@@ -1853,14 +1926,9 @@ int main(int argc, char** argv)
                     if (message == "exit") enable = false;
                     else
                     {
-                        // Set New Context
-                        Context::Clear();
-                        auto ctx = Context::Get();
-                        ctx.enable = true;
+                        // Update Context
+                        ctx = Context::Get();
                         ctx.connection.sockfd = connfd;
-                        ctx.connection.sqlite_ptr = db;
-                        ctx.market.market_ptr = &market;
-                        ctx.market.handler_ptr = &market_handler;
                         ctx.command.input = message;
                         ctx.command.response = NULL_STR;
                         Context::Set(ctx);
@@ -1874,6 +1942,12 @@ int main(int argc, char** argv)
                         auto size = ctx.command.response_size;
                         rdy = WriteSocketStream(connfd, size, &res);
                         if (rdy < 0) error("Failed sending response to client");
+
+                        // Clear Context
+                        ctx.connection.sockfd = 0;
+                        ctx.order = Context::Order();
+                        ctx.command = Context::Command();
+                        Context::Set(ctx);
                     }
                 }
                 ++it; // Update iterator
