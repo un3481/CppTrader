@@ -230,8 +230,8 @@ namespace Context {
 void chld_handler(int signum)
 {
     signal(SIGCHLD, chld_handler);
-	pid_t pid; int wstat;
-    pid = wait3(&wstat, WNOHANG, NULL);
+	int wstat;
+    wait3(&wstat, WNOHANG, NULL);
 }
 
 // Change current process to Daemon
