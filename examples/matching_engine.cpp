@@ -29,7 +29,7 @@ using namespace CppTrader::Matching;
 
 /* Preprocessed */
 
-#define VERSION "2.2.0.0" // Program version
+#define VERSION "2.2.1.0" // Program version
 
 #define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)
 #define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)
@@ -123,10 +123,10 @@ const std::string QUERY_INSERT_INTO_LATEST = (EMPTY_STR +
 
 // Convert Objects to string via operator<<
 template <typename T>
-inline std::string sstos(const T* input)
+inline std::string sstos(const T input)
 {
     std::stringstream ss;
-    ss << (*input);
+    ss << input;
     return ss.str();
 }
 
@@ -200,18 +200,17 @@ namespace Context {
     };
 
     // Get Context
-    Ctx* Get()
+    Ctx Get()
     {
         static Ctx ctx;
-        return &ctx;
+        return ctx;
     }
 
     // Set Context
     inline void Set(Ctx& value)
     {
-        Ctx new_ctx = value;
         auto ctx = Get();
-        (*ctx) = new_ctx;
+        ctx = value;
     }
 
     // Clear Context
@@ -590,7 +589,7 @@ void PopulateDatabase(sqlite3* db)
     char* err;
     auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
     if (rdy != SQLITE_OK)
-    { error("sqlite error(1): " + sstos(&err)); exit(1); };
+    { error("sqlite error(1): " + sstos(err)); exit(1); };
 }
 
 // Get Latest Id from Database
@@ -604,7 +603,7 @@ int GetLatestId(sqlite3* db)
     if (rdy != SQLITE_OK)
     {
         const char* err = sqlite3_errmsg(db);
-        error("sqlite error(2): " + sstos(&err));
+        error("sqlite error(2): " + sstos(err));
         exit(1);
     };
 
@@ -622,12 +621,12 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
     Symbol symbol(SYMBOL_ID, name);
     auto err = (*market).AddSymbol(symbol);
     if (err != ErrorCode::OK)
-    { error("Failed AddSymbol: " + sstos(&err)); exit(1); };
+    { error("Failed AddSymbol: " + sstos(err)); exit(1); };
 
     // Add Book
     err = (*market).AddOrderBook(symbol);
     if (err != ErrorCode::OK)
-    { error("Failed AddOrderBook: " + sstos(&err)); exit(1); };
+    { error("Failed AddOrderBook: " + sstos(err)); exit(1); };
 
     // Prepare query
     sqlite3_stmt* result;
@@ -636,7 +635,7 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
     if (rdy != SQLITE_OK)
     {
         const char* _err = sqlite3_errmsg(db);
-        error("sqlite error(3): " + sstos(&_err));
+        error("sqlite error(3): " + sstos(_err));
         exit(1);
     };
 
@@ -648,14 +647,14 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
         // Add Order
         auto order = OrderFromQuery(result);
         auto info = sqlite3_column_text(result, 14);
-        (*ctx).order.info = std::string((char const*)info);
-        (*ctx).order.id = (int)order.Id;
+        ctx.order.info = std::string((char const*)info);
+        ctx.order.id = (int)order.Id;
         err = (*market).AddOrder(order);
         if (err != ErrorCode::OK)
-        { error("Failed AddOrder: " + sstos(&err)); exit(1); };
+        { error("Failed AddOrder: " + sstos(err)); exit(1); };
     };
 
-    (*ctx).order = Context::Order();
+    ctx.order = Context::Order();
 }
 
 /* ############################################################################################################################################# */
@@ -723,10 +722,10 @@ protected:
         auto ctx = Context::Get();
 
         // Check if operation is enabled
-        if (!(*ctx).enable) return;
+        if (!ctx.enable) return;
 
         // Log Add Symbol
-        log("Add symbol: " + sstos(&symbol));
+        log("Add symbol: " + sstos(symbol));
 
         /*
         // Send to server
@@ -743,10 +742,10 @@ protected:
         auto ctx = Context::Get();
 
         // Check if operation is enabled
-        if (!(*ctx).enable) return;
+        if (!ctx.enable) return;
 
         // Log Delete Symbol
-        log("Delete symbol: " + sstos(&symbol)); 
+        log("Delete symbol: " + sstos(symbol)); 
 
         /*
         // Send to server
@@ -763,7 +762,7 @@ protected:
         auto ctx = Context::Get();
 
         // Check if operation is enabled
-        if (!(*ctx).enable) return;
+        if (!ctx.enable) return;
 
         // Log Add Order Book
         log("Add order book: " + sstos(&order_book)); 
@@ -783,7 +782,7 @@ protected:
         auto ctx = Context::Get();
 
         // Check if operation is enabled
-        if (!(*ctx).enable) return;
+        if (!ctx.enable) return;
 
         // Log Update Order Book
         log("Update order book: " + sstos(&order_book) + (top ? " - Top of the book!" : "")); 
@@ -803,7 +802,7 @@ protected:
         auto ctx = Context::Get();
 
         // Check if operation is enabled
-        if (!(*ctx).enable) return;
+        if (!ctx.enable) return;
 
         // Log Delete Order Book
         log("Delete order book: " + sstos(&order_book)); 
@@ -823,10 +822,10 @@ protected:
         auto ctx = Context::Get();
 
         // Check if operation is enabled
-        if (!(*ctx).enable) return;
+        if (!ctx.enable) return;
 
         // Log Add Level
-        log("Add level: " + sstos(&level) + (top ? " - Top of the book!" : "")); 
+        log("Add level: " + sstos(level) + (top ? " - Top of the book!" : "")); 
 
         /*
         // Send to server
@@ -843,10 +842,10 @@ protected:
         auto ctx = Context::Get();
 
         // Check if operation is enabled
-        if (!(*ctx).enable) return;
+        if (!ctx.enable) return;
 
         // Log Update Level
-        log("Update level: " + sstos(&level) + (top ? " - Top of the book!" : "")); 
+        log("Update level: " + sstos(level) + (top ? " - Top of the book!" : "")); 
 
         /*
         // Send to server
@@ -863,10 +862,10 @@ protected:
         auto ctx = Context::Get();
 
         // Check if operation is enabled
-        if (!(*ctx).enable) return;
+        if (!ctx.enable) return;
 
         // Log Delete Leve
-        log("Delete level: " + sstos(&level) + (top ? " - Top of the book!" : "")); 
+        log("Delete level: " + sstos(level) + (top ? " - Top of the book!" : "")); 
 
         /*
         // Send to server
@@ -886,48 +885,48 @@ protected:
         auto ctx = Context::Get();
 
         // Check if Id is Sync
-        if ((int)order.Id != (*ctx).order.id)
+        if ((int)order.Id != ctx.order.id)
         {
             error("Error at 'onAddOrder' callback: id out of sync");
             return;
         }
 
         // Store Order Info
-        (*ctx).market.info.insert(
-            std::make_pair((int)order.Id, (*ctx).order.info)
+        ctx.market.info.insert(
+            std::make_pair((int)order.Id, ctx.order.info)
         );
 
         // Check if operation is enabled
-        if (!(*ctx).enable) return;
+        if (!ctx.enable) return;
 
         std::string id = std::to_string((int)order.Id);
 
-        auto db = (*ctx).connection.sqlite_ptr;
+        auto db = ctx.connection.sqlite_ptr;
         char* err;
 
         // Add order to SQLite
         const std::string query = (EMPTY_STR +
             "BEGIN; " +
             "UPDATE latest SET Id=" + id + "; " +
-            InsertQueryFromOrder(order, (*ctx).order.info) + "; " +
+            InsertQueryFromOrder(order, ctx.order.info) + "; " +
             "COMMIT;"
         );
         auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
-        { error("sqlite error(4): " + sstos(&err)); };
+        { error("sqlite error(4): " + sstos(err)); };
 
         // Log Add Order
-        log("Add order: " + sstos(&order));
+        log("Add order: " + sstos(order));
 
         /*
         // Send to server
-        std::string cmd = "/home/sysop/books/BTC_TUSD/server AddOrder " + id + ":" + (*ctx).order.info;
+        std::string cmd = "/home/sysop/books/BTC_TUSD/server AddOrder " + id + ":" + ctx.order.info;
         int iCallResult = system(cmd.c_str());
         if (iCallResult < 0) { error("Error doing system call " + std::string(strerror(errno))); }
         */
 
         // Set response to client
-        (*ctx).command.response = id;
+        ctx.command.response = id;
     }
 
     /* Update orders when half filled */
@@ -938,20 +937,20 @@ protected:
         auto ctx = Context::Get();
 
         // Delete Order Info
-        (*ctx).market.info.erase(
-            (*ctx).market.info.find((int)order.Id)
+        ctx.market.info.erase(
+            ctx.market.info.find((int)order.Id)
         );
 
         // Check if operation is enabled
-        if (!(*ctx).enable) return;
+        if (!ctx.enable) return;
 
-        auto db = (*ctx).connection.sqlite_ptr;
+        auto db = ctx.connection.sqlite_ptr;
         char* err;
 
         const std::string query = UpdateQueryFromOrder(order);
         auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
-        { error("sqlite error(6): " + sstos(&err)); };
+        { error("sqlite error(6): " + sstos(err)); };
 
         /*
         // Send to server
@@ -968,11 +967,11 @@ protected:
         auto ctx = Context::Get();
 
         // Check if operation is enabled
-        if (!(*ctx).enable) return;
+        if (!ctx.enable) return;
 
         std::string id = std::to_string((int)order.Id);
 
-        auto db = (*ctx).connection.sqlite_ptr;
+        auto db = ctx.connection.sqlite_ptr;
         char* err;
 
         // Delete order from SQLite
@@ -981,10 +980,10 @@ protected:
         );
         auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
-        { error("sqlite error(5): " + sstos(&err)); };
+        { error("sqlite error(5): " + sstos(err)); };
 
         // Log Deleted Order
-        log("Delete order: " + sstos(&order));
+        log("Delete order: " + sstos(order));
         
         /*
         // *** Send to server
@@ -994,11 +993,11 @@ protected:
         // *** Send to server end
         */
 
-        auto command = (*ctx).command.input;
+        auto command = ctx.command.input;
         if (command.find("delete order") == std::string::npos) return;
         
         // Set response to client
-        (*ctx).command.response = "OK";
+        ctx.command.response = "OK";
     }
 
     void onExecuteOrder(const Order& order, uint64_t price, uint64_t quantity) override
@@ -1008,15 +1007,15 @@ protected:
         auto ctx = Context::Get();
 
         // Add Order Id to changes if not already added
-        auto ch = (*ctx).market.changes;
+        auto ch = ctx.market.changes;
         auto chit = find(ch.begin(), ch.end(), (int)order.Id);
-        if (chit == ch.end()) (*ctx).market.changes.push_back((int)order.Id);
+        if (chit == ch.end()) ctx.market.changes.push_back((int)order.Id);
 
         // Check if operation is enabled
-        if (!(*ctx).enable) return;
+        if (!ctx.enable) return;
 
         // Log Executed Order
-     	log("Execute order: " + sstos(&order) + " with price " + sstos(&price) + " and quantity " + sstos(&quantity));
+     	log("Execute order: " + sstos(order) + " with price " + sstos(price) + " and quantity " + sstos(quantity));
 
         /*
         std::string csv;
@@ -1026,7 +1025,7 @@ protected:
         
         /*
         // *** Send to server
-        std::string cmd = "/home/sysop/books/BTC_TUSD/execute_processor ExecuteOrder '" + sstos(&price) + "@" + sstos(&quantity) + ":" + sstos(&order) + "'";
+        std::string cmd = "/home/sysop/books/BTC_TUSD/execute_processor ExecuteOrder '" + sstos(price) + "@" + sstos(quantity) + ":" + sstos(order) + "'";
         int iCallResult = system(cmd.c_str());
         if (iCallResult < 0 && iCallResult != -1) { error("Error doing system call (AA832): " + std::string(strerror(errno)) + " " + std::to_string(iCallResult)); }
         // *** Send to server end
@@ -1055,7 +1054,7 @@ void AddSymbol(MarketManager* market, const std::string& command)
 
         ErrorCode result = (*market).AddSymbol(symbol);
         if (result != ErrorCode::OK)
-            error("Failed 'add symbol' command: " + sstos(&result));
+            error("Failed 'add symbol' command: " + sstos(result));
 
         return;
     }
@@ -1074,7 +1073,7 @@ void DeleteSymbol(MarketManager* market, const std::string& command)
 
         ErrorCode result = (*market).DeleteSymbol(id);
         if (result != ErrorCode::OK)
-            error("Failed 'delete symbol' command: " + sstos(&result));
+            error("Failed 'delete symbol' command: " + sstos(result));
 
         return;
     }
@@ -1102,7 +1101,7 @@ void AddOrderBook(MarketManager* market, const std::string& command)
 
         ErrorCode result = (*market).AddOrderBook(symbol);
         if (result != ErrorCode::OK)
-            error("Failed 'add book' command: " + sstos(&result));
+            error("Failed 'add book' command: " + sstos(result));
 
         return;
     }
@@ -1121,7 +1120,7 @@ void DeleteOrderBook(MarketManager* market, const std::string& command)
 
         ErrorCode result = (*market).DeleteOrderBook(id);
         if (result != ErrorCode::OK)
-            error("Failed 'delete book' command: " + sstos(&result));
+            error("Failed 'delete book' command: " + sstos(result));
 
         return;
     }
@@ -1149,8 +1148,8 @@ void GetOrderBook(MarketManager* market, const std::string& command)
 
             // Set response to client
             auto ctx = Context::Get();
-            (*ctx).command.response = res;
-            (*ctx).command.response_size = MSG_SIZE_LARGE;
+            ctx.command.response = res;
+            ctx.command.response_size = MSG_SIZE_LARGE;
         }
         
         return;
@@ -1175,7 +1174,7 @@ void ReduceOrder(MarketManager* market, const std::string& command)
 
         ErrorCode result = (*market).ReduceOrder(id, quantity);
         if (result != ErrorCode::OK)
-            error("Failed 'reduce order' command: " + sstos(&result));
+            error("Failed 'reduce order' command: " + sstos(result));
 
         return;
     }
@@ -1196,7 +1195,7 @@ void ModifyOrder(MarketManager* market, const std::string& command)
 
         ErrorCode result = (*market).ModifyOrder(id, new_price, new_quantity);
         if (result != ErrorCode::OK)
-            error("Failed 'modify order' command: " + sstos(&result));
+            error("Failed 'modify order' command: " + sstos(result));
 
         return;
     }
@@ -1217,7 +1216,7 @@ void MitigateOrder(MarketManager* market, const std::string& command)
 
         ErrorCode result = (*market).MitigateOrder(id, new_price, new_quantity);
         if (result != ErrorCode::OK)
-            error("Failed 'mitigate order' command: " + sstos(&result));
+            error("Failed 'mitigate order' command: " + sstos(result));
 
         return;
     }
@@ -1239,7 +1238,7 @@ void ReplaceOrder(MarketManager* market, const std::string& command)
 
         ErrorCode result = (*market).ReplaceOrder(id, new_id, new_price, new_quantity);
         if (result != ErrorCode::OK)
-            error("Failed 'replace order' command: " + sstos(&result));
+            error("Failed 'replace order' command: " + sstos(result));
 
         return;
     }
@@ -1258,7 +1257,7 @@ void DeleteOrder(MarketManager* market, const std::string& command)
 
         ErrorCode result = (*market).DeleteOrder(id);
         if (result != ErrorCode::OK)
-            error("Failed 'delete order' command: " + sstos(&result));
+            error("Failed 'delete order' command: " + sstos(result));
 
         return;
     }
@@ -1290,8 +1289,8 @@ void GetOrder(MarketManager* market, const std::string& command)
 
             // Set response to client
             auto ctx = Context::Get();
-            (*ctx).command.response = res;
-            (*ctx).command.response_size = MSG_SIZE;
+            ctx.command.response = res;
+            ctx.command.response_size = MSG_SIZE;
         }
         
         return;
@@ -1313,9 +1312,9 @@ void AddMarketOrder(MarketManager* market, const std::string& command)
     {
         auto ctx = Context::Get();
 
-        uint64_t id = (*ctx).order.id;
+        uint64_t id = ctx.order.id;
         uint64_t quantity = std::stoi(match[2]);
-        (*ctx).order.info = match[3];
+        ctx.order.info = match[3];
 
         Order order;
         if (match[1] == "buy")
@@ -1324,13 +1323,13 @@ void AddMarketOrder(MarketManager* market, const std::string& command)
             order = Order::SellMarket(id, SYMBOL_ID, quantity);
         else
         {
-            error("Invalid market order side: " + sstos(&match[1]));
+            error("Invalid market order side: " + sstos(match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add market' command: " + sstos(&result));
+            error("Failed 'add market' command: " + sstos(result));
 
         return;
     }
@@ -1347,10 +1346,10 @@ void AddSlippageMarketOrder(MarketManager* market, const std::string& command)
     {
         auto ctx = Context::Get();
 
-        uint64_t id = (*ctx).order.id;
+        uint64_t id = ctx.order.id;
         uint64_t quantity = std::stoi(match[2]);
         uint64_t slippage = std::stoi(match[3]);
-        (*ctx).order.info = match[4];
+        ctx.order.info = match[4];
 
         Order order;
         if (match[1] == "buy")
@@ -1359,13 +1358,13 @@ void AddSlippageMarketOrder(MarketManager* market, const std::string& command)
             order = Order::SellMarket(id, SYMBOL_ID, quantity, slippage);
         else
         {
-            error("Invalid market order side: " + sstos(&match[1]));
+            error("Invalid market order side: " + sstos(match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add slippage market' command: " + sstos(&result));
+            error("Failed 'add slippage market' command: " + sstos(result));
 
         return;
     }
@@ -1382,10 +1381,10 @@ void AddLimitOrder(MarketManager* market, const std::string& command)
     {
         auto ctx = Context::Get();
 
-        uint64_t id = (*ctx).order.id;
+        uint64_t id = ctx.order.id;
         uint64_t price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
-        (*ctx).order.info = match[4];
+        ctx.order.info = match[4];
 
         Order order;
         if (match[1] == "buy")
@@ -1394,13 +1393,13 @@ void AddLimitOrder(MarketManager* market, const std::string& command)
             order = Order::SellLimit(id, SYMBOL_ID, price, quantity);
         else
         {
-            error("Invalid limit order side: " + sstos(&match[1]));
+            error("Invalid limit order side: " + sstos(match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add limit' command: " + sstos(&result));
+            error("Failed 'add limit' command: " + sstos(result));
 
         return;
     }
@@ -1417,10 +1416,10 @@ void AddIOCLimitOrder(MarketManager* market, const std::string& command)
     {
         auto ctx = Context::Get();
 
-        uint64_t id = (*ctx).order.id;
+        uint64_t id = ctx.order.id;
         uint64_t price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
-        (*ctx).order.info = match[4];
+        ctx.order.info = match[4];
 
         Order order;
         if (match[1] == "buy")
@@ -1429,13 +1428,13 @@ void AddIOCLimitOrder(MarketManager* market, const std::string& command)
             order = Order::SellLimit(id, SYMBOL_ID, price, quantity, OrderTimeInForce::IOC);
         else
         {
-            error("Invalid limit order side: " + sstos(&match[1]));
+            error("Invalid limit order side: " + sstos(match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add ioc limit' command: " + sstos(&result));
+            error("Failed 'add ioc limit' command: " + sstos(result));
 
         return;
     }
@@ -1452,10 +1451,10 @@ void AddFOKLimitOrder(MarketManager* market, const std::string& command)
     {
         auto ctx = Context::Get();
 
-        uint64_t id = (*ctx).order.id;
+        uint64_t id = ctx.order.id;
         uint64_t price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
-        (*ctx).order.info = match[4];
+        ctx.order.info = match[4];
 
         Order order;
         if (match[1] == "buy")
@@ -1464,13 +1463,13 @@ void AddFOKLimitOrder(MarketManager* market, const std::string& command)
             order = Order::SellLimit(id, SYMBOL_ID, price, quantity, OrderTimeInForce::FOK);
         else
         {
-            error("Invalid limit order side: " + sstos(&match[1]));
+            error("Invalid limit order side: " + sstos(match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add fok limit' command: " + sstos(&result));
+            error("Failed 'add fok limit' command: " + sstos(result));
 
         return;
     }
@@ -1487,10 +1486,10 @@ void AddAONLimitOrder(MarketManager* market, const std::string& command)
     {
         auto ctx = Context::Get();
 
-        uint64_t id = (*ctx).order.id;
+        uint64_t id = ctx.order.id;
         uint64_t price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
-        (*ctx).order.info = match[4];
+        ctx.order.info = match[4];
 
         Order order;
         if (match[1] == "buy")
@@ -1499,13 +1498,13 @@ void AddAONLimitOrder(MarketManager* market, const std::string& command)
             order = Order::SellLimit(id, SYMBOL_ID, price, quantity, OrderTimeInForce::AON);
         else
         {
-            error("Invalid limit order side: " + sstos(&match[1]));
+            error("Invalid limit order side: " + sstos(match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add aon limit' command: " + sstos(&result));
+            error("Failed 'add aon limit' command: " + sstos(result));
 
         return;
     }
@@ -1522,10 +1521,10 @@ void AddStopOrder(MarketManager* market, const std::string& command)
     {
         auto ctx = Context::Get();
 
-        uint64_t id = (*ctx).order.id;
+        uint64_t id = ctx.order.id;
         uint64_t stop_price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
-        (*ctx).order.info = match[4];
+        ctx.order.info = match[4];
 
         Order order;
         if (match[1] == "buy")
@@ -1534,13 +1533,13 @@ void AddStopOrder(MarketManager* market, const std::string& command)
             order = Order::SellStop(id, SYMBOL_ID, stop_price, quantity);
         else
         {
-            error("Invalid stop order side: " + sstos(&match[1]));
+            error("Invalid stop order side: " + sstos(match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add stop' command: " + sstos(&result));
+            error("Failed 'add stop' command: " + sstos(result));
 
         return;
     }
@@ -1557,11 +1556,11 @@ void AddStopLimitOrder(MarketManager* market, const std::string& command)
     {
         auto ctx = Context::Get();
 
-        uint64_t id = (*ctx).order.id;
+        uint64_t id = ctx.order.id;
         uint64_t stop_price = std::stoi(match[2]);
         uint64_t price = std::stoi(match[3]);
         uint64_t quantity = std::stoi(match[4]);
-        (*ctx).order.info = match[5];
+        ctx.order.info = match[5];
 
         Order order;
         if (match[1] == "buy")
@@ -1570,13 +1569,13 @@ void AddStopLimitOrder(MarketManager* market, const std::string& command)
             order = Order::SellStopLimit(id, SYMBOL_ID, stop_price, price, quantity);
         else
         {
-            error("Invalid stop-limit order side: " + sstos(&match[1]));
+            error("Invalid stop-limit order side: " + sstos(match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add stop-limit' command: " + sstos(&result));
+            error("Failed 'add stop-limit' command: " + sstos(result));
 
         return;
     }
@@ -1593,12 +1592,12 @@ void AddTrailingStopOrder(MarketManager* market, const std::string& command)
     {
         auto ctx = Context::Get();
 
-        uint64_t id = (*ctx).order.id;
+        uint64_t id = ctx.order.id;
         uint64_t stop_price = std::stoi(match[2]);
         uint64_t quantity = std::stoi(match[3]);
         int64_t trailing_distance = std::stoi(match[4]);
         int64_t trailing_step = std::stoi(match[5]);
-        (*ctx).order.info = match[6];
+        ctx.order.info = match[6];
 
         Order order;
         if (match[1] == "buy")
@@ -1607,13 +1606,13 @@ void AddTrailingStopOrder(MarketManager* market, const std::string& command)
             order = Order::TrailingSellStop(id, SYMBOL_ID, stop_price, quantity, trailing_distance, trailing_step);
         else
         {
-            error("Invalid stop order side: " + sstos(&match[1]));
+            error("Invalid stop order side: " + sstos(match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add trailing stop' command: " + sstos(&result));
+            error("Failed 'add trailing stop' command: " + sstos(result));
 
         return;
     }
@@ -1630,13 +1629,13 @@ void AddTrailingStopLimitOrder(MarketManager* market, const std::string& command
     {
         auto ctx = Context::Get();
 
-        uint64_t id = (*ctx).order.id;
+        uint64_t id = ctx.order.id;
         uint64_t stop_price = std::stoi(match[2]);
         uint64_t price = std::stoi(match[3]);
         uint64_t quantity = std::stoi(match[4]);
         int64_t trailing_distance = std::stoi(match[5]);
         int64_t trailing_step = std::stoi(match[6]);
-        (*ctx).order.info = match[7];
+        ctx.order.info = match[7];
 
         Order order;
         if (match[1] == "buy")
@@ -1645,13 +1644,13 @@ void AddTrailingStopLimitOrder(MarketManager* market, const std::string& command
             order = Order::TrailingSellStopLimit(id, SYMBOL_ID, stop_price, price, quantity, trailing_distance, trailing_step);
         else
         {
-            error("Invalid stop-limit order side: " + sstos(&match[1]));
+            error("Invalid stop-limit order side: " + sstos(match[1]));
             return;
         }
 
         ErrorCode result = (*market).AddOrder(order);
         if (result != ErrorCode::OK)
-            error("Failed 'add trailing stop-limit' command: " + sstos(&result));
+            error("Failed 'add trailing stop-limit' command: " + sstos(result));
 
         return;
     }
@@ -1669,34 +1668,34 @@ void UpdateOrders()
 
     // Generate all update queries
     std::string updates;
-    for (auto id : (*ctx).market.changes)
+    for (auto id : ctx.market.changes)
     {
-        auto order = (*(*ctx).market.market_ptr).GetOrder(id);
+        auto order = (*ctx.market.market_ptr).GetOrder(id);
         if (order == NULL) continue;
         updates.append(UpdateQueryFromOrder(*order) + "; ");
     }
 
     if (!updates.empty())
     {
-        auto db = (*ctx).connection.sqlite_ptr;
+        auto db = ctx.connection.sqlite_ptr;
         char* err;
 
         const std::string query = "BEGIN; " + updates + "COMMIT;";
         auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
-        { error("sqlite error(7): " + sstos(&err)); };
+        { error("sqlite error(7): " + sstos(err)); };
     }
 
     // Clear changes
-    (*ctx).market.changes.clear();
+    ctx.market.changes.clear();
 }
 
 void Execute()
 {
     // Get Context
     auto ctx = Context::Get();
-    auto command = (*ctx).command.input;
-    auto market = (*ctx).market.market_ptr;
+    auto command = ctx.command.input;
+    auto market = ctx.market.market_ptr;
 
     // Matching
     if (command == "enable matching") (*market).EnableMatching();
@@ -1719,7 +1718,7 @@ void Execute()
     else if (command.find("add ") != std::string::npos)
     {
         // Set new Order Id
-        (*ctx).order.id = (*(*ctx).market.handler_ptr).lts_order_id() + 1;
+        ctx.order.id = (*ctx.market.handler_ptr).lts_order_id() + 1;
 
         // Orders: Add
         if (command.find("add market") != std::string::npos) AddMarketOrder(market, command);
@@ -1735,7 +1734,7 @@ void Execute()
     }
 
     // Update changed orders
-    if (!(*ctx).market.changes.empty()) UpdateOrders();
+    if (!ctx.market.changes.empty()) UpdateOrders();
 }
 
 /* ############################################################################################################################################# */
@@ -1847,10 +1846,10 @@ int main(int argc, char** argv)
 
     // Set New Context
     auto ctx = Context::Get();
-    (*ctx).market.market_ptr = &market;
-    (*ctx).market.handler_ptr = &market_handler;
-    (*ctx).connection.sqlite_ptr = db;
-    (*ctx).enable = true;
+    ctx.market.market_ptr = &market;
+    ctx.market.handler_ptr = &market_handler;
+    ctx.connection.sqlite_ptr = db;
+    ctx.enable = true;
 
     // Handle connections
     while (enable)
@@ -1883,23 +1882,25 @@ int main(int argc, char** argv)
                     else
                     {
                         // Update Context
-                        (*ctx).connection.sockfd = connfd;
-                        (*ctx).command.input = message;
-                        (*ctx).command.response = NULL_STR;
+                        ctx.connection.sockfd = connfd;
+                        ctx.command.input = message;
+                        ctx.command.response = NULL_STR;
 
                         // Execute command
                         Execute();
 
                         // Send response to client
-                        auto res = (*ctx).command.response;
-                        auto size = (*ctx).command.response_size;
+                        auto res = ctx.command.response;
+                        auto size = ctx.command.response_size;
                         rdy = WriteSocketStream(connfd, size, &res);
                         if (rdy < 0) error("Failed sending response to client");
 
                         // Clear Context
-                        (*ctx).connection.sockfd = 0;
-                        (*ctx).order = Context::Order();
-                        (*ctx).command = Context::Command();
+                        ctx.connection.sockfd = 0;
+                        ctx.order = Context::Order();
+                        ctx.command = Context::Command();
+
+                        log("info: " + sstos(ctx.market.info));
                     }
                 }
                 ++it; // Update iterator
