@@ -1858,12 +1858,13 @@ int main(int argc, char** argv)
     (*ctx).market.market_ptr = &market;
     (*ctx).market.handler_ptr = &market_handler;
     (*ctx).connection.sqlite_ptr = db;
-
-    (*ctx).enable = true; // Run condition
     
-    std::string message; int connfd;
     std::vector<int> connections = {sockfd}; // Connection vector
     std::vector<int>::iterator it; // Connection iterator
+    std::string message, response;
+    int connfd, response_size;
+
+    (*ctx).enable = true; // Run condition
 
     // Handle connections
     while ((*ctx).enable)
@@ -1900,9 +1901,9 @@ int main(int argc, char** argv)
                     Execute();
 
                     // Send response to client
-                    std::string res = (*ctx).command.response;
-                    int size = (*ctx).command.response_size;
-                    rdy = WriteSocketStream(*it, size, &res);
+                    response = (*ctx).command.response;
+                    response_size = (*ctx).command.response_size;
+                    rdy = WriteSocketStream(*it, response_size, &response);
                     if (rdy < 0) error("Failed sending response to client");
 
                     // Clear Context
