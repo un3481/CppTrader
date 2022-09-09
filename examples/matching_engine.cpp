@@ -182,13 +182,13 @@ namespace Context {
     struct Order
     {
         int id = 0; // Order Id
-        std::string info = ""; // Order Info
+        std::string info = EMPTY_STR; // Order Info
     };
 
     struct Command
     {
-        std::string input = ""; // Command Input
-        std::string response = ""; // Command Response
+        std::string input = EMPTY_STR; // Command Input
+        std::string response = EMPTY_STR; // Command Response
         int response_size = MSG_SIZE_SMALL; // Response Size
     };
 
@@ -213,7 +213,7 @@ namespace Context {
     // Set Context
     inline void Set(Ctx& value)
     {
-        auto ctx = Get();
+        Ctx* ctx = Get();
         (*ctx) = value;
     }
 
@@ -471,7 +471,7 @@ std::string ParseOrderBookLevels(MarketManager* market, OrderBook::Levels levels
     std::string level_props;
     
     // Loop over Levels orders
-    for (auto level : levels)
+    for (LevelNode level : levels)
     {
         // Get Level properties
         level_props = (
@@ -479,9 +479,9 @@ std::string ParseOrderBookLevels(MarketManager* market, OrderBook::Levels levels
             LEVEL_TYPES[(int)level.Type] + CSV_SEP +
             std::to_string(level.Price)
         );
-        for (auto node : level.OrderList)
+        for (OrderNode node : level.OrderList)
         {
-            auto order = (*market).GetOrder(node.Id);
+            const Order* order = (*market).GetOrder(node.Id);
             csv.append(
                 level_props + CSV_SEP + // Insert level properties
                 ParseOrder(*order) + CSV_EOL // Insert Order properties
@@ -566,7 +566,7 @@ inline std::string UpdateQueryFromOrder(const Order& order)
 // Generate new Order from result of Query
 inline Order OrderFromQuery(sqlite3_stmt* row)
 {
-    auto order = Order(
+    Order order = Order(
         sqlite3_column_int(row, 0), // Id
         SYMBOL_ID, // Symbol
         OrderType(sqlite3_column_int(row, 2)), // Type
@@ -592,13 +592,13 @@ inline Order OrderFromQuery(sqlite3_stmt* row)
 void PopulateDatabase(sqlite3* db)
 {
     // Create Tables in SQLite
-    static const auto query = (
+    static const std::string query = (
         QUERY_CREATE_TABLE_LATEST + "; " +
         QUERY_INSERT_INTO_LATEST + "; " +
         QUERY_CREATE_TABLE_ORDERS + ";"
     );
     char* err;
-    auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
+    int rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
     if (rdy != SQLITE_OK)
     { error("sqlite error(1): " + sstos(&err)); exit(1); };
 }
@@ -610,7 +610,7 @@ int GetLatestId(sqlite3* db)
     static const char* query = "SELECT * FROM latest";
 
     // Prepare query
-    auto rdy = sqlite3_prepare(db, query, -1, &result, NULL);
+    int rdy = sqlite3_prepare(db, query, -1, &result, NULL);
     if (rdy != SQLITE_OK)
     {
         const char* err = sqlite3_errmsg(db);
@@ -630,7 +630,7 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
 {
     // Add Symbol
     Symbol symbol(SYMBOL_ID, name);
-    auto err = (*market).AddSymbol(symbol);
+    ErrorCode err = (*market).AddSymbol(symbol);
     if (err != ErrorCode::OK)
     { error("Failed AddSymbol: " + sstos(&err)); exit(1); };
 
@@ -642,7 +642,7 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
     // Prepare query
     sqlite3_stmt* result;
     const char* query = "SELECT * FROM orders";
-    auto rdy = sqlite3_prepare(db, query, -1, &result, NULL);
+    int rdy = sqlite3_prepare(db, query, -1, &result, NULL);
     if (rdy != SQLITE_OK)
     {
         const char* _err = sqlite3_errmsg(db);
@@ -656,8 +656,8 @@ void PopulateBook(MarketManager* market, sqlite3* db, const char* name)
     while (sqlite3_step(result) == SQLITE_ROW)
     {
         // Add Order
-        auto order = OrderFromQuery(result);
-        auto info = sqlite3_column_text(result, 14);
+        Order order = OrderFromQuery(result);
+        const unsigned char* info = sqlite3_column_text(result, 14);
         (*ctx).order.info = std::string((char const*)info);
         (*ctx).order.id = (int)order.Id;
         err = (*market).AddOrder(order);
@@ -912,7 +912,7 @@ protected:
 
         std::string id = std::to_string((int)order.Id);
 
-        auto db = (*ctx).connection.sqlite_ptr;
+        sqlite3* db = (*ctx).connection.sqlite_ptr;
         char* err;
 
         // Add order to SQLite
@@ -922,7 +922,7 @@ protected:
             InsertQueryFromOrder(order, (*ctx).order.info) + "; " +
             "COMMIT;"
         );
-        auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
+        int rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
         { error("sqlite error(4): " + sstos(&err)); };
 
@@ -950,11 +950,11 @@ protected:
         // Check if operation is enabled
         if (!(*ctx).enable) return;
 
-        auto db = (*ctx).connection.sqlite_ptr;
+        sqlite3* db = (*ctx).connection.sqlite_ptr;
         char* err;
 
         const std::string query = UpdateQueryFromOrder(order);
-        auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
+        int rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
         { error("sqlite error(6): " + sstos(&err)); };
 
@@ -982,14 +982,14 @@ protected:
 
         std::string id = std::to_string((int)order.Id);
 
-        auto db = (*ctx).connection.sqlite_ptr;
+        sqlite3* db = (*ctx).connection.sqlite_ptr;
         char* err;
 
         // Delete order from SQLite
         const std::string query = (
             "DELETE FROM orders WHERE Id=" + id
         );
-        auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
+        int rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
         { error("sqlite error(5): " + sstos(&err)); };
 
@@ -1004,7 +1004,7 @@ protected:
         // *** Send to server end
         */
 
-        auto command = (*ctx).command.input;
+        std::string command = (*ctx).command.input;
         if (command.find("delete order") == std::string::npos) return;
         
         // Set response to client
@@ -1018,9 +1018,9 @@ protected:
         auto ctx = Context::Get();
 
         // Add Order Id to changes if not already added
-        auto ch = (*ctx).market.changes;
-        auto chit = find(ch.begin(), ch.end(), (int)order.Id);
-        if (chit == ch.end()) (*ctx).market.changes.push_back((int)order.Id);
+        std::vector<int> ch = (*ctx).market.changes;
+        std::vector<int>::iterator it = find(ch.begin(), ch.end(), (int)order.Id);
+        if (it == ch.end()) (*ctx).market.changes.push_back((int)order.Id);
 
         // Check if operation is enabled
         if (!(*ctx).enable) return;
@@ -1679,20 +1679,20 @@ void UpdateOrders()
 
     // Generate all update queries
     std::string updates;
-    for (auto id : (*ctx).market.changes)
+    for (int id : (*ctx).market.changes)
     {
-        auto order = (*(*ctx).market.market_ptr).GetOrder(id);
+        const Order* order = (*(*ctx).market.market_ptr).GetOrder(id);
         if (order == NULL) continue;
         updates.append(UpdateQueryFromOrder(*order) + "; ");
     }
 
     if (!updates.empty())
     {
-        auto db = (*ctx).connection.sqlite_ptr;
+        sqlite3* db = (*ctx).connection.sqlite_ptr;
         char* err;
 
         const std::string query = "BEGIN; " + updates + "COMMIT;";
-        auto rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
+        int rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
         { error("sqlite error(7): " + sstos(&err)); };
     }
@@ -1705,11 +1705,13 @@ void Execute()
 {
     // Get Context
     auto ctx = Context::Get();
-    auto command = (*ctx).command.input;
-    auto market = (*ctx).market.market_ptr;
+    std::string command = (*ctx).command.input;
+    MarketManager* market = (*ctx).market.market_ptr;
 
+    // Exit
+    if (command == "exit") (*ctx).enable = false;
     // Matching
-    if (command == "enable matching") (*market).EnableMatching();
+    else if (command == "enable matching") (*market).EnableMatching();
     else if (command == "disable matching") (*market).DisableMatching();
     // Symbols
     else if (command.find("add symbol") != std::string::npos) AddSymbol(market, command);
@@ -1754,11 +1756,12 @@ int main(int argc, char** argv)
 {
     /* CLI */
 
-    // Parse input args 
-    auto parser = optparse::OptionParser().version(VERSION);
+    // Parse input args
+    optparse::OptionParser parser = optparse::OptionParser();
+    parser.version(VERSION);
     parser.add_option("-n", "--name").dest("name").help("Daemon name");
     parser.add_option("-p", "--path").dest("path").help("Daemon root folder");
-    auto options = parser.parse_args(argc, argv);
+    optparse::Values options = parser.parse_args(argc, argv);
 
     // Print help
     if (options.get("help"))
@@ -1789,7 +1792,7 @@ int main(int argc, char** argv)
     /* SETUP */
 
     // Setup status file
-    const auto status_text = File::ReadAllText(status_path);
+    const std::string status_text = File::ReadAllText(status_path);
     bool status = socket_path.IsExists() || (status_text != STATUS_GSTOP);
     
     bool socket_in_use = true;
@@ -1824,7 +1827,7 @@ int main(int argc, char** argv)
 
     // Setup SQLite
     PopulateDatabase(db); // Create DB Tables
-    auto lts = GetLatestId(db); // Get Latest Order Id
+    int lts = GetLatestId(db); // Get Latest Order Id
 
     log("connected to sqlite");
 
@@ -1835,7 +1838,7 @@ int main(int argc, char** argv)
     market.EnableMatching(); // Enable matching
     
     // Create socket
-    auto sockfd = UnixSocket(socket_path.string().c_str(), MAX_CLIENTS);
+    int sockfd = UnixSocket(socket_path.string().c_str(), MAX_CLIENTS);
     if (sockfd == -1) { error("error creating socket"); exit(1); };
     if (sockfd == -2) { error("error binding socket"); exit(1); };
     if (sockfd == -3) { error("error listening on socket"); exit(1); };
@@ -1849,21 +1852,21 @@ int main(int argc, char** argv)
 
     /* LOOP */
 
-    std::vector<int> connections = {sockfd}; // Connection vector
-    auto it = connections.begin(); // Connection iterator
-    int newfd, connfd;
-    bool enable = true; // Run condition
-    std::string message;
-
-    // Set New Context
     auto ctx = Context::Get();
+
+    // Set Constants
     (*ctx).market.market_ptr = &market;
     (*ctx).market.handler_ptr = &market_handler;
     (*ctx).connection.sqlite_ptr = db;
-    (*ctx).enable = true;
+
+    (*ctx).enable = true; // Run condition
+    
+    std::string message; int connfd;
+    std::vector<int> connections = {sockfd}; // Connection vector
+    std::vector<int>::iterator it; // Connection iterator
 
     // Handle connections
-    while (enable)
+    while ((*ctx).enable)
     {
         try
         {
@@ -1872,45 +1875,40 @@ int main(int argc, char** argv)
             if (rdy < 0) error("error waiting for connections");
 
             // Accept new connection (if available)
-            newfd = AcceptConnection(sockfd);
-            if (newfd < 0) error("error accepting connetion");
-            if (newfd > 0) connections.push_back(newfd); // Add connection to vector
+            connfd = AcceptConnection(sockfd);
+            if (connfd < 0) error("error accepting connetion");
+            if (connfd > 0) connections.push_back(connfd); // Add connection to vector
 
             // Read messages from all clients (if available)
             it = ++connections.begin();
-            while ((it < connections.end()) && enable)
+            while ((it < connections.end()) && (*ctx).enable)
             {
-                connfd = *it;
-                rdy = ReadSocketStream(connfd, MSG_SIZE, &message); // Read message
+                rdy = ReadSocketStream(*it, MSG_SIZE, &message); // Read message
                 if (rdy < 0) // Connection closed
                 {
-                    close(connfd);
+                    close(*it);
                     it = connections.erase(it); // Remove connection from vector
                 }
                 if (rdy > 0) // Message recieved
                 {
-                    if (message == "exit") enable = false;
-                    else
-                    {
-                        // Update Context
-                        (*ctx).connection.sockfd = connfd;
-                        (*ctx).command.input = message;
-                        (*ctx).command.response = NULL_STR;
+                    // Update Context
+                    (*ctx).connection.sockfd = *it;
+                    (*ctx).command.input = message;
+                    (*ctx).command.response = NULL_STR;
 
-                        // Execute command
-                        Execute();
+                    // Execute command
+                    Execute();
 
-                        // Send response to client
-                        auto res = (*ctx).command.response;
-                        auto size = (*ctx).command.response_size;
-                        rdy = WriteSocketStream(connfd, size, &res);
-                        if (rdy < 0) error("Failed sending response to client");
+                    // Send response to client
+                    std::string res = (*ctx).command.response;
+                    int size = (*ctx).command.response_size;
+                    rdy = WriteSocketStream(*it, size, &res);
+                    if (rdy < 0) error("Failed sending response to client");
 
-                        // Clear Context
-                        (*ctx).connection.sockfd = 0;
-                        (*ctx).order = Context::Order();
-                        (*ctx).command = Context::Command();
-                    }
+                    // Clear Context
+                    (*ctx).connection.sockfd = 0;
+                    (*ctx).order = Context::Order();
+                    (*ctx).command = Context::Command();
                 }
                 ++it; // Update iterator
             }
@@ -1919,12 +1917,12 @@ int main(int argc, char** argv)
         catch (std::exception const& e)
         {
             error(e.what());
-            enable = false;
+            (*ctx).enable = false;
         }
         catch (...)
         {
             error("unknown error occurred");
-            enable = false;
+            (*ctx).enable = false;
         }
     }
 
