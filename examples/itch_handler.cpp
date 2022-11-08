@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <stdio.h>
+#include <regex>
 
 /* ############################################################################################################################################# */
 
@@ -36,7 +37,7 @@ inline int SelectReadBlocking(int fd)
 }
 
 // Read stream on Unix socket (non-blocking)
-int ReadSocketStream(int sockfd, std::string* dest)
+int ReadSocketStream(int sockfd, std::string* dest, int size = MSG_SIZE)
 {
     // Always clear string
     (*dest).clear();
@@ -46,27 +47,22 @@ int ReadSocketStream(int sockfd, std::string* dest)
     if (rdy <= 0) return rdy;
 
     // Read stream to string
-    char buffer[MSG_SIZE_LARGE]; // Read MSG_SIZE bytes
-    if (read(sockfd, buffer, MSG_SIZE_LARGE) <= 0) return -1;
+    char buffer[MSG_SIZE_LARGE];
+    if (read(sockfd, buffer, size) <= 0) return -1;
     (*dest).append(buffer, strcspn(buffer, "\0")); // buffer is copied to string until the first \0 char is found
 
-    return 1;
-}
+    static std::regex pattern("^PAGES >> (\\d+)\n");
+    std::smatch match;
+    if (std::regex_search(*dest, match, pattern)) return 1; // Check for pagination
 
-// Read stream on Unix socket (non-blocking)
-int ReadSocketStreamSmall(int sockfd, std::string* dest)
-{
-    // Always clear string
-    (*dest).clear();
+    (*dest) = regex_replace(*dest, pattern, ""); // Remove prefix
+    int pages = std::stoi(match[1]); // Get page count
 
-    // Check if data is available
-    int rdy = SelectReadBlocking(sockfd);
-    if (rdy <= 0) return rdy;
-
-    // Read stream to string
-    char buffer[MSG_SIZE_SMALL]; // Read MSG_SIZE bytes
-    if (read(sockfd, buffer, MSG_SIZE_SMALL) <= 0) return -1;
-    (*dest).append(buffer, strcspn(buffer, "\0")); // buffer is copied to string until the first \0 char is found
+    for (int n = 2; n <= pages; ++n) {
+        char _buffer[MSG_SIZE_LARGE];
+        if (read(sockfd, _buffer, size) <= 0) return -1;
+        (*dest).append(_buffer, strcspn(_buffer, "\0")); // buffer is copied to string until the first \0 char is found
+    };
 
     return 1;
 }
@@ -121,8 +117,13 @@ int main(int argc, char *argv[])
         size = write(sockfd, buffer, MSG_SIZE);
 
         std::string instr = buffer;
+        int size = 0;
+        if (instr.find("get order ") != std::string::npos) size = MSG_SIZE;
+        if (instr.find("get book ") != std::string::npos) size = MSG_SIZE_LARGE;
+        else size = MSG_SIZE_SMALL;
+
         std::string result;
-        int rdy = ReadSocketStreamSmall(sockfd, &result);
+        int rdy = ReadSocketStream(sockfd, &result, size);
         if (rdy < 0) {};
         std::cout << result << std::endl;
         
