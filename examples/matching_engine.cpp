@@ -21,6 +21,7 @@
 #include <vector>
 #include <regex>
 #include <iostream>
+#include <iomanip>
 
 extern "C" {
     #include <sqlite3/sqlite3.h>
@@ -392,7 +393,7 @@ inline int ReadSocketStream(int sockfd, int size, std::string* dest)
     if (rdy <= 0) return rdy;
 
     // Read stream to string
-    char buffer[MSG_SIZE_LARGE]; // Read MSG_SIZE bytes
+    char buffer[MSG_SIZE_LARGE];
     if (read(sockfd, buffer, size) <= 0) return -1;
     (*dest).append(buffer, strcspn(buffer, "\0")); // buffer is copied to string until the first \0 char is found
 
@@ -407,7 +408,7 @@ inline int WriteSocketStream(int sockfd, int size, std::string* data)
     if (rdy <= 0) return rdy;
 
     // Write string to stream
-    char buffer[MSG_SIZE_LARGE]; // Write MSG_SIZE bytes
+    char buffer[MSG_SIZE_LARGE];
     strcpy(buffer, (*data).c_str() + '\0'); // string is copied to buffer with a trailing \0 char 
     if (write(sockfd, buffer, size) <= 0) return -1;
 
@@ -1776,6 +1777,59 @@ void Execute()
 
 /* ############################################################################################################################################# */
 
+/* Send Response */
+
+void SendResponse()
+{
+    auto ctx = Context::Get();
+
+    // Send response to client
+    int sockfd = (*ctx).connection.sockfd;
+    std::string response = (*ctx).command.response;
+    int response_size = (*ctx).command.response_size;
+    int content_size = response.size() + 1;
+
+    // Send single response
+    if (content_size <= response_size) {
+        int rdy = WriteSocketStream(sockfd, response_size, &response);
+        if (rdy < 0) error("Failed sending response to client");
+        return;
+    };
+
+    // Calculate pages
+    content_size += 14; // Add prefix characters
+    int pages = (int)content_size / response_size;
+    int rem = content_size % response_size;
+    if (rem > 0) ++pages; // Add terminator characters
+    if ((content_size + pages) > (response_size * pages)) ++pages;
+
+    // Add prefix to content
+    std::stringstream ss_pages;
+    ss_pages << std::setw(4) << std::setfill('0') << pages;
+    std::string prefix = "PAGES >> " + ss_pages.str() + '\n';
+    response = prefix + response;
+
+    // Send multiple responses
+    std::string::iterator it = response.begin();
+    std::string::iterator it_end = it;
+    while (true) {
+        if (it == response.end()) break;
+        if (it_end == response.end()) break;
+
+        it_end = it + response_size - 1; // End of page
+        if (it_end > response.end()) it_end = response.end();
+
+        std::string page(it, it_end); // Get substring
+
+        int rdy = WriteSocketStream(sockfd, response_size, &page);
+        if (rdy < 0) error("Failed sending response to client");
+        
+        it += response_size; // Go to next page
+    };
+}
+
+/* ############################################################################################################################################# */
+
 int main(int argc, char** argv)
 {
     /* CLI */
@@ -1885,8 +1939,8 @@ int main(int argc, char** argv)
     
     std::vector<int> connections = {sockfd}; // Connection vector
     std::vector<int>::iterator it; // Connection iterator
-    std::string message, response;
-    int connfd, response_size;
+    std::string message;
+    int connfd;
 
     (*ctx).enable = true; // Run condition
 
@@ -1925,10 +1979,7 @@ int main(int argc, char** argv)
                     Execute();
 
                     // Send response to client
-                    response = (*ctx).command.response;
-                    response_size = (*ctx).command.response_size;
-                    rdy = WriteSocketStream(*it, response_size, &response);
-                    if (rdy < 0) error("Failed sending response to client");
+                    SendResponse();
 
                     // Clear Context
                     (*ctx).connection.sockfd = 0;
