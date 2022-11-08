@@ -1883,8 +1883,8 @@ $(function() {
 <div class="line">    std::string::iterator it = response.begin();</div>
 <div class="line">    std::string::iterator it_end = it;</div>
 <div class="line">    <span class="keywordflow">while</span> (<span class="keyword">true</span>) {</div>
-<div class="line">        <span class="keywordflow">if</span> (it == response.end()) <span class="keywordflow">break</span>;</div>
-<div class="line">        <span class="keywordflow">if</span> (it_end == response.end()) <span class="keywordflow">break</span>;</div>
+<div class="line">        <span class="keywordflow">if</span> (it &gt;= response.end()) <span class="keywordflow">break</span>;</div>
+<div class="line">        <span class="keywordflow">if</span> (it_end &gt;= response.end()) <span class="keywordflow">break</span>;</div>
 <div class="line"> </div>
 <div class="line">        it_end = it + response_size - 1; <span class="comment">// End of page</span></div>
 <div class="line">        <span class="keywordflow">if</span> (it_end &gt; response.end()) it_end = response.end();</div>
