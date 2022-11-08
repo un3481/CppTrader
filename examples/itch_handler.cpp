@@ -117,13 +117,13 @@ int main(int argc, char *argv[])
         size = write(sockfd, buffer, MSG_SIZE);
 
         std::string instr = buffer;
-        int size = 0;
-        if (instr.find("get order ") != std::string::npos) size = MSG_SIZE;
-        if (instr.find("get book ") != std::string::npos) size = MSG_SIZE_LARGE;
-        else size = MSG_SIZE_SMALL;
+        int msg_size = 0;
+        if (instr.find("get order ") != std::string::npos) msg_size = MSG_SIZE;
+        if (instr.find("get book ") != std::string::npos) msg_size = MSG_SIZE_LARGE;
+        else msg_size = MSG_SIZE_SMALL;
 
         std::string result;
-        int rdy = ReadSocketStream(sockfd, &result, size);
+        int rdy = ReadSocketStream(sockfd, &result, msg_size);
         if (rdy < 0) {};
         std::cout << result << std::endl;
         
