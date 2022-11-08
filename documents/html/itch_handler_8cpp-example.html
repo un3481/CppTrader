@@ -79,6 +79,7 @@ $(function() {
 <div class="line"><span class="preprocessor">#include &lt;sys/socket.h&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;sys/un.h&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;stdio.h&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;regex&gt;</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
 <div class="line"> </div>
@@ -106,7 +107,7 @@ $(function() {
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Read stream on Unix socket (non-blocking)</span></div>
-<div class="line"><span class="keywordtype">int</span> ReadSocketStream(<span class="keywordtype">int</span> sockfd, std::string* dest)</div>
+<div class="line"><span class="keywordtype">int</span> ReadSocketStream(<span class="keywordtype">int</span> sockfd, std::string* dest, <span class="keywordtype">int</span> size = MSG_SIZE)</div>
 <div class="line">{</div>
 <div class="line">    <span class="comment">// Always clear string</span></div>
 <div class="line">    (*dest).clear();</div>
@@ -116,27 +117,22 @@ $(function() {
 <div class="line">    <span class="keywordflow">if</span> (rdy &lt;= 0) <span class="keywordflow">return</span> rdy;</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Read stream to string</span></div>
-<div class="line">    <span class="keywordtype">char</span> buffer[MSG_SIZE_LARGE]; <span class="comment">// Read MSG_SIZE bytes</span></div>
-<div class="line">    <span class="keywordflow">if</span> (read(sockfd, buffer, MSG_SIZE_LARGE) &lt;= 0) <span class="keywordflow">return</span> -1;</div>
+<div class="line">    <span class="keywordtype">char</span> buffer[MSG_SIZE_LARGE];</div>
+<div class="line">    <span class="keywordflow">if</span> (read(sockfd, buffer, size) &lt;= 0) <span class="keywordflow">return</span> -1;</div>
 <div class="line">    (*dest).append(buffer, strcspn(buffer, <span class="stringliteral">&quot;\0&quot;</span>)); <span class="comment">// buffer is copied to string until the first \0 char is found</span></div>
 <div class="line"> </div>
-<div class="line">    <span class="keywordflow">return</span> 1;</div>
-<div class="line">}</div>
+<div class="line">    <span class="keyword">static</span> std::regex pattern(<span class="stringliteral">&quot;^PAGES &gt;&gt; (\\d+)\n&quot;</span>);</div>
+<div class="line">    std::smatch match;</div>
+<div class="line">    <span class="keywordflow">if</span> (std::regex_search(*dest, match, pattern)) <span class="keywordflow">return</span> 1; <span class="comment">// Check for pagination</span></div>
 <div class="line"> </div>
-<div class="line"><span class="comment">// Read stream on Unix socket (non-blocking)</span></div>
-<div class="line"><span class="keywordtype">int</span> ReadSocketStreamSmall(<span class="keywordtype">int</span> sockfd, std::string* dest)</div>
-<div class="line">{</div>
-<div class="line">    <span class="comment">// Always clear string</span></div>
-<div class="line">    (*dest).clear();</div>
+<div class="line">    (*dest) = regex_replace(*dest, pattern, <span class="stringliteral">&quot;&quot;</span>); <span class="comment">// Remove prefix</span></div>
+<div class="line">    <span class="keywordtype">int</span> pages = std::stoi(match[1]); <span class="comment">// Get page count</span></div>
 <div class="line"> </div>
-<div class="line">    <span class="comment">// Check if data is available</span></div>
-<div class="line">    <span class="keywordtype">int</span> rdy = SelectReadBlocking(sockfd);</div>
-<div class="line">    <span class="keywordflow">if</span> (rdy &lt;= 0) <span class="keywordflow">return</span> rdy;</div>
-<div class="line"> </div>
-<div class="line">    <span class="comment">// Read stream to string</span></div>
-<div class="line">    <span class="keywordtype">char</span> buffer[MSG_SIZE_SMALL]; <span class="comment">// Read MSG_SIZE bytes</span></div>
-<div class="line">    <span class="keywordflow">if</span> (read(sockfd, buffer, MSG_SIZE_SMALL) &lt;= 0) <span class="keywordflow">return</span> -1;</div>
-<div class="line">    (*dest).append(buffer, strcspn(buffer, <span class="stringliteral">&quot;\0&quot;</span>)); <span class="comment">// buffer is copied to string until the first \0 char is found</span></div>
+<div class="line">    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> n = 2; n &lt;= pages; ++n) {</div>
+<div class="line">        <span class="keywordtype">char</span> _buffer[MSG_SIZE_LARGE];</div>
+<div class="line">        <span class="keywordflow">if</span> (read(sockfd, _buffer, size) &lt;= 0) <span class="keywordflow">return</span> -1;</div>
+<div class="line">        (*dest).append(_buffer, strcspn(_buffer, <span class="stringliteral">&quot;\0&quot;</span>)); <span class="comment">// buffer is copied to string until the first \0 char is found</span></div>
+<div class="line">    };</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordflow">return</span> 1;</div>
 <div class="line">}</div>
@@ -191,8 +187,13 @@ $(function() {
 <div class="line">        size = write(sockfd, buffer, MSG_SIZE);</div>
 <div class="line"> </div>
 <div class="line">        std::string instr = buffer;</div>
+<div class="line">        <span class="keywordtype">int</span> size = 0;</div>
+<div class="line">        <span class="keywordflow">if</span> (instr.find(<span class="stringliteral">&quot;get order &quot;</span>) != std::string::npos) size = MSG_SIZE;</div>
+<div class="line">        <span class="keywordflow">if</span> (instr.find(<span class="stringliteral">&quot;get book &quot;</span>) != std::string::npos) size = MSG_SIZE_LARGE;</div>
+<div class="line">        <span class="keywordflow">else</span> size = MSG_SIZE_SMALL;</div>
+<div class="line"> </div>
 <div class="line">        std::string result;</div>
-<div class="line">        <span class="keywordtype">int</span> rdy = ReadSocketStreamSmall(sockfd, &amp;result);</div>
+<div class="line">        <span class="keywordtype">int</span> rdy = ReadSocketStream(sockfd, &amp;result, size);</div>
 <div class="line">        <span class="keywordflow">if</span> (rdy &lt; 0) {};</div>
 <div class="line">        std::cout &lt;&lt; result &lt;&lt; std::endl;</div>
 <div class="line">        </div>
