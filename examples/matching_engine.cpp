@@ -435,6 +435,13 @@ inline int AcceptConnection(int sockfd)
 // Parse Order to CSV
 inline std::string ParseOrder(const Order& order)
 {
+    auto ctx = Context::Get();
+
+    std::string info;
+    std::map<int, std::string> info_map = (*ctx).market.info;
+    if (info_map.find((int)order.Id) != info_map.end()) info = info_map[(int)order.Id];
+    info = std::regex_replace(info, std::regex("\""), "\\\"");
+
     return (
         std::to_string(order.Id) + CSV_SEP +
         std::to_string(order.SymbolId) + CSV_SEP +
@@ -458,7 +465,8 @@ inline std::string ParseOrder(const Order& order)
             : NULL_STR + CSV_SEP + NULL_STR
         ) + CSV_SEP +
         std::to_string(order.ExecutedQuantity) + CSV_SEP +
-        std::to_string(order.LeavesQuantity)
+        std::to_string(order.LeavesQuantity) + CSV_SEP +
+        "\"" + info + "\""
     );
 }
 
@@ -949,7 +957,7 @@ protected:
 
         // First get info/transaction ID variable
         std::string info;
-        auto info_map = (*ctx).market.info;
+        std::map<int, std::string> info_map = (*ctx).market.info;
         if (info_map.find((int)order.Id) != info_map.end()) info = info_map[(int)order.Id];
 
         // Check if operation is enabled
@@ -980,7 +988,7 @@ protected:
 
         // First get info/transaction ID variable
         std::string info;
-        auto info_map = (*ctx) .market .info;
+        std::map<int, std::string> info_map = (*ctx).market.info;
         if (info_map.find((int)order.Id) != info_map.end()) info = info_map[(int)order.Id];
 
         // Delete Order Info
@@ -1038,7 +1046,7 @@ protected:
 
         // Get info/transaction ID variable
         std::string info;
-        auto info_map = (*ctx).market.info;
+        std::map<int, std::string> info_map = (*ctx).market.info;
         if (info_map.find((int)order.Id) != info_map.end()) info = info_map[(int)order.Id];
 
         // Log Executed Order
