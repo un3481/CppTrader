@@ -56,6 +56,7 @@ int ReadSocketStream(int sockfd, std::string* dest, int size = MSG_SIZE)
     if (std::regex_search(*dest, match, pattern)) return 1; // Check for pagination
 
     (*dest) = regex_replace(*dest, pattern, ""); // Remove prefix
+    std::cout << "[\"" << match[0] << "\", \"" << match[1] << "\"]" << std::endl;
     int pages = std::stoi(match[1]); // Get page count
 
     for (int n = 2; n <= pages; ++n) {
