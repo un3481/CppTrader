@@ -33,7 +33,7 @@ using namespace CppTrader::Matching;
 
 /* Preprocessed */
 
-#define VERSION "2.2.1.0" // Program version
+#define VERSION "2.2.1.2" // Program version
 
 #define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)
 #define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)
@@ -105,7 +105,7 @@ const std::string QUERY_CREATE_TABLE_ORDERS = (EMPTY_STR +
         "TrailingStep INT" + CSV_SEP +
         "ExecutedQuantity INT NOT NULL" + CSV_SEP +
         "LeavesQuantity INT NOT NULL" + CSV_SEP +
-        "Info CHAR(200) NOT NULL" +
+        "Info CHAR(300) NOT NULL" +
     ")"
 );
 
@@ -930,7 +930,7 @@ protected:
         log("Add order: " + sstos(&order));
 
         /*
-        // Send to server
+        // Send to server with system()
         std::string cmd = "/home/sysop/books/BTC_TUSD/server AddOrder " + id + ":" + (*ctx).order.info;
         int iCallResult = system(cmd.c_str());
         if (iCallResult < 0) { error("Error doing system call " + std::string(strerror(errno))); }
@@ -947,6 +947,11 @@ protected:
 
         auto ctx = Context::Get();
 
+        // First get info/transaction ID variable
+        std::string info;
+        auto info_map = (*ctx).market.info;
+        if (info_map.find((int)order.Id) != info_map.end()) info = info_map[(int)order.Id];
+
         // Check if operation is enabled
         if (!(*ctx).enable) return;
 
@@ -958,12 +963,13 @@ protected:
         if (rdy != SQLITE_OK)
         { error("sqlite error(6): " + sstos(&err)); };
 
-        /*
-        // Send to server
-        std::string cmd = "/home/sysop/books/scripts/server UpdateOrder 123";
-        int iCallResult = system(cmd.c_str());
-        if (iCallResult < 0) { error("Error doing system call " + strerror(errno)); }
-        */
+        // *** Send to server with system()
+        // NOT NEEDED BECAUSE I CAN CALCULATE PARTIAL TRADES
+        // BUT CAN BE USED IN FUTURE TO CROSS CHECK THESE PARTIAL CALCS
+        //std::string cmd = "/home/sysop/books/BTC_TUSD/execute_processor UpdateOrder '" + sstos(&order) + ":" + info + "' > execute_processor.txt 2>&1 &";
+        //int iCallResult = system(cmd.c_str());
+        //if (iCallResult < 0 && iCallResult != -1) { error("Error doing system call (AC862): " + std::string(strerror(errno)) + " " + std::to_string(iCallResult)); }
+        // *** Send to server end
     }
 
     void onDeleteOrder(const Order& order) override
@@ -971,6 +977,11 @@ protected:
         ++_updates; --_orders; ++_delete_orders;
 
         auto ctx = Context::Get();
+
+        // First get info/transaction ID variable
+        std::string info;
+        auto info_map = (*ctx) .market .info;
+        if (info_map.find((int)order.Id) != info_map.end()) info = info_map[(int)order.Id];
 
         // Delete Order Info
         (*ctx).market.info.erase(
@@ -994,11 +1005,11 @@ protected:
         { error("sqlite error(5): " + sstos(&err)); };
 
         // Log Deleted Order
-        log("Delete order: " + sstos(&order));
+        log("Delete order: " + sstos(&order) + " and info " + info);
         
         /*
         // *** Send to server
-        std::string cmd = "/home/sysop/books/BTC_TUSD/execute_processor DeleteOrder " + id;
+        std::string cmd = "/home/sysop/books/BTC_TUSD/execute_processor DeleteOrder '" + id + ":" + sstos(&order) + ":" + info + "' > execute_processor.txt 2>&1 &";
         int iCallResult = system(cmd.c_str());
         if (iCallResult < 0 && iCallResult != -1) { error("Error doing system call (BB332): " + std::string(strerror(errno)) + " " + std::to_string(iCallResult)); }
         // *** Send to server end
@@ -1025,8 +1036,13 @@ protected:
         // Check if operation is enabled
         if (!(*ctx).enable) return;
 
+        // Get info/transaction ID variable
+        std::string info;
+        auto info_map = (*ctx).market.info;
+        if (info_map.find((int)order.Id) != info_map.end()) info = info_map[(int)order.Id];
+
         // Log Executed Order
-     	log("Execute order: " + sstos(&order) + " with price " + sstos(&price) + " and quantity " + sstos(&quantity));
+     	log("Execute order: " + sstos(&order) + " with price " + sstos(&price) + " and quantity " + sstos(&quantity) + " and info " + info);
 
         /*
         std::string csv;
@@ -1035,8 +1051,8 @@ protected:
         */
         
         /*
-        // *** Send to server
-        std::string cmd = "/home/sysop/books/BTC_TUSD/execute_processor ExecuteOrder '" + sstos(&price) + "@" + sstos(&quantity) + ":" + sstos(&order) + "'";
+        // *** Send to server with system()
+        std::string cmd = "/home/sysop/books/BTC_TUSD/execute_processor ExecuteOrder '" + sstos(&price) + "@" + sstos(&quantity) + ":" + sstos(&order) + ":" + info + "' > execute_processor.txt 2>&1 &";
         int iCallResult = system(cmd.c_str());
         if (iCallResult < 0 && iCallResult != -1) { error("Error doing system call (AA832): " + std::string(strerror(errno)) + " " + std::to_string(iCallResult)); }
         // *** Send to server end
