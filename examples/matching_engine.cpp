@@ -1813,8 +1813,8 @@ void SendResponse()
     std::string::iterator it = response.begin();
     std::string::iterator it_end = it;
     while (true) {
-        if (it == response.end()) break;
-        if (it_end == response.end()) break;
+        if (it >= response.end()) break;
+        if (it_end >= response.end()) break;
 
         it_end = it + response_size - 1; // End of page
         if (it_end > response.end()) it_end = response.end();
