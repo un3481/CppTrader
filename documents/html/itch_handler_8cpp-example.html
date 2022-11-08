@@ -126,6 +126,7 @@ $(function() {
 <div class="line">    <span class="keywordflow">if</span> (std::regex_search(*dest, match, pattern)) <span class="keywordflow">return</span> 1; <span class="comment">// Check for pagination</span></div>
 <div class="line"> </div>
 <div class="line">    (*dest) = regex_replace(*dest, pattern, <span class="stringliteral">&quot;&quot;</span>); <span class="comment">// Remove prefix</span></div>
+<div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;[\&quot;&quot;</span> &lt;&lt; match[0] &lt;&lt; <span class="stringliteral">&quot;\&quot;, \&quot;&quot;</span> &lt;&lt; match[1] &lt;&lt; <span class="stringliteral">&quot;\&quot;]&quot;</span> &lt;&lt; std::endl;</div>
 <div class="line">    <span class="keywordtype">int</span> pages = std::stoi(match[1]); <span class="comment">// Get page count</span></div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> n = 2; n &lt;= pages; ++n) {</div>
