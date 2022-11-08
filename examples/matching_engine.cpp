@@ -510,7 +510,8 @@ std::string ParseOrderBook(MarketManager* market, const OrderBook* order_book_pt
     std::string csv;
     csv.append(
         CSV_HEADER_FOR_BOOK + CSV_SEP +
-        CSV_HEADER_FOR_ORDER + CSV_EOL
+        CSV_HEADER_FOR_ORDER + CSV_SEP +
+        "Info" + CSV_EOL
     );
 
     // Parse Levels
