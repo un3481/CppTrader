@@ -1779,31 +1779,15 @@ void Execute()
 
 /* Send Response */
 
-void SendResponse()
+void SendResponseIncremental(int sockfd, int response_size, std::string response)
 {
-    auto ctx = Context::Get();
-
-    // Send response to client
-    int sockfd = (*ctx).connection.sockfd;
-    std::string response = (*ctx).command.response;
-    int response_size = (*ctx).command.response_size;
-    int content_size = response.size() + 1;
-
-    // Send single response
-    if (content_size <= response_size) {
-        int rdy = WriteSocketStream(sockfd, response_size, &response);
-        if (rdy < 0) error("Failed sending response to client");
-        return;
-    };
-
     // Calculate pages
-    content_size += 14; // Add prefix characters
+    int content_size = response.size() + 15; // Add prefix characters
     int pages = (int)content_size / response_size;
     int rem = content_size % response_size;
-    if (rem > 0) ++pages; // Last page
+    if (rem > 0) ++pages; // Add last page
     if ((content_size + pages) > (response_size * pages)) ++pages; // Add terminator characters
 
-    // Add prefix to content
     std::stringstream ss_pages;
     ss_pages << std::setw(4) << std::setfill('0') << pages;
     response = "PAGES >> " + ss_pages.str() + '\n' + response; // Add prefix
@@ -1824,6 +1808,26 @@ void SendResponse()
         if (rdy < 0) error("Failed sending response to client");
         
         it += response_size; // Go to next page
+    };
+}
+
+void SendResponse()
+{
+    auto ctx = Context::Get();
+
+    // Send response to client
+    int sockfd = (*ctx).connection.sockfd;
+    std::string response = (*ctx).command.response;
+    int response_size = (*ctx).command.response_size;
+    int content_size = response.size() + 1;
+
+    // Send multiple responses
+    if (content_size > response_size) {
+        SendResponseIncremental(sockfd, response_size, response);
+    } else {
+        // Send single response
+        int rdy = WriteSocketStream(sockfd, response_size, &response);
+        if (rdy < 0) error("Failed sending response to client");
     };
 }
 
