@@ -1800,13 +1800,13 @@ void SendResponse()
     content_size += 14; // Add prefix characters
     int pages = (int)content_size / response_size;
     int rem = content_size % response_size;
-    if (rem > 0) ++pages; // Add terminator characters
-    if ((content_size + pages) > (response_size * pages)) ++pages;
+    if (rem > 0) ++pages; // Last page
+    if ((content_size + pages) > (response_size * pages)) ++pages; // Add terminator characters
 
     // Add prefix to content
     std::stringstream ss_pages;
     ss_pages << std::setw(4) << std::setfill('0') << pages;
-    response = "PAGES >> " + ss_pages.str() + '\n' + response;
+    response = "PAGES >> " + ss_pages.str() + '\n' + response; // Add prefix
 
     // Send multiple responses
     std::string::iterator it = response.begin();
