@@ -1806,8 +1806,7 @@ void SendResponse()
     // Add prefix to content
     std::stringstream ss_pages;
     ss_pages << std::setw(4) << std::setfill('0') << pages;
-    std::string prefix = "PAGES >> " + ss_pages.str() + '\n';
-    response = prefix + response;
+    response = "PAGES >> " + ss_pages.str() + '\n' + response;
 
     // Send multiple responses
     std::string::iterator it = response.begin();
