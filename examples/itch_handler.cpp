@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
         std::string instr = buffer;
         int msg_size = 0;
         if (instr.find("get order ") != std::string::npos) msg_size = MSG_SIZE;
-        if (instr.find("get book ") != std::string::npos) msg_size = MSG_SIZE_LARGE;
+        else if (instr.find("get book ") != std::string::npos) msg_size = MSG_SIZE_LARGE;
         else msg_size = MSG_SIZE_SMALL;
 
         std::string result;
