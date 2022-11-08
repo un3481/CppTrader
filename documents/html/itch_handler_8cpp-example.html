@@ -190,7 +190,7 @@ $(function() {
 <div class="line">        std::string instr = buffer;</div>
 <div class="line">        <span class="keywordtype">int</span> msg_size = 0;</div>
 <div class="line">        <span class="keywordflow">if</span> (instr.find(<span class="stringliteral">&quot;get order &quot;</span>) != std::string::npos) msg_size = MSG_SIZE;</div>
-<div class="line">        <span class="keywordflow">if</span> (instr.find(<span class="stringliteral">&quot;get book &quot;</span>) != std::string::npos) msg_size = MSG_SIZE_LARGE;</div>
+<div class="line">        <span class="keywordflow">else</span> <span class="keywordflow">if</span> (instr.find(<span class="stringliteral">&quot;get book &quot;</span>) != std::string::npos) msg_size = MSG_SIZE_LARGE;</div>
 <div class="line">        <span class="keywordflow">else</span> msg_size = MSG_SIZE_SMALL;</div>
 <div class="line"> </div>
 <div class="line">        std::string result;</div>
