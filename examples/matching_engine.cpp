@@ -1800,7 +1800,7 @@ void SendResponseIncremental(int sockfd, int response_size, std::string response
         if (it >= response.end()) break;
         if (it_end >= response.end()) break;
 
-        it_end = it + response_size - 1; // End of page
+        it_end = it + response_size; // End of page
         if (it_end > response.end()) it_end = response.end();
 
         std::string page(it, it_end); // Get substring
