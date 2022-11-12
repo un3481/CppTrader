@@ -1870,7 +1870,7 @@ $(function() {
 <div class="line">        <span class="keywordflow">if</span> (it &gt;= response.end()) <span class="keywordflow">break</span>;</div>
 <div class="line">        <span class="keywordflow">if</span> (it_end &gt;= response.end()) <span class="keywordflow">break</span>;</div>
 <div class="line"> </div>
-<div class="line">        it_end = it + response_size - 1; <span class="comment">// End of page</span></div>
+<div class="line">        it_end = it + response_size; <span class="comment">// End of page</span></div>
 <div class="line">        <span class="keywordflow">if</span> (it_end &gt; response.end()) it_end = response.end();</div>
 <div class="line"> </div>
 <div class="line">        std::string page(it, it_end); <span class="comment">// Get substring</span></div>
