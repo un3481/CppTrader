@@ -104,7 +104,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line"><span class="comment">/* Preprocessed */</span></div>
 <div class="line"> </div>
-<div class="line"><span class="preprocessor">#define VERSION &quot;2.2.1.2&quot; // Program version</span></div>
+<div class="line"><span class="preprocessor">#define VERSION &quot;2.2.1.5&quot; // Program version</span></div>
 <div class="line"> </div>
 <div class="line"><span class="preprocessor">#define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)</span></div>
 <div class="line"><span class="preprocessor">#define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)</span></div>
@@ -242,15 +242,7 @@ $(function() {
 <div class="line">        <span class="keywordtype">int</span> sockfd = 0; <span class="comment">// File Descriptor for current Connection</span></div>
 <div class="line">    };</div>
 <div class="line"> </div>
-<div class="line">    <span class="keyword">struct </span>Market</div>
-<div class="line">    {</div>
-<div class="line">        <a name="_a0"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a>* market_ptr = NULL; <span class="comment">// Pointer to Market Manager</span></div>
-<div class="line">        MyMarketHandler* handler_ptr = NULL; <span class="comment">// Pointer to Market Handler</span></div>
-<div class="line">        std::vector&lt;int&gt; changes = {}; <span class="comment">// List of changed orders</span></div>
-<div class="line">        std::map&lt;int, std::string&gt; info = {}; <span class="comment">// Info</span></div>
-<div class="line">    };</div>
-<div class="line"> </div>
-<div class="line">    <span class="keyword">struct </span><a name="_a1"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a></div>
+<div class="line">    <span class="keyword">struct </span><a name="_a0"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a></div>
 <div class="line">    {</div>
 <div class="line">        <span class="keywordtype">int</span> <span class="keywordtype">id</span> = 0; <span class="comment">// Order Id</span></div>
 <div class="line">        std::string info = EMPTY_STR; <span class="comment">// Order Info</span></div>
@@ -262,6 +254,59 @@ $(function() {
 <div class="line">        std::string response = EMPTY_STR; <span class="comment">// Command Response</span></div>
 <div class="line">        <span class="keywordtype">int</span> response_size = MSG_SIZE_SMALL; <span class="comment">// Response Size</span></div>
 <div class="line">    };</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">struct </span>Market</div>
+<div class="line">    {</div>
+<div class="line">        <a name="_a1"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a>* market_ptr = NULL; <span class="comment">// Pointer to Market Manager</span></div>
+<div class="line">        MyMarketHandler* handler_ptr = NULL; <span class="comment">// Pointer to Market Handler</span></div>
+<div class="line">        std::vector&lt;int&gt; changes = {}; <span class="comment">// List of changed orders</span></div>
+<div class="line">        std::map&lt;int, std::string&gt; info = {}; <span class="comment">// Info</span></div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Methods</span></div>
+<div class="line">        std::vector&lt;int&gt;::iterator ChangesInsert(<span class="keywordtype">int</span> <span class="keywordtype">id</span>);</div>
+<div class="line">        std::pair&lt;int, std::string&gt;* InfoFind(std::string text);</div>
+<div class="line">        std::pair&lt;int, std::string&gt;* InfoFindByID(<span class="keywordtype">int</span> <span class="keywordtype">id</span>);</div>
+<div class="line">        std::map&lt;int, std::string&gt;::iterator InfoInsert(<span class="keywordtype">int</span> <span class="keywordtype">id</span>, std::string text);</div>
+<div class="line">        std::map&lt;int, std::string&gt;::iterator InfoErase(<span class="keywordtype">int</span> <span class="keywordtype">id</span>);</div>
+<div class="line">    };</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">/* ############################################################################################################################################# */</span></div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Add entry to Changes list</span></div>
+<div class="line">    std::vector&lt;int&gt;::iterator Market::ChangesInsert(<span class="keywordtype">int</span> <span class="keywordtype">id</span>)</div>
+<div class="line">    {</div>
+<div class="line">        std::vector&lt;int&gt;::iterator it = find(changes.begin(), changes.end(), <span class="keywordtype">id</span>);</div>
+<div class="line">        <span class="keywordflow">if</span> (it == changes.end()) changes.push_back(<span class="keywordtype">id</span>);</div>
+<div class="line">        <span class="keywordflow">return</span> find(changes.begin(), changes.end(), <span class="keywordtype">id</span>);</div>
+<div class="line">    };</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Get OrderID from Info text</span></div>
+<div class="line">    std::pair&lt;int, std::string&gt;* Market::InfoFind(std::string text)</div>
+<div class="line">    {</div>
+<div class="line">        <span class="keyword">auto</span> it = std::find_if(info.begin(), info.end(),</div>
+<div class="line">            [&amp;](std::pair&lt;int, std::string&gt; &amp;pair) { return pair.second == text }</div>
+<div class="line">        );</div>
+<div class="line">        <span class="keywordflow">if</span> (it != info.end()) <span class="keywordflow">return</span> &amp;(*it)</div>
+<div class="line">        <span class="keywordflow">else</span> <span class="keywordflow">return</span> NULL;</div>
+<div class="line">    };</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Get Info text from OrderID</span></div>
+<div class="line">    std::pair&lt;int, std::string&gt;* Market::InfoFindByID(<span class="keywordtype">int</span> <span class="keywordtype">id</span>)</div>
+<div class="line">    {</div>
+<div class="line">        <span class="keyword">auto</span> it = info.find(<span class="keywordtype">id</span>);</div>
+<div class="line">        <span class="keywordflow">if</span> (it != info.end()) <span class="keywordflow">return</span> &amp;(*it)</div>
+<div class="line">        <span class="keywordflow">else</span> <span class="keywordflow">return</span> NULL;</div>
+<div class="line">    };</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Add entry to Info map</span></div>
+<div class="line">    std::map&lt;int, std::string&gt;::iterator Market::InfoInsert(<span class="keywordtype">int</span> <span class="keywordtype">id</span>, std::string text)</div>
+<div class="line">        { <span class="keywordflow">return</span> info.insert(std::make_pair(<span class="keywordtype">id</span>, text)).first };</div>
+<div class="line">    </div>
+<div class="line">    <span class="comment">// Delete entry from Info map</span></div>
+<div class="line">    std::map&lt;int, std::string&gt;::iterator Market::InfoErase(<span class="keywordtype">int</span> <span class="keywordtype">id</span>)</div>
+<div class="line">        { <span class="keywordflow">return</span> info.erase(info.find(<span class="keywordtype">id</span>)) };</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">/* ############################################################################################################################################# */</span></div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Context struct</span></div>
 <div class="line">    <span class="keyword">struct </span>Ctx</div>
@@ -509,34 +554,36 @@ $(function() {
 <div class="line">    <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
 <div class="line">    std::string info;</div>
-<div class="line">    std::map&lt;int, std::string&gt; info_map = (*ctx).market.info;</div>
-<div class="line">    <span class="keywordflow">if</span> (info_map.find((<span class="keywordtype">int</span>)order.<a name="a2"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>) != info_map.end()) info = info_map[(int)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>];</div>
+<div class="line">    std::pair&lt;int, std::string&gt;* info_pair = (*ctx).market.InfoFindByID(order.<a name="a2"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
+<div class="line">    <span class="keywordflow">if</span> (info_pair != NULL) { info = info_pair-&gt;second; }</div>
+<div class="line">    <span class="keywordflow">else</span> error(<span class="stringliteral">&quot;Error at &#39;ParseOrder&#39;: could not find &#39;info&#39; for order: &quot;</span> + sstos(&amp;order));</div>
+<div class="line">    </div>
 <div class="line">    info = std::regex_replace(info, std::regex(<span class="stringliteral">&quot;\&quot;&quot;</span>), <span class="stringliteral">&quot;\\\&quot;&quot;</span>);</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordflow">return</span> (</div>
 <div class="line">        std::to_string(order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>) + CSV_SEP +</div>
 <div class="line">        std::to_string(order.<a name="a3"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ad78901a32671682eb2e829e73e5a6839">SymbolId</a>) + CSV_SEP +</div>
-<div class="line">        ORDER_TYPES[(int)order.<a name="a4"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a8f9a2bd4403993d06556167258a3ed95">Type</a>] + CSV_SEP +</div>
+<div class="line">        ORDER_TYPES[(<span class="keywordtype">int</span>)order.<a name="a4"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a8f9a2bd4403993d06556167258a3ed95">Type</a>] + CSV_SEP +</div>
 <div class="line">        ORDER_SIDES[(<span class="keywordtype">int</span>)order.<a name="a5"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a326726dbed270af12b64bc1eefd42673">Side</a>] + CSV_SEP +</div>
 <div class="line">        std::to_string(order.<a name="a6"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a38c3dbc9e2e9ca4d91827a7f3a195dc7">Price</a>) + CSV_SEP +</div>
 <div class="line">        std::to_string(order.<a name="a7"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a8780a90b1a61f2866eb78182e306db12">StopPrice</a>) + CSV_SEP +</div>
 <div class="line">        std::to_string(order.<a name="a8"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#aeb6dd457fd9f343d0f9da913cc1f199c">Quantity</a>) + CSV_SEP +</div>
-<div class="line">        ORDER_TIFS[(int)order.<a name="a9"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a9f0f38e28183909ed38c970ad9c8f96c">TimeInForce</a>] + CSV_SEP +</div>
+<div class="line">        ORDER_TIFS[(<span class="keywordtype">int</span>)order.<a name="a9"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a9f0f38e28183909ed38c970ad9c8f96c">TimeInForce</a>] + CSV_SEP +</div>
 <div class="line">        ((order.<a name="a10"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a020f762b9b3d40816d3ac083edb5fbec">IsHidden</a>() || order.<a name="a11"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a0cd1433ebde9773d0c084dc094fc2b51">IsIceberg</a>())</div>
 <div class="line">            ? std::to_string(order.<a name="a12"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a3d51591547fdb6db893771bf0f00d118">MaxVisibleQuantity</a>)</div>
 <div class="line">            : NULL_STR</div>
 <div class="line">        ) + CSV_SEP +</div>
-<div class="line">        ((order.IsSlippage())</div>
-<div class="line">            ? std::to_string(order.Slippage)</div>
+<div class="line">        ((order.<a name="a13"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a51cc41350e9b75a79db52b6437f3a850">IsSlippage</a>())</div>
+<div class="line">            ? std::to_string(order.<a name="a14"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ae3c50002ba4f8486d6e288e4cee9d0fa">Slippage</a>)</div>
 <div class="line">            : NULL_STR</div>
 <div class="line">        ) + CSV_SEP +</div>
-<div class="line">        ((order.IsTrailingStop() || order.IsTrailingStopLimit())</div>
-<div class="line">            ? std::to_string(order.TrailingDistance) + CSV_SEP +</div>
-<div class="line">                std::to_string(order.TrailingStep)</div>
+<div class="line">        ((order.<a name="a15"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a46b85c77c2787ae14075f9ca5948293d">IsTrailingStop</a>() || order.<a name="a16"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ade10834d828fd3ad59d726c9c7d5cf36">IsTrailingStopLimit</a>())</div>
+<div class="line">            ? std::to_string(order.<a name="a17"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#aacaa8f37a245bb45e4fc1e1372517920">TrailingDistance</a>) + CSV_SEP +</div>
+<div class="line">                std::to_string(order.<a name="a18"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a50407e3856a81f25cc2da01599f15f02">TrailingStep</a>)</div>
 <div class="line">            : NULL_STR + CSV_SEP + NULL_STR</div>
 <div class="line">        ) + CSV_SEP +</div>
-<div class="line">        std::to_string(order.ExecutedQuantity) + CSV_SEP +</div>
-<div class="line">        std::to_string(order.LeavesQuantity) + CSV_SEP +</div>
+<div class="line">        std::to_string(order.<a name="a19"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a555135d11f7188cb08d51be8455ada85">ExecutedQuantity</a>) + CSV_SEP +</div>
+<div class="line">        std::to_string(order.<a name="a20"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a798b7777f5c575a301c6174af2c23e94">LeavesQuantity</a>) + CSV_SEP +</div>
 <div class="line">        <span class="stringliteral">&quot;\&quot;&quot;</span> + info + <span class="stringliteral">&quot;\&quot;&quot;</span></div>
 <div class="line">    );</div>
 <div class="line">}</div>
@@ -550,7 +597,7 @@ $(function() {
 <div class="line">    std::string level_props;</div>
 <div class="line">    </div>
 <div class="line">    <span class="comment">// Loop over Levels orders</span></div>
-<div class="line">    <span class="keywordflow">for</span> (<a name="_a13"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_level_node.html">LevelNode</a> level : levels)</div>
+<div class="line">    <span class="keywordflow">for</span> (<a name="_a21"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_level_node.html">LevelNode</a> level : levels)</div>
 <div class="line">    {</div>
 <div class="line">        <span class="comment">// Get Level properties</span></div>
 <div class="line">        level_props = (</div>
@@ -558,7 +605,7 @@ $(function() {
 <div class="line">            LEVEL_TYPES[(int)level.Type] + CSV_SEP +</div>
 <div class="line">            std::to_string(level.Price)</div>
 <div class="line">        );</div>
-<div class="line">        <span class="keywordflow">for</span> (<a name="_a14"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order_node.html">OrderNode</a> node : level.OrderList)</div>
+<div class="line">        <span class="keywordflow">for</span> (<a name="_a22"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order_node.html">OrderNode</a> node : level.OrderList)</div>
 <div class="line">        {</div>
 <div class="line">            <span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>* order = (*market).GetOrder(node.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
 <div class="line">            csv.append(</div>
@@ -574,7 +621,7 @@ $(function() {
 <div class="line"><span class="comment">/* ############################################################################################################################################# */</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Parse OrderBook to CSV</span></div>
-<div class="line">std::string ParseOrderBook(<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a>* market, <span class="keyword">const</span> <a name="_a15"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html">OrderBook</a>* order_book_ptr)</div>
+<div class="line">std::string ParseOrderBook(<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a>* market, <span class="keyword">const</span> <a name="_a23"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html">OrderBook</a>* order_book_ptr)</div>
 <div class="line">{</div>
 <div class="line">    <span class="comment">// Insert header</span></div>
 <div class="line">    std::string csv;</div>
@@ -611,11 +658,11 @@ $(function() {
 <div class="line">            std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#aeb6dd457fd9f343d0f9da913cc1f199c">Quantity</a>) + CSV_SEP +</div>
 <div class="line">            std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a9f0f38e28183909ed38c970ad9c8f96c">TimeInForce</a>) + CSV_SEP +</div>
 <div class="line">            std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a3d51591547fdb6db893771bf0f00d118">MaxVisibleQuantity</a>) + CSV_SEP +</div>
-<div class="line">            std::to_string((<span class="keywordtype">int</span>)order.<a name="a16"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ae3c50002ba4f8486d6e288e4cee9d0fa">Slippage</a>) + CSV_SEP +</div>
-<div class="line">            std::to_string((<span class="keywordtype">int</span>)order.<a name="a17"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#aacaa8f37a245bb45e4fc1e1372517920">TrailingDistance</a>) + CSV_SEP +</div>
-<div class="line">            std::to_string((<span class="keywordtype">int</span>)order.<a name="a18"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a50407e3856a81f25cc2da01599f15f02">TrailingStep</a>) + CSV_SEP +</div>
-<div class="line">            std::to_string((<span class="keywordtype">int</span>)order.<a name="a19"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a555135d11f7188cb08d51be8455ada85">ExecutedQuantity</a>) + CSV_SEP +</div>
-<div class="line">            std::to_string((<span class="keywordtype">int</span>)order.<a name="a20"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a798b7777f5c575a301c6174af2c23e94">LeavesQuantity</a>) + CSV_SEP +</div>
+<div class="line">            std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ae3c50002ba4f8486d6e288e4cee9d0fa">Slippage</a>) + CSV_SEP +</div>
+<div class="line">            std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#aacaa8f37a245bb45e4fc1e1372517920">TrailingDistance</a>) + CSV_SEP +</div>
+<div class="line">            std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a50407e3856a81f25cc2da01599f15f02">TrailingStep</a>) + CSV_SEP +</div>
+<div class="line">            std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a555135d11f7188cb08d51be8455ada85">ExecutedQuantity</a>) + CSV_SEP +</div>
+<div class="line">            std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#a798b7777f5c575a301c6174af2c23e94">LeavesQuantity</a>) + CSV_SEP +</div>
 <div class="line">            <span class="stringliteral">&quot;&#39;&quot;</span> + info + <span class="stringliteral">&quot;&#39;&quot;</span> +</div>
 <div class="line">        <span class="stringliteral">&quot;)&quot;</span></div>
 <div class="line">    );</div>
@@ -649,12 +696,12 @@ $(function() {
 <div class="line">    <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a> order = <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>(</div>
 <div class="line">        sqlite3_column_int(row, 0), <span class="comment">// Id</span></div>
 <div class="line">        SYMBOL_ID, <span class="comment">// Symbol</span></div>
-<div class="line">        <a name="a21"></a><a class="code" href="namespace_cpp_trader_1_1_matching.html#a3f665b3bd035eb7a647258ce0ca1dd43">OrderType</a>(sqlite3_column_int(row, 2)), <span class="comment">// Type</span></div>
-<div class="line">        <a name="a22"></a><a class="code" href="namespace_cpp_trader_1_1_matching.html#a07e8bfcb84f50475ba6ca9d29a6ca668">OrderSide</a>(sqlite3_column_int(row, 3)), <span class="comment">// Side</span></div>
+<div class="line">        <a name="a24"></a><a class="code" href="namespace_cpp_trader_1_1_matching.html#a3f665b3bd035eb7a647258ce0ca1dd43">OrderType</a>(sqlite3_column_int(row, 2)), <span class="comment">// Type</span></div>
+<div class="line">        <a name="a25"></a><a class="code" href="namespace_cpp_trader_1_1_matching.html#a07e8bfcb84f50475ba6ca9d29a6ca668">OrderSide</a>(sqlite3_column_int(row, 3)), <span class="comment">// Side</span></div>
 <div class="line">        sqlite3_column_int(row, 4), <span class="comment">// Price</span></div>
 <div class="line">        sqlite3_column_int(row, 5), <span class="comment">// Stop Price</span></div>
 <div class="line">        sqlite3_column_int(row, 6), <span class="comment">// Quantity</span></div>
-<div class="line">        <a name="a23"></a><a class="code" href="namespace_cpp_trader_1_1_matching.html#a3c4a6bd3748dd98d9daff8e5c40b2b9a">OrderTimeInForce</a>(sqlite3_column_int(row, 7)), <span class="comment">// Time In Force</span></div>
+<div class="line">        <a name="a26"></a><a class="code" href="namespace_cpp_trader_1_1_matching.html#a3c4a6bd3748dd98d9daff8e5c40b2b9a">OrderTimeInForce</a>(sqlite3_column_int(row, 7)), <span class="comment">// Time In Force</span></div>
 <div class="line">        sqlite3_column_int(row, 8), <span class="comment">// Max Visible Quantity</span></div>
 <div class="line">        sqlite3_column_int(row, 9), <span class="comment">// Slippage</span></div>
 <div class="line">        sqlite3_column_int(row, 10), <span class="comment">// Trailing Distance</span></div>
@@ -709,7 +756,7 @@ $(function() {
 <div class="line"><span class="keywordtype">void</span> PopulateBook(<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a>* market, sqlite3* db, <span class="keyword">const</span> <span class="keywordtype">char</span>* name)</div>
 <div class="line">{</div>
 <div class="line">    <span class="comment">// Add Symbol</span></div>
-<div class="line">    <a name="_a24"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_symbol.html">Symbol</a> symbol(SYMBOL_ID, name);</div>
+<div class="line">    <a name="_a27"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_symbol.html">Symbol</a> symbol(SYMBOL_ID, name);</div>
 <div class="line">    <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> err = (*market).AddSymbol(symbol);</div>
 <div class="line">    <span class="keywordflow">if</span> (err != ErrorCode::OK)</div>
 <div class="line">    { error(<span class="stringliteral">&quot;Failed AddSymbol: &quot;</span> + sstos(&amp;err)); exit(1); };</div>
@@ -752,7 +799,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line"><span class="comment">/* Custom Market Handler */</span></div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">class </span>MyMarketHandler : <span class="keyword">public</span> <a name="_a25"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_handler.html">MarketHandler</a></div>
+<div class="line"><span class="keyword">class </span>MyMarketHandler : <span class="keyword">public</span> <a name="_a28"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_handler.html">MarketHandler</a></div>
 <div class="line">{</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">private</span>:</div>
@@ -868,7 +915,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">void</span> onUpdateOrderBook(<span class="keyword">const</span> <a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html">OrderBook</a>&amp; order_book, <span class="keywordtype">bool</span> top)<span class="keyword"> override</span></div>
 <div class="line"><span class="keyword">    </span>{</div>
-<div class="line">        _max_order_book_levels = std::max(std::max(order_book.<a name="a26"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html#a613c21ef0c5097641a559032b0d1df3d">bids</a>().size(), order_book.<a name="a27"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html#a5dc10173d986f48d519c5da0e4d8d29b">asks</a>().size()), _max_order_book_levels);</div>
+<div class="line">        _max_order_book_levels = std::max(std::max(order_book.<a name="a29"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html#a613c21ef0c5097641a559032b0d1df3d">bids</a>().size(), order_book.<a name="a30"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html#a5dc10173d986f48d519c5da0e4d8d29b">asks</a>().size()), _max_order_book_levels);</div>
 <div class="line"> </div>
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
@@ -906,7 +953,7 @@ $(function() {
 <div class="line"><span class="comment">        */</span></div>
 <div class="line">    }</div>
 <div class="line"> </div>
-<div class="line">    <span class="keywordtype">void</span> onAddLevel(<span class="keyword">const</span> <a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html">OrderBook</a>&amp; order_book, <span class="keyword">const</span> <a name="_a28"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_level.html">Level</a>&amp; level, <span class="keywordtype">bool</span> top)<span class="keyword"> override</span></div>
+<div class="line">    <span class="keywordtype">void</span> onAddLevel(<span class="keyword">const</span> <a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html">OrderBook</a>&amp; order_book, <span class="keyword">const</span> <a name="_a31"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_level.html">Level</a>&amp; level, <span class="keywordtype">bool</span> top)<span class="keyword"> override</span></div>
 <div class="line"><span class="keyword">    </span>{</div>
 <div class="line">        ++_updates;</div>
 <div class="line"> </div>
@@ -928,7 +975,7 @@ $(function() {
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">void</span> onUpdateLevel(<span class="keyword">const</span> <a class="code" href="class_cpp_trader_1_1_matching_1_1_order_book.html">OrderBook</a>&amp; order_book, <span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_level.html">Level</a>&amp; level, <span class="keywordtype">bool</span> top)<span class="keyword"> override</span></div>
 <div class="line"><span class="keyword">    </span>{</div>
-<div class="line">        ++_updates; _max_order_book_orders = std::max(level.<a name="a29"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_level.html#a164155ae2b8f0c691be8292c5e39084b">Orders</a>, _max_order_book_orders);</div>
+<div class="line">        ++_updates; _max_order_book_orders = std::max(level.<a name="a32"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_level.html#a164155ae2b8f0c691be8292c5e39084b">Orders</a>, _max_order_book_orders);</div>
 <div class="line"> </div>
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
@@ -983,12 +1030,12 @@ $(function() {
 <div class="line">        }</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Store Order Info</span></div>
-<div class="line">        (*ctx).market.info.insert(</div>
-<div class="line">            std::make_pair((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>, (*ctx).order.info)</div>
-<div class="line">        );</div>
+<div class="line">        (*ctx).market.InfoInsert((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>, (*ctx).order.info);</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Check if operation is enabled</span></div>
 <div class="line">        <span class="keywordflow">if</span> (!(*ctx).enable) <span class="keywordflow">return</span>;</div>
+<div class="line"> </div>
+<div class="line">        <span class="keywordtype">bool</span> success = <span class="keyword">true</span>;</div>
 <div class="line"> </div>
 <div class="line">        std::string <span class="keywordtype">id</span> = std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
 <div class="line"> </div>
@@ -1004,7 +1051,10 @@ $(function() {
 <div class="line">        );</div>
 <div class="line">        <span class="keywordtype">int</span> rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &amp;err);</div>
 <div class="line">        <span class="keywordflow">if</span> (rdy != SQLITE_OK)</div>
-<div class="line">        { error(<span class="stringliteral">&quot;sqlite error(4): &quot;</span> + sstos(&amp;err)); };</div>
+<div class="line">        {</div>
+<div class="line">            error(<span class="stringliteral">&quot;sqlite error(4): &quot;</span> + sstos(&amp;err));</div>
+<div class="line">            success = <span class="keyword">false</span>;</div>
+<div class="line">        };</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Add Order</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Add order: &quot;</span> + sstos(&amp;order));</div>
@@ -1017,7 +1067,7 @@ $(function() {
 <div class="line"><span class="comment">        */</span></div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Set response to client</span></div>
-<div class="line">        (*ctx).command.response = id;</div>
+<div class="line">        <span class="keywordflow">if</span> (success) (*ctx).command.response = id;</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">/* Update orders when half filled */</span></div>
@@ -1027,29 +1077,32 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
+<div class="line">        <span class="comment">// Check if operation is enabled</span></div>
+<div class="line">        <span class="keywordflow">if</span> (!(*ctx).enable) <span class="keywordflow">return</span>;</div>
+<div class="line"> </div>
 <div class="line">        <span class="comment">// First get info/transaction ID variable</span></div>
 <div class="line">        std::string info;</div>
-<div class="line">        std::map&lt;int, std::string&gt; info_map = (*ctx).market.info;</div>
-<div class="line">        <span class="keywordflow">if</span> (info_map.find((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>) != info_map.end()) info = info_map[(int)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>];</div>
-<div class="line"> </div>
-<div class="line">        <span class="comment">// Check if operation is enabled</span></div>
-<div class="line">        if (!(*ctx).enable) return;</div>
+<div class="line">        std::pair&lt;int, std::string&gt;* info_pair = (*ctx).market.InfoFindByID(order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
+<div class="line">        <span class="keywordflow">if</span> (info_pair != NULL) { info = info_pair-&gt;second; }</div>
+<div class="line">        <span class="keywordflow">else</span> error(<span class="stringliteral">&quot;Error at &#39;onUpdateOrder&#39; callback: could not find &#39;info&#39; for order: &quot;</span> + sstos(&amp;order));</div>
 <div class="line"> </div>
 <div class="line">        sqlite3* db = (*ctx).connection.sqlite_ptr;</div>
 <div class="line">        <span class="keywordtype">char</span>* err;</div>
 <div class="line"> </div>
-<div class="line">        const std::<span class="keywordtype">string</span> query = UpdateQueryFromOrder(order);</div>
+<div class="line">        <span class="keyword">const</span> std::string query = UpdateQueryFromOrder(order);</div>
 <div class="line">        <span class="keywordtype">int</span> rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &amp;err);</div>
-<div class="line">        if (rdy != SQLITE_OK)</div>
+<div class="line">        <span class="keywordflow">if</span> (rdy != SQLITE_OK)</div>
 <div class="line">        { error(<span class="stringliteral">&quot;sqlite error(6): &quot;</span> + sstos(&amp;err)); };</div>
 <div class="line"> </div>
-<div class="line">        <span class="comment">// *** Send to server with system()</span></div>
-<div class="line">        <span class="comment">// NOT NEEDED BECAUSE I CAN CALCULATE PARTIAL TRADES</span></div>
-<div class="line">        <span class="comment">// BUT CAN BE USED IN FUTURE TO CROSS CHECK THESE PARTIAL CALCS</span></div>
-<div class="line">        <span class="comment">//std::string cmd = &quot;/home/sysop/books/BTC_TUSD/execute_processor UpdateOrder &#39;&quot; + sstos(&amp;order) + &quot;:&quot; + info + &quot;&#39; &gt; execute_processor.txt 2&gt;&amp;1 &amp;&quot;;</span></div>
-<div class="line">        <span class="comment">//int iCallResult = system(cmd.c_str());</span></div>
-<div class="line">        <span class="comment">//if (iCallResult &lt; 0 &amp;&amp; iCallResult != -1) { error(&quot;Error doing system call (AC862): &quot; + std::string(strerror(errno)) + &quot; &quot; + std::to_string(iCallResult)); }</span></div>
-<div class="line">        <span class="comment">// *** Send to server end</span></div>
+<div class="line">        <span class="comment">/*</span></div>
+<div class="line"><span class="comment">        // *** Send to server with system()</span></div>
+<div class="line"><span class="comment">        // NOT NEEDED BECAUSE I CAN CALCULATE PARTIAL TRADES</span></div>
+<div class="line"><span class="comment">        // BUT CAN BE USED IN FUTURE TO CROSS CHECK THESE PARTIAL CALCS</span></div>
+<div class="line"><span class="comment">        std::string cmd = &quot;/home/sysop/books/BTC_TUSD/execute_processor UpdateOrder &#39;&quot; + sstos(&amp;order) + &quot;:&quot; + info + &quot;&#39; &gt; execute_processor.txt 2&gt;&amp;1 &amp;&quot;;</span></div>
+<div class="line"><span class="comment">        int iCallResult = system(cmd.c_str());</span></div>
+<div class="line"><span class="comment">        if (iCallResult &lt; 0 &amp;&amp; iCallResult != -1) { error(&quot;Error doing system call (AC862): &quot; + std::string(strerror(errno)) + &quot; &quot; + std::to_string(iCallResult)); }</span></div>
+<div class="line"><span class="comment">        // *** Send to server end</span></div>
+<div class="line"><span class="comment">        */</span></div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">void</span> onDeleteOrder(<span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>&amp; order)<span class="keyword"> override</span></div>
@@ -1060,16 +1113,17 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <span class="comment">// First get info/transaction ID variable</span></div>
 <div class="line">        std::string info;</div>
-<div class="line">        std::map&lt;int, std::string&gt; info_map = (*ctx).market.info;</div>
-<div class="line">        <span class="keywordflow">if</span> (info_map.find((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>) != info_map.end()) info = info_map[(int)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>];</div>
+<div class="line">        std::pair&lt;int, std::string&gt;* info_pair = (*ctx).market.InfoFindByID(order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
+<div class="line">        <span class="keywordflow">if</span> (info_pair != NULL) { info = info_pair-&gt;second; }</div>
+<div class="line">        <span class="keywordflow">else</span> error(<span class="stringliteral">&quot;Error at &#39;onDeleteOrder&#39; callback: could not find &#39;info&#39; for order: &quot;</span> + sstos(&amp;order));</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Delete Order Info</span></div>
-<div class="line">        (*ctx).market.info.erase(</div>
-<div class="line">            (*ctx).market.info.find((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>)</div>
-<div class="line">        );</div>
+<div class="line">        (*ctx).market.InfoErase((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Check if operation is enabled</span></div>
 <div class="line">        <span class="keywordflow">if</span> (!(*ctx).enable) <span class="keywordflow">return</span>;</div>
+<div class="line"> </div>
+<div class="line">        <span class="keywordtype">bool</span> success = <span class="keyword">true</span>;</div>
 <div class="line"> </div>
 <div class="line">        std::string <span class="keywordtype">id</span> = std::to_string((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
 <div class="line"> </div>
@@ -1082,11 +1136,33 @@ $(function() {
 <div class="line">        );</div>
 <div class="line">        <span class="keywordtype">int</span> rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &amp;err);</div>
 <div class="line">        <span class="keywordflow">if</span> (rdy != SQLITE_OK)</div>
-<div class="line">        { error(<span class="stringliteral">&quot;sqlite error(5): &quot;</span> + sstos(&amp;err)); };</div>
+<div class="line">        {</div>
+<div class="line">            error(<span class="stringliteral">&quot;sqlite error(5): &quot;</span> + sstos(&amp;err));</div>
+<div class="line">            success = <span class="keyword">false</span>;</div>
+<div class="line">        };</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Log Deleted Order</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Delete order: &quot;</span> + sstos(&amp;order) + <span class="stringliteral">&quot; and info &quot;</span> + info);</div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Check if order was deleted by user</span></div>
+<div class="line">        std::string command = (*ctx).command.input;</div>
+<div class="line">        <span class="keywordtype">bool</span> user_cmd = command.find(<span class="stringliteral">&quot;delete order&quot;</span>) != std::string::npos;</div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Execute child callbacks</span></div>
+<div class="line">        <span class="keywordflow">if</span> (user_cmd) onDeleteOrderCommand(order, success)</div>
+<div class="line">        <span class="keywordflow">else</span> onDeleteExecutedOrder(order, <span class="keywordtype">id</span>, info);</div>
+<div class="line">    }</div>
+<div class="line"> </div>
+<div class="line">    <span class="keywordtype">void</span> onDeleteOrderCommand(<span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>&amp; order, <span class="keywordtype">bool</span> success)</div>
+<div class="line">    {</div>
+<div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line">        </div>
+<div class="line">        <span class="comment">// Set response to client</span></div>
+<div class="line">        <span class="keywordflow">if</span> (success) (*ctx).command.response = <span class="stringliteral">&quot;OK&quot;</span>;</div>
+<div class="line">    }</div>
+<div class="line"> </div>
+<div class="line">    <span class="keywordtype">void</span> onDeleteExecutedOrder(<span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>&amp; order, std::string <span class="keywordtype">id</span>, std::string info)</div>
+<div class="line">    {</div>
 <div class="line">        <span class="comment">/*</span></div>
 <div class="line"><span class="comment">        // *** Send to server</span></div>
 <div class="line"><span class="comment">        std::string cmd = &quot;/home/sysop/books/BTC_TUSD/execute_processor DeleteOrder &#39;&quot; + id + &quot;:&quot; + sstos(&amp;order) + &quot;:&quot; + info + &quot;&#39; &gt; execute_processor.txt 2&gt;&amp;1 &amp;&quot;;</span></div>
@@ -1094,12 +1170,6 @@ $(function() {
 <div class="line"><span class="comment">        if (iCallResult &lt; 0 &amp;&amp; iCallResult != -1) { error(&quot;Error doing system call (BB332): &quot; + std::string(strerror(errno)) + &quot; &quot; + std::to_string(iCallResult)); }</span></div>
 <div class="line"><span class="comment">        // *** Send to server end</span></div>
 <div class="line"><span class="comment">        */</span></div>
-<div class="line"> </div>
-<div class="line">        std::string command = (*ctx).command.input;</div>
-<div class="line">        <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;delete order&quot;</span>) == std::string::npos) <span class="keywordflow">return</span>;</div>
-<div class="line">        </div>
-<div class="line">        <span class="comment">// Set response to client</span></div>
-<div class="line">        (*ctx).command.response = <span class="stringliteral">&quot;OK&quot;</span>;</div>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">void</span> onExecuteOrder(<span class="keyword">const</span> <a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html">Order</a>&amp; order, uint64_t price, uint64_t quantity)<span class="keyword"> override</span></div>
@@ -1108,19 +1178,18 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
-<div class="line">        <span class="comment">// Add Order Id to changes if not already added</span></div>
-<div class="line">        std::vector&lt;int&gt; ch = (*ctx).market.changes;</div>
-<div class="line">        std::vector&lt;int&gt;::iterator it = find(ch.begin(), ch.end(), (<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
-<div class="line">        <span class="keywordflow">if</span> (it == ch.end()) (*ctx).market.changes.push_back((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
-<div class="line"> </div>
 <div class="line">        <span class="comment">// Check if operation is enabled</span></div>
 <div class="line">        <span class="keywordflow">if</span> (!(*ctx).enable) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
-<div class="line">        <span class="comment">// Get info/transaction ID variable</span></div>
-<div class="line">        std::string info;</div>
-<div class="line">        std::map&lt;int, std::string&gt; info_map = (*ctx).market.info;</div>
-<div class="line">        <span class="keywordflow">if</span> (info_map.find((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>) != info_map.end()) info = info_map[(int)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>];</div>
+<div class="line">        <span class="comment">// Add Order to changes if not already added</span></div>
+<div class="line">        (*ctx).market.ChangesInsert(order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
 <div class="line"> </div>
+<div class="line">        <span class="comment">// First get info/transaction ID variable</span></div>
+<div class="line">        std::string info;</div>
+<div class="line">        std::pair&lt;int, std::string&gt;* info_pair = (*ctx).market.InfoFindByID(order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
+<div class="line">        <span class="keywordflow">if</span> (info_pair != NULL) { info = info_pair-&gt;second; }</div>
+<div class="line">        <span class="keywordflow">else</span> error(<span class="stringliteral">&quot;Error at &#39;onExecuteOrder&#39; callback: could not find &#39;info&#39; for order: &quot;</span> + sstos(&amp;order));</div>
+<div class="line">        </div>
 <div class="line">        <span class="comment">// Log Executed Order</span></div>
 <div class="line">        log(<span class="stringliteral">&quot;Execute order: &quot;</span> + sstos(&amp;order) + <span class="stringliteral">&quot; with price &quot;</span> + sstos(&amp;price) + <span class="stringliteral">&quot; and quantity &quot;</span> + sstos(&amp;quantity) + <span class="stringliteral">&quot; and info &quot;</span> + info);</div>
 <div class="line"> </div>
@@ -1355,13 +1424,27 @@ $(function() {
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">void</span> DeleteOrder(<a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a>* market, <span class="keyword">const</span> std::string&amp; command)</div>
 <div class="line">{</div>
-<div class="line">    <span class="keyword">static</span> std::regex pattern(<span class="stringliteral">&quot;^delete order (\\d+)$&quot;</span>);</div>
+<div class="line">    <span class="keyword">static</span> std::regex pattern(<span class="stringliteral">&quot;^delete order (.+)$&quot;</span>);</div>
 <div class="line">    std::smatch match;</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordflow">if</span> (std::regex_search(command, match, pattern))</div>
 <div class="line">    {</div>
-<div class="line">        uint64_t <span class="keywordtype">id</span> = std::stoi(match[1]);</div>
+<div class="line">        <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
+<div class="line">        <span class="comment">// Set default response</span></div>
+<div class="line">        (*ctx).command.response = <span class="stringliteral">&quot;FAIL&quot;</span>;</div>
+<div class="line">        </div>
+<div class="line">        std::string info = match[1];</div>
+<div class="line"> </div>
+<div class="line">        <span class="comment">// Get Order ID from Info</span></div>
+<div class="line">        <span class="keywordtype">int</span> id;</div>
+<div class="line">        std::pair&lt;int, std::string&gt;* info_pair = (*ctx).market.InfoFind(info);</div>
+<div class="line">        <span class="keywordflow">if</span> (info_pair != NULL) { <span class="keywordtype">id</span> = info_pair-&gt;first; }</div>
+<div class="line">        <span class="keywordflow">else</span> {</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;delete order&#39; command: &quot;</span> + sstos(&amp;ErrorCode::ORDER_NOT_FOUND));</div>
+<div class="line">            <span class="keywordflow">return</span>;</div>
+<div class="line">        };</div>
+<div class="line">        </div>
 <div class="line">        <a class="code" href="namespace_cpp_trader_1_1_matching.html#a1ec2fbd049c2332c538badf16c46b86e">ErrorCode</a> result = (*market).DeleteOrder(<span class="keywordtype">id</span>);</div>
 <div class="line">        <span class="keywordflow">if</span> (result != ErrorCode::OK)</div>
 <div class="line">            error(<span class="stringliteral">&quot;Failed &#39;delete order&#39; command: &quot;</span> + sstos(&amp;result));</div>
@@ -1805,9 +1888,9 @@ $(function() {
 <div class="line">    <a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html">MarketManager</a>* market = (*ctx).market.market_ptr;</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Exit</span></div>
-<div class="line">    <span class="keywordflow">if</span> (command == <span class="stringliteral">&quot;exit&quot;</span>) (*ctx).enable = <span class="keyword">false</span>;</div>
+<div class="line">    <span class="keywordflow">if</span>      (command == <span class="stringliteral">&quot;exit&quot;</span>) (*ctx).enable = <span class="keyword">false</span>;</div>
 <div class="line">    <span class="comment">// Matching</span></div>
-<div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command == <span class="stringliteral">&quot;enable matching&quot;</span>) (*market).<a name="a30"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a4bd7f531ee55fdd76974d75115e18687">EnableMatching</a>();</div>
+<div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command == <span class="stringliteral">&quot;enable matching&quot;</span>) (*market).<a name="a33"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a4bd7f531ee55fdd76974d75115e18687">EnableMatching</a>();</div>
 <div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command == <span class="stringliteral">&quot;disable matching&quot;</span>) (*market).DisableMatching();</div>
 <div class="line">    <span class="comment">// Symbols</span></div>
 <div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;add symbol&quot;</span>) != std::string::npos) AddSymbol(market, command);</div>
@@ -1823,14 +1906,17 @@ $(function() {
 <div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;replace order&quot;</span>) != std::string::npos) ReplaceOrder(market, command);</div>
 <div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;delete order&quot;</span>) != std::string::npos) DeleteOrder(market, command);</div>
 <div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;get order&quot;</span>) != std::string::npos) GetOrder(market, command);</div>
-<div class="line">    <span class="comment">// Prepare to Add</span></div>
+<div class="line">    <span class="comment">// Prepare to Add Order</span></div>
 <div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;add &quot;</span>) != std::string::npos)</div>
 <div class="line">    {</div>
+<div class="line">        <span class="comment">// Set default response</span></div>
+<div class="line">        (*ctx).command.response = <span class="stringliteral">&quot;FAIL&quot;</span>;</div>
+<div class="line"> </div>
 <div class="line">        <span class="comment">// Set new Order Id</span></div>
 <div class="line">        (*ctx).order.id = (*(*ctx).market.handler_ptr).lts_order_id() + 1;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Orders: Add</span></div>
-<div class="line">        <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;add market&quot;</span>) != std::string::npos) AddMarketOrder(market, command);</div>
+<div class="line">        <span class="keywordflow">if</span>      (command.find(<span class="stringliteral">&quot;add market&quot;</span>) != std::string::npos) AddMarketOrder(market, command);</div>
 <div class="line">        <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;add slippage market&quot;</span>) != std::string::npos) AddSlippageMarketOrder(market, command);</div>
 <div class="line">        <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;add limit&quot;</span>) != std::string::npos) AddLimitOrder(market, command);</div>
 <div class="line">        <span class="keywordflow">else</span> <span class="keywordflow">if</span> (command.find(<span class="stringliteral">&quot;add ioc limit&quot;</span>) != std::string::npos) AddIOCLimitOrder(market, command);</div>
@@ -2083,7 +2169,7 @@ $(function() {
 <div class="line">    <span class="comment">// Graceful shutdown</span></div>
 <div class="line">    CloseVector(&amp;connections); <span class="comment">// Close sockets</span></div>
 <div class="line">    unlink(socket_path.string().c_str());</div>
-<div class="line">    market.<a name="a31"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a06930138a5a90d2f8f79ddeb3941d286">DisableMatching</a>();</div>
+<div class="line">    market.<a name="a34"></a><a class="code" href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a06930138a5a90d2f8f79ddeb3941d286">DisableMatching</a>();</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Update status file</span></div>
 <div class="line">    File::WriteAllText(status_path, STATUS_GSTOP);</div>
@@ -2117,6 +2203,7 @@ $(function() {
 <div class="ttc" id="astruct_cpp_trader_1_1_matching_1_1_order_html_a38c3dbc9e2e9ca4d91827a7f3a195dc7"><div class="ttname"><a href="struct_cpp_trader_1_1_matching_1_1_order.html#a38c3dbc9e2e9ca4d91827a7f3a195dc7">CppTrader::Matching::Order::Price</a></div><div class="ttdeci">uint64_t Price</div><div class="ttdoc">Order price.</div><div class="ttdef"><b>Definition:</b> <a href="order_8h_source.html#l00138">order.h:138</a></div></div>
 <div class="ttc" id="anamespace_cpp_trader_1_1_matching_html"><div class="ttname"><a href="namespace_cpp_trader_1_1_matching.html">CppTrader::Matching</a></div><div class="ttdoc">Matching engine definitions.</div><div class="ttdef"><b>Definition:</b> <a href="errors_8h_source.html#l00017">errors.h:17</a></div></div>
 <div class="ttc" id="astruct_cpp_trader_1_1_matching_1_1_order_html_ae3c50002ba4f8486d6e288e4cee9d0fa"><div class="ttname"><a href="struct_cpp_trader_1_1_matching_1_1_order.html#ae3c50002ba4f8486d6e288e4cee9d0fa">CppTrader::Matching::Order::Slippage</a></div><div class="ttdeci">uint64_t Slippage</div><div class="ttdoc">Market order slippage.</div><div class="ttdef"><b>Definition:</b> <a href="order_8h_source.html#l00179">order.h:179</a></div></div>
+<div class="ttc" id="astruct_cpp_trader_1_1_matching_1_1_order_html_ade10834d828fd3ad59d726c9c7d5cf36"><div class="ttname"><a href="struct_cpp_trader_1_1_matching_1_1_order.html#ade10834d828fd3ad59d726c9c7d5cf36">CppTrader::Matching::Order::IsTrailingStopLimit</a></div><div class="ttdeci">bool IsTrailingStopLimit() const noexcept</div><div class="ttdoc">Is the trailing stop-limit order?</div><div class="ttdef"><b>Definition:</b> <a href="order_8h_source.html#l00228">order.h:228</a></div></div>
 <div class="ttc" id="aclass_cpp_trader_1_1_matching_1_1_order_book_html_a5dc10173d986f48d519c5da0e4d8d29b"><div class="ttname"><a href="class_cpp_trader_1_1_matching_1_1_order_book.html#a5dc10173d986f48d519c5da0e4d8d29b">CppTrader::Matching::OrderBook::asks</a></div><div class="ttdeci">const Levels &amp; asks() const noexcept</div><div class="ttdoc">Get the order book asks container.</div><div class="ttdef"><b>Definition:</b> <a href="order__book_8h_source.html#l00064">order_book.h:64</a></div></div>
 <div class="ttc" id="astruct_cpp_trader_1_1_matching_1_1_order_html_a3d51591547fdb6db893771bf0f00d118"><div class="ttname"><a href="struct_cpp_trader_1_1_matching_1_1_order.html#a3d51591547fdb6db893771bf0f00d118">CppTrader::Matching::Order::MaxVisibleQuantity</a></div><div class="ttdeci">uint64_t MaxVisibleQuantity</div><div class="ttdoc">Order max visible quantity.</div><div class="ttdef"><b>Definition:</b> <a href="order_8h_source.html#l00162">order.h:162</a></div></div>
 <div class="ttc" id="astruct_cpp_trader_1_1_matching_1_1_order_node_html"><div class="ttname"><a href="struct_cpp_trader_1_1_matching_1_1_order_node.html">CppTrader::Matching::OrderNode</a></div><div class="ttdoc">Order node.</div><div class="ttdef"><b>Definition:</b> <a href="order_8h_source.html#l00301">order.h:301</a></div></div>
@@ -2127,6 +2214,8 @@ $(function() {
 <div class="ttc" id="anamespace_cpp_trader_1_1_matching_html_a3c4a6bd3748dd98d9daff8e5c40b2b9a"><div class="ttname"><a href="namespace_cpp_trader_1_1_matching.html#a3c4a6bd3748dd98d9daff8e5c40b2b9a">CppTrader::Matching::OrderTimeInForce</a></div><div class="ttdeci">OrderTimeInForce</div><div class="ttdoc">Order Time in Force.</div><div class="ttdef"><b>Definition:</b> <a href="order_8h_source.html#l00109">order.h:109</a></div></div>
 <div class="ttc" id="astruct_cpp_trader_1_1_matching_1_1_level_node_html"><div class="ttname"><a href="struct_cpp_trader_1_1_matching_1_1_level_node.html">CppTrader::Matching::LevelNode</a></div><div class="ttdoc">Price level node.</div><div class="ttdef"><b>Definition:</b> <a href="level_8h_source.html#l00078">level.h:78</a></div></div>
 <div class="ttc" id="astruct_cpp_trader_1_1_matching_1_1_level_html"><div class="ttname"><a href="struct_cpp_trader_1_1_matching_1_1_level.html">CppTrader::Matching::Level</a></div><div class="ttdoc">Price level.</div><div class="ttdef"><b>Definition:</b> <a href="level_8h_source.html#l00031">level.h:31</a></div></div>
+<div class="ttc" id="astruct_cpp_trader_1_1_matching_1_1_order_html_a46b85c77c2787ae14075f9ca5948293d"><div class="ttname"><a href="struct_cpp_trader_1_1_matching_1_1_order.html#a46b85c77c2787ae14075f9ca5948293d">CppTrader::Matching::Order::IsTrailingStop</a></div><div class="ttdeci">bool IsTrailingStop() const noexcept</div><div class="ttdoc">Is the trailing stop order?</div><div class="ttdef"><b>Definition:</b> <a href="order_8h_source.html#l00226">order.h:226</a></div></div>
+<div class="ttc" id="astruct_cpp_trader_1_1_matching_1_1_order_html_a51cc41350e9b75a79db52b6437f3a850"><div class="ttname"><a href="struct_cpp_trader_1_1_matching_1_1_order.html#a51cc41350e9b75a79db52b6437f3a850">CppTrader::Matching::Order::IsSlippage</a></div><div class="ttdeci">bool IsSlippage() const noexcept</div><div class="ttdoc">Is the order have slippage?</div><div class="ttdef"><b>Definition:</b> <a href="order_8h_source.html#l00250">order.h:250</a></div></div>
 <div class="ttc" id="anamespace_cpp_trader_1_1_matching_html_a3f665b3bd035eb7a647258ce0ca1dd43"><div class="ttname"><a href="namespace_cpp_trader_1_1_matching.html#a3f665b3bd035eb7a647258ce0ca1dd43">CppTrader::Matching::OrderType</a></div><div class="ttdeci">OrderType</div><div class="ttdoc">Order type.</div><div class="ttdef"><b>Definition:</b> <a href="order_8h_source.html#l00081">order.h:81</a></div></div>
 <div class="ttc" id="anamespace_cpp_trader_1_1_matching_html_a07e8bfcb84f50475ba6ca9d29a6ca668"><div class="ttname"><a href="namespace_cpp_trader_1_1_matching.html#a07e8bfcb84f50475ba6ca9d29a6ca668">CppTrader::Matching::OrderSide</a></div><div class="ttdeci">OrderSide</div><div class="ttdoc">Order side.</div><div class="ttdef"><b>Definition:</b> <a href="order_8h_source.html#l00033">order.h:33</a></div></div>
 <div class="ttc" id="aclass_cpp_trader_1_1_matching_1_1_market_manager_html_a4bd7f531ee55fdd76974d75115e18687"><div class="ttname"><a href="class_cpp_trader_1_1_matching_1_1_market_manager.html#a4bd7f531ee55fdd76974d75115e18687">CppTrader::Matching::MarketManager::EnableMatching</a></div><div class="ttdeci">void EnableMatching()</div><div class="ttdoc">Enable automatic matching.</div><div class="ttdef"><b>Definition:</b> <a href="market__manager_8h_source.html#l00212">market_manager.h:212</a></div></div>
