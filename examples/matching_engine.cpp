@@ -220,11 +220,12 @@ namespace Context {
     // Get OrderID from Info text
     std::map<int, std::string>::iterator Market::InfoFindID(std::string text)
     {
-        auto it = std::find_if(info.begin(), info.end(),
-            [&](const std::pair<int, std::string> &pair) { return pair.second == text }
+        return std::find_if(
+            info.begin(),
+            info.end(),
+            [&](const std::pair<int, std::string> &pair)
+                { return pair.second == text }
         );
-        if (it != info.end()) return it
-        else return NULL;
     };
 
     /* ############################################################################################################################################# */
