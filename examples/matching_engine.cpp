@@ -224,7 +224,7 @@ namespace Context {
             info.begin(),
             info.end(),
             [&](const std::pair<int, std::string> &pair)
-                { return pair.second == text }
+                { return pair.second == text; }
         );
     }
 
