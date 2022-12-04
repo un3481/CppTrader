@@ -284,7 +284,7 @@ $(function() {
 <div class="line">    std::map&lt;int, std::string&gt;::iterator Market::InfoFind(std::string text)</div>
 <div class="line">    {</div>
 <div class="line">        <span class="keyword">auto</span> it = std::find_if(info.begin(), info.end(),</div>
-<div class="line">            [&amp;](std::pair&lt;int, std::string&gt; &amp;pair) { return pair.second == text }</div>
+<div class="line">            [&amp;](<span class="keyword">const</span> std::pair&lt;int, std::string&gt; &amp;pair) { return pair.second == text }</div>
 <div class="line">        );</div>
 <div class="line">        <span class="keywordflow">if</span> (it != info.end()) <span class="keywordflow">return</span> it</div>
 <div class="line">        <span class="keywordflow">else</span> <span class="keywordflow">return</span> NULL;</div>
@@ -1441,7 +1441,7 @@ $(function() {
 <div class="line">        std::map&lt;int, std::string&gt;::iterator info_it = (*ctx).market.InfoFind(info);</div>
 <div class="line">        <span class="keywordflow">if</span> (info_it != NULL) { <span class="keywordtype">id</span> = info_it-&gt;first; }</div>
 <div class="line">        <span class="keywordflow">else</span> {</div>
-<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;delete order&#39; command: &quot;</span> + sstos(&amp;ErrorCode::ORDER_NOT_FOUND));</div>
+<div class="line">            error(<span class="stringliteral">&quot;Failed &#39;delete order&#39; command: ORDER_NOT_FOUND&quot;</span>);</div>
 <div class="line">            <span class="keywordflow">return</span>;</div>
 <div class="line">        };</div>
 <div class="line">        </div>
