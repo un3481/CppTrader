@@ -207,15 +207,15 @@ namespace Context {
         std::vector<int>::iterator it = find(changes.begin(), changes.end(), id);
         if (it == changes.end()) changes.push_back(id);
         return find(changes.begin(), changes.end(), id);
-    };
+    }
 
     // Add entry to Info map
     std::map<int, std::string>::iterator Market::InfoInsert(int id, std::string text)
-        { return info.insert(std::make_pair(id, text)).first };
+        { return info.insert(std::make_pair(id, text)).first; }
     
     // Delete entry from Info map
     std::map<int, std::string>::iterator Market::InfoErase(int id)
-        { return info.erase(info.find(id)) };
+        { return info.erase(info.find(id)); }
 
     // Get OrderID from Info text
     std::map<int, std::string>::iterator Market::InfoFindID(std::string text)
@@ -226,7 +226,7 @@ namespace Context {
             [&](const std::pair<int, std::string> &pair)
                 { return pair.second == text }
         );
-    };
+    }
 
     /* ############################################################################################################################################# */
 
@@ -1072,7 +1072,7 @@ protected:
         bool user_cmd = command.find("delete order") != std::string::npos;
 
         // Execute child callbacks
-        if (user_cmd) onDeleteOrderCommand(order, success)
+        if (user_cmd) onDeleteOrderCommand(order, success);
         else onDeleteExecutedOrder(order, id, info);
     }
 
