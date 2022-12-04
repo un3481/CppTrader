@@ -194,8 +194,6 @@ namespace Context {
 
         // Methods
         std::vector<int>::iterator ChangesInsert(int id);
-        std::map<int, std::string>::iterator InfoInsert(int id, std::string text);
-        std::map<int, std::string>::iterator InfoErase(int id);
         std::map<int, std::string>::iterator InfoFindID(std::string text);
     };
 
@@ -208,14 +206,6 @@ namespace Context {
         if (it == changes.end()) changes.push_back(id);
         return find(changes.begin(), changes.end(), id);
     }
-
-    // Add entry to Info map
-    std::map<int, std::string>::iterator Market::InfoInsert(int id, std::string text)
-        { return info.insert(std::make_pair(id, text)).first; }
-    
-    // Delete entry from Info map
-    std::map<int, std::string>::iterator Market::InfoErase(int id)
-        { return info.erase(info.find(id)); }
 
     // Get OrderID from Info text
     std::map<int, std::string>::iterator Market::InfoFindID(std::string text)
@@ -953,7 +943,9 @@ protected:
         }
 
         // Store Order Info
-        (*ctx).market.InfoInsert(order.Id, (*ctx).order.info);
+        (*ctx).market.info.insert(
+            std::make_pair((int)order.Id, (*ctx).order.info)
+        );
 
         // Check if operation is enabled
         if (!(*ctx).enable) return;
@@ -1041,7 +1033,9 @@ protected:
         else error("Error at 'onDeleteOrder' callback: could not find 'info' for order: " + sstos(&order));
 
         // Delete Order Info
-        (*ctx).market.InfoErase(order.Id);
+        (*ctx).market.info.erase(
+            (*ctx).market.info.find((int)order.Id)
+        );
 
         // Check if operation is enabled
         if (!(*ctx).enable) return;
