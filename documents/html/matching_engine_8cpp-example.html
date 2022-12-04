@@ -264,10 +264,10 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Methods</span></div>
 <div class="line">        std::vector&lt;int&gt;::iterator ChangesInsert(<span class="keywordtype">int</span> <span class="keywordtype">id</span>);</div>
-<div class="line">        std::pair&lt;int, std::string&gt;* InfoFind(std::string text);</div>
-<div class="line">        std::pair&lt;int, std::string&gt;* InfoFindByID(<span class="keywordtype">int</span> <span class="keywordtype">id</span>);</div>
 <div class="line">        std::map&lt;int, std::string&gt;::iterator InfoInsert(<span class="keywordtype">int</span> <span class="keywordtype">id</span>, std::string text);</div>
 <div class="line">        std::map&lt;int, std::string&gt;::iterator InfoErase(<span class="keywordtype">int</span> <span class="keywordtype">id</span>);</div>
+<div class="line">        std::map&lt;int, std::string&gt;::iterator InfoFind(std::string text);</div>
+<div class="line">        std::map&lt;int, std::string&gt;::iterator InfoFindByID(<span class="keywordtype">int</span> <span class="keywordtype">id</span>);</div>
 <div class="line">    };</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">/* ############################################################################################################################################# */</span></div>
@@ -281,20 +281,20 @@ $(function() {
 <div class="line">    };</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Get OrderID from Info text</span></div>
-<div class="line">    std::pair&lt;int, std::string&gt;* Market::InfoFind(std::string text)</div>
+<div class="line">    std::map&lt;int, std::string&gt;::iterator Market::InfoFind(std::string text)</div>
 <div class="line">    {</div>
 <div class="line">        <span class="keyword">auto</span> it = std::find_if(info.begin(), info.end(),</div>
 <div class="line">            [&amp;](std::pair&lt;int, std::string&gt; &amp;pair) { return pair.second == text }</div>
 <div class="line">        );</div>
-<div class="line">        <span class="keywordflow">if</span> (it != info.end()) <span class="keywordflow">return</span> &amp;(*it)</div>
+<div class="line">        <span class="keywordflow">if</span> (it != info.end()) <span class="keywordflow">return</span> it</div>
 <div class="line">        <span class="keywordflow">else</span> <span class="keywordflow">return</span> NULL;</div>
 <div class="line">    };</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Get Info text from OrderID</span></div>
-<div class="line">    std::pair&lt;int, std::string&gt;* Market::InfoFindByID(<span class="keywordtype">int</span> <span class="keywordtype">id</span>)</div>
+<div class="line">    std::map&lt;int, std::string&gt;::iterator Market::InfoFindByID(<span class="keywordtype">int</span> <span class="keywordtype">id</span>)</div>
 <div class="line">    {</div>
 <div class="line">        <span class="keyword">auto</span> it = info.find(<span class="keywordtype">id</span>);</div>
-<div class="line">        <span class="keywordflow">if</span> (it != info.end()) <span class="keywordflow">return</span> &amp;(*it)</div>
+<div class="line">        <span class="keywordflow">if</span> (it != info.end()) <span class="keywordflow">return</span> it</div>
 <div class="line">        <span class="keywordflow">else</span> <span class="keywordflow">return</span> NULL;</div>
 <div class="line">    };</div>
 <div class="line"> </div>
@@ -554,8 +554,8 @@ $(function() {
 <div class="line">    <span class="keyword">auto</span> ctx = Context::Get();</div>
 <div class="line"> </div>
 <div class="line">    std::string info;</div>
-<div class="line">    std::pair&lt;int, std::string&gt;* info_pair = (*ctx).market.InfoFindByID(order.<a name="a2"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
-<div class="line">    <span class="keywordflow">if</span> (info_pair != NULL) { info = info_pair-&gt;second; }</div>
+<div class="line">    std::map&lt;int, std::string&gt;::iterator info_it = (*ctx).market.InfoFindByID(order.<a name="a2"></a><a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
+<div class="line">    <span class="keywordflow">if</span> (info_it != NULL) { info = info_it-&gt;second; }</div>
 <div class="line">    <span class="keywordflow">else</span> error(<span class="stringliteral">&quot;Error at &#39;ParseOrder&#39;: could not find &#39;info&#39; for order: &quot;</span> + sstos(&amp;order));</div>
 <div class="line">    </div>
 <div class="line">    info = std::regex_replace(info, std::regex(<span class="stringliteral">&quot;\&quot;&quot;</span>), <span class="stringliteral">&quot;\\\&quot;&quot;</span>);</div>
@@ -1030,7 +1030,7 @@ $(function() {
 <div class="line">        }</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Store Order Info</span></div>
-<div class="line">        (*ctx).market.InfoInsert((<span class="keywordtype">int</span>)order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>, (*ctx).order.info);</div>
+<div class="line">        (*ctx).market.InfoInsert(order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>, (*ctx).order.info);</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Check if operation is enabled</span></div>
 <div class="line">        <span class="keywordflow">if</span> (!(*ctx).enable) <span class="keywordflow">return</span>;</div>
@@ -1082,8 +1082,8 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <span class="comment">// First get info/transaction ID variable</span></div>
 <div class="line">        std::string info;</div>
-<div class="line">        std::pair&lt;int, std::string&gt;* info_pair = (*ctx).market.InfoFindByID(order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
-<div class="line">        <span class="keywordflow">if</span> (info_pair != NULL) { info = info_pair-&gt;second; }</div>
+<div class="line">        std::map&lt;int, std::string&gt;::iterator info_it = (*ctx).market.InfoFindByID(order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
+<div class="line">        <span class="keywordflow">if</span> (info_it != NULL) { info = info_it-&gt;second; }</div>
 <div class="line">        <span class="keywordflow">else</span> error(<span class="stringliteral">&quot;Error at &#39;onUpdateOrder&#39; callback: could not find &#39;info&#39; for order: &quot;</span> + sstos(&amp;order));</div>
 <div class="line"> </div>
 <div class="line">        sqlite3* db = (*ctx).connection.sqlite_ptr;</div>
@@ -1113,8 +1113,8 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <span class="comment">// First get info/transaction ID variable</span></div>
 <div class="line">        std::string info;</div>
-<div class="line">        std::pair&lt;int, std::string&gt;* info_pair = (*ctx).market.InfoFindByID(order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
-<div class="line">        <span class="keywordflow">if</span> (info_pair != NULL) { info = info_pair-&gt;second; }</div>
+<div class="line">        std::map&lt;int, std::string&gt;::iterator info_it = (*ctx).market.InfoFindByID(order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
+<div class="line">        <span class="keywordflow">if</span> (info_it != NULL) { info = info_it-&gt;second; }</div>
 <div class="line">        <span class="keywordflow">else</span> error(<span class="stringliteral">&quot;Error at &#39;onDeleteOrder&#39; callback: could not find &#39;info&#39; for order: &quot;</span> + sstos(&amp;order));</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Delete Order Info</span></div>
@@ -1186,8 +1186,8 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <span class="comment">// First get info/transaction ID variable</span></div>
 <div class="line">        std::string info;</div>
-<div class="line">        std::pair&lt;int, std::string&gt;* info_pair = (*ctx).market.InfoFindByID(order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
-<div class="line">        <span class="keywordflow">if</span> (info_pair != NULL) { info = info_pair-&gt;second; }</div>
+<div class="line">        std::map&lt;int, std::string&gt;::iterator info_it = (*ctx).market.InfoFindByID(order.<a class="code" href="struct_cpp_trader_1_1_matching_1_1_order.html#ab1bdcd3d6bd3dce6d54d0c3bbdcaeeac">Id</a>);</div>
+<div class="line">        <span class="keywordflow">if</span> (info_it != NULL) { info = info_it-&gt;second; }</div>
 <div class="line">        <span class="keywordflow">else</span> error(<span class="stringliteral">&quot;Error at &#39;onExecuteOrder&#39; callback: could not find &#39;info&#39; for order: &quot;</span> + sstos(&amp;order));</div>
 <div class="line">        </div>
 <div class="line">        <span class="comment">// Log Executed Order</span></div>
@@ -1438,8 +1438,8 @@ $(function() {
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Get Order ID from Info</span></div>
 <div class="line">        <span class="keywordtype">int</span> id;</div>
-<div class="line">        std::pair&lt;int, std::string&gt;* info_pair = (*ctx).market.InfoFind(info);</div>
-<div class="line">        <span class="keywordflow">if</span> (info_pair != NULL) { <span class="keywordtype">id</span> = info_pair-&gt;first; }</div>
+<div class="line">        std::map&lt;int, std::string&gt;::iterator info_it = (*ctx).market.InfoFind(info);</div>
+<div class="line">        <span class="keywordflow">if</span> (info_it != NULL) { <span class="keywordtype">id</span> = info_it-&gt;first; }</div>
 <div class="line">        <span class="keywordflow">else</span> {</div>
 <div class="line">            error(<span class="stringliteral">&quot;Failed &#39;delete order&#39; command: &quot;</span> + sstos(&amp;ErrorCode::ORDER_NOT_FOUND));</div>
 <div class="line">            <span class="keywordflow">return</span>;</div>
