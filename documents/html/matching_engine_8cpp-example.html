@@ -277,25 +277,26 @@ $(function() {
 <div class="line">        std::vector&lt;int&gt;::iterator it = find(changes.begin(), changes.end(), <span class="keywordtype">id</span>);</div>
 <div class="line">        <span class="keywordflow">if</span> (it == changes.end()) changes.push_back(<span class="keywordtype">id</span>);</div>
 <div class="line">        <span class="keywordflow">return</span> find(changes.begin(), changes.end(), <span class="keywordtype">id</span>);</div>
-<div class="line">    };</div>
+<div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Add entry to Info map</span></div>
 <div class="line">    std::map&lt;int, std::string&gt;::iterator Market::InfoInsert(<span class="keywordtype">int</span> <span class="keywordtype">id</span>, std::string text)</div>
-<div class="line">        { <span class="keywordflow">return</span> info.insert(std::make_pair(<span class="keywordtype">id</span>, text)).first };</div>
+<div class="line">        { <span class="keywordflow">return</span> info.insert(std::make_pair(<span class="keywordtype">id</span>, text)).first; }</div>
 <div class="line">    </div>
 <div class="line">    <span class="comment">// Delete entry from Info map</span></div>
 <div class="line">    std::map&lt;int, std::string&gt;::iterator Market::InfoErase(<span class="keywordtype">int</span> <span class="keywordtype">id</span>)</div>
-<div class="line">        { <span class="keywordflow">return</span> info.erase(info.find(<span class="keywordtype">id</span>)) };</div>
+<div class="line">        { <span class="keywordflow">return</span> info.erase(info.find(<span class="keywordtype">id</span>)); }</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Get OrderID from Info text</span></div>
 <div class="line">    std::map&lt;int, std::string&gt;::iterator Market::InfoFindID(std::string text)</div>
 <div class="line">    {</div>
-<div class="line">        <span class="keyword">auto</span> it = std::find_if(info.begin(), info.end(),</div>
-<div class="line">            [&amp;](<span class="keyword">const</span> std::pair&lt;int, std::string&gt; &amp;pair) { return pair.second == text }</div>
+<div class="line">        <span class="keywordflow">return</span> std::find_if(</div>
+<div class="line">            info.begin(),</div>
+<div class="line">            info.end(),</div>
+<div class="line">            [&amp;](<span class="keyword">const</span> std::pair&lt;int, std::string&gt; &amp;pair)</div>
+<div class="line">                { return pair.second == text; }</div>
 <div class="line">        );</div>
-<div class="line">        <span class="keywordflow">if</span> (it != info.end()) <span class="keywordflow">return</span> it</div>
-<div class="line">        <span class="keywordflow">else</span> <span class="keywordflow">return</span> NULL;</div>
-<div class="line">    };</div>
+<div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">/* ############################################################################################################################################# */</span></div>
 <div class="line"> </div>
@@ -1141,7 +1142,7 @@ $(function() {
 <div class="line">        <span class="keywordtype">bool</span> user_cmd = command.find(<span class="stringliteral">&quot;delete order&quot;</span>) != std::string::npos;</div>
 <div class="line"> </div>
 <div class="line">        <span class="comment">// Execute child callbacks</span></div>
-<div class="line">        <span class="keywordflow">if</span> (user_cmd) onDeleteOrderCommand(order, success)</div>
+<div class="line">        <span class="keywordflow">if</span> (user_cmd) onDeleteOrderCommand(order, success);</div>
 <div class="line">        <span class="keywordflow">else</span> onDeleteExecutedOrder(order, <span class="keywordtype">id</span>, info);</div>
 <div class="line">    }</div>
 <div class="line"> </div>
