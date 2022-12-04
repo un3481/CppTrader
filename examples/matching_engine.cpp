@@ -196,8 +196,7 @@ namespace Context {
         std::vector<int>::iterator ChangesInsert(int id);
         std::map<int, std::string>::iterator InfoInsert(int id, std::string text);
         std::map<int, std::string>::iterator InfoErase(int id);
-        std::map<int, std::string>::iterator InfoFind(std::string text);
-        std::map<int, std::string>::iterator InfoFindByID(int id);
+        std::map<int, std::string>::iterator InfoFindID(std::string text);
     };
 
     /* ############################################################################################################################################# */
@@ -210,24 +209,6 @@ namespace Context {
         return find(changes.begin(), changes.end(), id);
     };
 
-    // Get OrderID from Info text
-    std::map<int, std::string>::iterator Market::InfoFind(std::string text)
-    {
-        auto it = std::find_if(info.begin(), info.end(),
-            [&](const std::pair<int, std::string> &pair) { return pair.second == text }
-        );
-        if (it != info.end()) return it
-        else return NULL;
-    };
-
-    // Get Info text from OrderID
-    std::map<int, std::string>::iterator Market::InfoFindByID(int id)
-    {
-        auto it = info.find(id);
-        if (it != info.end()) return it
-        else return NULL;
-    };
-
     // Add entry to Info map
     std::map<int, std::string>::iterator Market::InfoInsert(int id, std::string text)
         { return info.insert(std::make_pair(id, text)).first };
@@ -235,6 +216,16 @@ namespace Context {
     // Delete entry from Info map
     std::map<int, std::string>::iterator Market::InfoErase(int id)
         { return info.erase(info.find(id)) };
+
+    // Get OrderID from Info text
+    std::map<int, std::string>::iterator Market::InfoFindID(std::string text)
+    {
+        auto it = std::find_if(info.begin(), info.end(),
+            [&](const std::pair<int, std::string> &pair) { return pair.second == text }
+        );
+        if (it != info.end()) return it
+        else return NULL;
+    };
 
     /* ############################################################################################################################################# */
 
@@ -483,9 +474,10 @@ inline std::string ParseOrder(const Order& order)
 {
     auto ctx = Context::Get();
 
+    // First get info/transaction ID variable
     std::string info;
-    std::map<int, std::string>::iterator info_it = (*ctx).market.InfoFindByID(order.Id);
-    if (info_it != NULL) { info = info_it->second; }
+    std::map<int, std::string>::iterator info_it = (*ctx).market.info.find(order.Id);
+    if (info_it != (*ctx).market.info.end()) { info = info_it->second; }
     else error("Error at 'ParseOrder': could not find 'info' for order: " + sstos(&order));
     
     info = std::regex_replace(info, std::regex("\""), "\\\"");
@@ -1010,12 +1002,6 @@ protected:
         // Check if operation is enabled
         if (!(*ctx).enable) return;
 
-        // First get info/transaction ID variable
-        std::string info;
-        std::map<int, std::string>::iterator info_it = (*ctx).market.InfoFindByID(order.Id);
-        if (info_it != NULL) { info = info_it->second; }
-        else error("Error at 'onUpdateOrder' callback: could not find 'info' for order: " + sstos(&order));
-
         sqlite3* db = (*ctx).connection.sqlite_ptr;
         char* err;
 
@@ -1023,6 +1009,12 @@ protected:
         int rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
         { error("sqlite error(6): " + sstos(&err)); };
+
+        // Get info/transaction ID
+        std::string info;
+        std::map<int, std::string>::iterator info_it = (*ctx).market.info.find(order.Id);
+        if (info_it != (*ctx).market.info.end()) { info = info_it->second; }
+        else error("Error at 'onUpdateOrder' callback: could not find 'info' for order: " + sstos(&order));
 
         /*
         // *** Send to server with system()
@@ -1043,12 +1035,12 @@ protected:
 
         // First get info/transaction ID variable
         std::string info;
-        std::map<int, std::string>::iterator info_it = (*ctx).market.InfoFindByID(order.Id);
-        if (info_it != NULL) { info = info_it->second; }
+        std::map<int, std::string>::iterator info_it = (*ctx).market.info.find(order.Id);
+        if (info_it != (*ctx).market.info.end()) { info = info_it->second; }
         else error("Error at 'onDeleteOrder' callback: could not find 'info' for order: " + sstos(&order));
 
         // Delete Order Info
-        (*ctx).market.InfoErase((int)order.Id);
+        (*ctx).market.InfoErase(order.Id);
 
         // Check if operation is enabled
         if (!(*ctx).enable) return;
@@ -1116,18 +1108,12 @@ protected:
 
         // First get info/transaction ID variable
         std::string info;
-        std::map<int, std::string>::iterator info_it = (*ctx).market.InfoFindByID(order.Id);
-        if (info_it != NULL) { info = info_it->second; }
+        std::map<int, std::string>::iterator info_it = (*ctx).market.info.find(order.Id);
+        if (info_it != (*ctx).market.info.end()) { info = info_it->second; }
         else error("Error at 'onExecuteOrder' callback: could not find 'info' for order: " + sstos(&order));
         
         // Log Executed Order
      	log("Execute order: " + sstos(&order) + " with price " + sstos(&price) + " and quantity " + sstos(&quantity) + " and info " + info);
-
-        /*
-        std::string csv;
-        csv.append(OrderCSVHeader + CSV_SEP + "Price" + CSV_SEP + "Quantity" + CSV_EOL);
-        csv.append(ParseOrder(order) + CSV_SEP + std::to_string(price) + CSV_SEP + std::to_string(quantity) + CSV_EOL);
-        */
         
         /*
         // *** Send to server with system()
@@ -1368,8 +1354,8 @@ void DeleteOrder(MarketManager* market, const std::string& command)
 
         // Get Order ID from Info
         int id;
-        std::map<int, std::string>::iterator info_it = (*ctx).market.InfoFind(info);
-        if (info_it != NULL) { id = info_it->first; }
+        std::map<int, std::string>::iterator info_it = (*ctx).market.InfoFindID(info);
+        if (info_it != (*ctx).market.info.end()) { id = info_it->first; }
         else {
             error("Failed 'delete order' command: ORDER_NOT_FOUND");
             return;
