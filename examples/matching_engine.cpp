@@ -214,7 +214,7 @@ namespace Context {
     std::map<int, std::string>::iterator Market::InfoFind(std::string text)
     {
         auto it = std::find_if(info.begin(), info.end(),
-            [&](std::pair<int, std::string> &pair) { return pair.second == text }
+            [&](const std::pair<int, std::string> &pair) { return pair.second == text }
         );
         if (it != info.end()) return it
         else return NULL;
@@ -1371,7 +1371,7 @@ void DeleteOrder(MarketManager* market, const std::string& command)
         std::map<int, std::string>::iterator info_it = (*ctx).market.InfoFind(info);
         if (info_it != NULL) { id = info_it->first; }
         else {
-            error("Failed 'delete order' command: " + sstos(&ErrorCode::ORDER_NOT_FOUND));
+            error("Failed 'delete order' command: ORDER_NOT_FOUND");
             return;
         };
         
