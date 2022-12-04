@@ -34,7 +34,7 @@ using namespace CppTrader::Matching;
 
 /* Preprocessed */
 
-#define VERSION "2.2.1.2" // Program version
+#define VERSION "2.2.1.5" // Program version
 
 #define MSG_SIZE 256 // Buffer size for messages on socket stream (bytes)
 #define MSG_SIZE_SMALL 64 // Buffer size for small messages on socket stream (bytes)
@@ -172,14 +172,6 @@ namespace Context {
         int sockfd = 0; // File Descriptor for current Connection
     };
 
-    struct Market
-    {
-        MarketManager* market_ptr = NULL; // Pointer to Market Manager
-        MyMarketHandler* handler_ptr = NULL; // Pointer to Market Handler
-        std::vector<int> changes = {}; // List of changed orders
-        std::map<int, std::string> info = {}; // Info
-    };
-
     struct Order
     {
         int id = 0; // Order Id
@@ -192,6 +184,59 @@ namespace Context {
         std::string response = EMPTY_STR; // Command Response
         int response_size = MSG_SIZE_SMALL; // Response Size
     };
+
+    struct Market
+    {
+        MarketManager* market_ptr = NULL; // Pointer to Market Manager
+        MyMarketHandler* handler_ptr = NULL; // Pointer to Market Handler
+        std::vector<int> changes = {}; // List of changed orders
+        std::map<int, std::string> info = {}; // Info
+
+        // Methods
+        std::vector<int>::iterator ChangesInsert(int id);
+        std::pair<int, std::string>* InfoFind(std::string text);
+        std::pair<int, std::string>* InfoFindByID(int id);
+        std::map<int, std::string>::iterator InfoInsert(int id, std::string text);
+        std::map<int, std::string>::iterator InfoErase(int id);
+    };
+
+    /* ############################################################################################################################################# */
+
+    // Add entry to Changes list
+    std::vector<int>::iterator Market::ChangesInsert(int id)
+    {
+        std::vector<int>::iterator it = find(changes.begin(), changes.end(), id);
+        if (it == changes.end()) changes.push_back(id);
+        return find(changes.begin(), changes.end(), id);
+    };
+
+    // Get OrderID from Info text
+    std::pair<int, std::string>* Market::InfoFind(std::string text)
+    {
+        auto it = std::find_if(info.begin(), info.end(),
+            [&](std::pair<int, std::string> &pair) { return pair.second == text }
+        );
+        if (it != info.end()) return &(*it)
+        else return NULL;
+    };
+
+    // Get Info text from OrderID
+    std::pair<int, std::string>* Market::InfoFindByID(int id)
+    {
+        auto it = info.find(id);
+        if (it != info.end()) return &(*it)
+        else return NULL;
+    };
+
+    // Add entry to Info map
+    std::map<int, std::string>::iterator Market::InfoInsert(int id, std::string text)
+        { return info.insert(std::make_pair(id, text)).first };
+    
+    // Delete entry from Info map
+    std::map<int, std::string>::iterator Market::InfoErase(int id)
+        { return info.erase(info.find(id)) };
+
+    /* ############################################################################################################################################# */
 
     // Context struct
     struct Ctx
@@ -439,8 +484,10 @@ inline std::string ParseOrder(const Order& order)
     auto ctx = Context::Get();
 
     std::string info;
-    std::map<int, std::string> info_map = (*ctx).market.info;
-    if (info_map.find((int)order.Id) != info_map.end()) info = info_map[(int)order.Id];
+    std::pair<int, std::string>* info_pair = (*ctx).market.InfoFindByID(order.Id);
+    if (info_pair != NULL) { info = info_pair->second; }
+    else error("Error at 'ParseOrder': could not find 'info' for order: " + sstos(&order));
+    
     info = std::regex_replace(info, std::regex("\""), "\\\"");
 
     return (
@@ -913,12 +960,12 @@ protected:
         }
 
         // Store Order Info
-        (*ctx).market.info.insert(
-            std::make_pair((int)order.Id, (*ctx).order.info)
-        );
+        (*ctx).market.InfoInsert((int)order.Id, (*ctx).order.info);
 
         // Check if operation is enabled
         if (!(*ctx).enable) return;
+
+        bool success = true;
 
         std::string id = std::to_string((int)order.Id);
 
@@ -934,7 +981,10 @@ protected:
         );
         int rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
-        { error("sqlite error(4): " + sstos(&err)); };
+        {
+            error("sqlite error(4): " + sstos(&err));
+            success = false;
+        };
 
         // Log Add Order
         log("Add order: " + sstos(&order));
@@ -947,7 +997,7 @@ protected:
         */
 
         // Set response to client
-        (*ctx).command.response = id;
+        if (success) (*ctx).command.response = id;
     }
 
     /* Update orders when half filled */
@@ -957,13 +1007,14 @@ protected:
 
         auto ctx = Context::Get();
 
-        // First get info/transaction ID variable
-        std::string info;
-        std::map<int, std::string> info_map = (*ctx).market.info;
-        if (info_map.find((int)order.Id) != info_map.end()) info = info_map[(int)order.Id];
-
         // Check if operation is enabled
         if (!(*ctx).enable) return;
+
+        // First get info/transaction ID variable
+        std::string info;
+        std::pair<int, std::string>* info_pair = (*ctx).market.InfoFindByID(order.Id);
+        if (info_pair != NULL) { info = info_pair->second; }
+        else error("Error at 'onUpdateOrder' callback: could not find 'info' for order: " + sstos(&order));
 
         sqlite3* db = (*ctx).connection.sqlite_ptr;
         char* err;
@@ -973,13 +1024,15 @@ protected:
         if (rdy != SQLITE_OK)
         { error("sqlite error(6): " + sstos(&err)); };
 
+        /*
         // *** Send to server with system()
         // NOT NEEDED BECAUSE I CAN CALCULATE PARTIAL TRADES
         // BUT CAN BE USED IN FUTURE TO CROSS CHECK THESE PARTIAL CALCS
-        //std::string cmd = "/home/sysop/books/BTC_TUSD/execute_processor UpdateOrder '" + sstos(&order) + ":" + info + "' > execute_processor.txt 2>&1 &";
-        //int iCallResult = system(cmd.c_str());
-        //if (iCallResult < 0 && iCallResult != -1) { error("Error doing system call (AC862): " + std::string(strerror(errno)) + " " + std::to_string(iCallResult)); }
+        std::string cmd = "/home/sysop/books/BTC_TUSD/execute_processor UpdateOrder '" + sstos(&order) + ":" + info + "' > execute_processor.txt 2>&1 &";
+        int iCallResult = system(cmd.c_str());
+        if (iCallResult < 0 && iCallResult != -1) { error("Error doing system call (AC862): " + std::string(strerror(errno)) + " " + std::to_string(iCallResult)); }
         // *** Send to server end
+        */
     }
 
     void onDeleteOrder(const Order& order) override
@@ -990,16 +1043,17 @@ protected:
 
         // First get info/transaction ID variable
         std::string info;
-        std::map<int, std::string> info_map = (*ctx).market.info;
-        if (info_map.find((int)order.Id) != info_map.end()) info = info_map[(int)order.Id];
+        std::pair<int, std::string>* info_pair = (*ctx).market.InfoFindByID(order.Id);
+        if (info_pair != NULL) { info = info_pair->second; }
+        else error("Error at 'onDeleteOrder' callback: could not find 'info' for order: " + sstos(&order));
 
         // Delete Order Info
-        (*ctx).market.info.erase(
-            (*ctx).market.info.find((int)order.Id)
-        );
+        (*ctx).market.InfoErase((int)order.Id);
 
         // Check if operation is enabled
         if (!(*ctx).enable) return;
+
+        bool success = true;
 
         std::string id = std::to_string((int)order.Id);
 
@@ -1012,11 +1066,33 @@ protected:
         );
         int rdy = sqlite3_exec(db, query.c_str(), NULL, NULL, &err);
         if (rdy != SQLITE_OK)
-        { error("sqlite error(5): " + sstos(&err)); };
+        {
+            error("sqlite error(5): " + sstos(&err));
+            success = false;
+        };
 
         // Log Deleted Order
         log("Delete order: " + sstos(&order) + " and info " + info);
+
+        // Check if order was deleted by user
+        std::string command = (*ctx).command.input;
+        bool user_cmd = command.find("delete order") != std::string::npos;
+
+        // Execute child callbacks
+        if (user_cmd) onDeleteOrderCommand(order, success)
+        else onDeleteExecutedOrder(order, id, info);
+    }
+
+    void onDeleteOrderCommand(const Order& order, bool success)
+    {
+        auto ctx = Context::Get();
         
+        // Set response to client
+        if (success) (*ctx).command.response = "OK";
+    }
+
+    void onDeleteExecutedOrder(const Order& order, std::string id, std::string info)
+    {
         /*
         // *** Send to server
         std::string cmd = "/home/sysop/books/BTC_TUSD/execute_processor DeleteOrder '" + id + ":" + sstos(&order) + ":" + info + "' > execute_processor.txt 2>&1 &";
@@ -1024,12 +1100,6 @@ protected:
         if (iCallResult < 0 && iCallResult != -1) { error("Error doing system call (BB332): " + std::string(strerror(errno)) + " " + std::to_string(iCallResult)); }
         // *** Send to server end
         */
-
-        std::string command = (*ctx).command.input;
-        if (command.find("delete order") == std::string::npos) return;
-        
-        // Set response to client
-        (*ctx).command.response = "OK";
     }
 
     void onExecuteOrder(const Order& order, uint64_t price, uint64_t quantity) override
@@ -1038,19 +1108,18 @@ protected:
 
         auto ctx = Context::Get();
 
-        // Add Order Id to changes if not already added
-        std::vector<int> ch = (*ctx).market.changes;
-        std::vector<int>::iterator it = find(ch.begin(), ch.end(), (int)order.Id);
-        if (it == ch.end()) (*ctx).market.changes.push_back((int)order.Id);
-
         // Check if operation is enabled
         if (!(*ctx).enable) return;
 
-        // Get info/transaction ID variable
-        std::string info;
-        std::map<int, std::string> info_map = (*ctx).market.info;
-        if (info_map.find((int)order.Id) != info_map.end()) info = info_map[(int)order.Id];
+        // Add Order to changes if not already added
+        (*ctx).market.ChangesInsert(order.Id);
 
+        // First get info/transaction ID variable
+        std::string info;
+        std::pair<int, std::string>* info_pair = (*ctx).market.InfoFindByID(order.Id);
+        if (info_pair != NULL) { info = info_pair->second; }
+        else error("Error at 'onExecuteOrder' callback: could not find 'info' for order: " + sstos(&order));
+        
         // Log Executed Order
      	log("Execute order: " + sstos(&order) + " with price " + sstos(&price) + " and quantity " + sstos(&quantity) + " and info " + info);
 
@@ -1285,13 +1354,27 @@ void ReplaceOrder(MarketManager* market, const std::string& command)
 
 void DeleteOrder(MarketManager* market, const std::string& command)
 {
-    static std::regex pattern("^delete order (\\d+)$");
+    static std::regex pattern("^delete order (.+)$");
     std::smatch match;
 
     if (std::regex_search(command, match, pattern))
     {
-        uint64_t id = std::stoi(match[1]);
+        auto ctx = Context::Get();
 
+        // Set default response
+        (*ctx).command.response = "FAIL";
+        
+        std::string info = match[1];
+
+        // Get Order ID from Info
+        int id;
+        std::pair<int, std::string>* info_pair = (*ctx).market.InfoFind(info);
+        if (info_pair != NULL) { id = info_pair->first; }
+        else {
+            error("Failed 'delete order' command: " + sstos(&ErrorCode::ORDER_NOT_FOUND));
+            return;
+        };
+        
         ErrorCode result = (*market).DeleteOrder(id);
         if (result != ErrorCode::OK)
             error("Failed 'delete order' command: " + sstos(&result));
@@ -1735,7 +1818,7 @@ void Execute()
     MarketManager* market = (*ctx).market.market_ptr;
 
     // Exit
-    if (command == "exit") (*ctx).enable = false;
+    if      (command == "exit") (*ctx).enable = false;
     // Matching
     else if (command == "enable matching") (*market).EnableMatching();
     else if (command == "disable matching") (*market).DisableMatching();
@@ -1753,14 +1836,17 @@ void Execute()
     else if (command.find("replace order") != std::string::npos) ReplaceOrder(market, command);
     else if (command.find("delete order") != std::string::npos) DeleteOrder(market, command);
     else if (command.find("get order") != std::string::npos) GetOrder(market, command);
-    // Prepare to Add
+    // Prepare to Add Order
     else if (command.find("add ") != std::string::npos)
     {
+        // Set default response
+        (*ctx).command.response = "FAIL";
+
         // Set new Order Id
         (*ctx).order.id = (*(*ctx).market.handler_ptr).lts_order_id() + 1;
 
         // Orders: Add
-        if (command.find("add market") != std::string::npos) AddMarketOrder(market, command);
+        if      (command.find("add market") != std::string::npos) AddMarketOrder(market, command);
         else if (command.find("add slippage market") != std::string::npos) AddSlippageMarketOrder(market, command);
         else if (command.find("add limit") != std::string::npos) AddLimitOrder(market, command);
         else if (command.find("add ioc limit") != std::string::npos) AddIOCLimitOrder(market, command);
