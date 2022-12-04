@@ -478,7 +478,7 @@ inline std::string ParseOrder(const Order& order)
     // First get info/transaction ID variable
     std::string info;
     std::map<int, std::string>::iterator info_it = (*ctx).market.info.find(order.Id);
-    if (info_it != (*ctx).market.info.end()) { info = info_it->second; }
+    if (info_it != (*ctx).market.info.end()) info = info_it->second;
     else error("Error at 'ParseOrder': could not find 'info' for order: " + sstos(&order));
     
     info = std::regex_replace(info, std::regex("\""), "\\\"");
@@ -1014,7 +1014,7 @@ protected:
         // Get info/transaction ID
         std::string info;
         std::map<int, std::string>::iterator info_it = (*ctx).market.info.find(order.Id);
-        if (info_it != (*ctx).market.info.end()) { info = info_it->second; }
+        if (info_it != (*ctx).market.info.end()) info = info_it->second;
         else error("Error at 'onUpdateOrder' callback: could not find 'info' for order: " + sstos(&order));
 
         /*
@@ -1037,7 +1037,7 @@ protected:
         // First get info/transaction ID variable
         std::string info;
         std::map<int, std::string>::iterator info_it = (*ctx).market.info.find(order.Id);
-        if (info_it != (*ctx).market.info.end()) { info = info_it->second; }
+        if (info_it != (*ctx).market.info.end()) info = info_it->second;
         else error("Error at 'onDeleteOrder' callback: could not find 'info' for order: " + sstos(&order));
 
         // Delete Order Info
@@ -1110,7 +1110,7 @@ protected:
         // First get info/transaction ID variable
         std::string info;
         std::map<int, std::string>::iterator info_it = (*ctx).market.info.find(order.Id);
-        if (info_it != (*ctx).market.info.end()) { info = info_it->second; }
+        if (info_it != (*ctx).market.info.end()) info = info_it->second;
         else error("Error at 'onExecuteOrder' callback: could not find 'info' for order: " + sstos(&order));
         
         // Log Executed Order
@@ -1356,7 +1356,7 @@ void DeleteOrder(MarketManager* market, const std::string& command)
         // Get Order ID from Info
         int id;
         std::map<int, std::string>::iterator info_it = (*ctx).market.InfoFindID(info);
-        if (info_it != (*ctx).market.info.end()) { id = info_it->first; }
+        if (info_it != (*ctx).market.info.end()) id = info_it->first;
         else {
             error("Failed 'delete order' command: ORDER_NOT_FOUND");
             return;
