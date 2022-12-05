@@ -214,7 +214,10 @@ namespace Context {
             info.begin(),
             info.end(),
             [&](const std::pair<int, std::string> &pair)
-                { return pair.second == text; }
+            {
+                std::string trans_id = pair.second.substr(0, pair.second.find(":"));
+                return (!trans_id.empty()) && (trans_id == text);
+            }
         );
     }
 
