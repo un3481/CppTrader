@@ -7,3 +7,4 @@ modules/* linguist-vendored
 temp/* linguist-vendored
 tools/* linguist-vendored
 modules/sqlite3/* linguist-vendored
+documents/** linguist-vendored
